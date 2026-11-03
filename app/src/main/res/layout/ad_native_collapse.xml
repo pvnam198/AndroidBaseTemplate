@@ -2,7 +2,7 @@
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#FFF3E0"
+    android:background="@color/ad_card_bg"
     android:elevation="8dp">
 
     <FrameLayout
@@ -19,11 +19,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="#F9A825"
+                android:background="@drawable/bg_ad_badge"
                 android:paddingHorizontal="5dp"
                 android:paddingVertical="2dp"
                 android:text="@string/ad_label"
-                android:textColor="#000000"
+                android:textColor="@color/ad_badge_text"
                 android:textSize="11sp" />
 
             <LinearLayout
@@ -78,10 +78,9 @@
                 android:maxLines="2"
                 android:textSize="13sp" />
 
-            <Button
+            <TextView
                 android:id="@+id/ad_call_to_action"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/Widget.Ad.Cta"
                 android:layout_marginTop="10dp" />
         </LinearLayout>
 
@@ -90,8 +89,11 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_gravity="top|end"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_ad_action"
             android:gravity="center"
             android:text="@string/ad_close"
+            android:textColor="@color/ad_cta_text"
             android:textSize="14sp"
             android:textStyle="bold" />
     </FrameLayout>

@@ -6,8 +6,8 @@ import com.namstd.androidskillhub.R
 /**
  * Native ad card layouts, selected by Remote Config key `native_template` ([key] is the value to set).
  *
- * The first four are the original app layouts. The rest are the Figma "Wavez - ADs" / "Mẫu v2" templates
- * (layout/ad_tpl_*.xml); every one uses the same view ids, so [com.namstd.androidskillhub.core.ads.NativeAds]
+ * All layouts are the Figma "Wavez - ADs" / "Mẫu v2" templates (layout/ad_tpl_*.xml); the first four
+ * are the original key values, now drawn with their closest Figma template. Every layout uses the same view ids, so [com.namstd.androidskillhub.core.ads.NativeAds]
  * can bind any of them:
  * `ad_headline` (required), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`, `ad_price`,
  * `ad_advertiser` (all optional), plus hidden controls `ad_close` / `ad_collapse` / `ad_next` that only a
@@ -17,10 +17,10 @@ import com.namstd.androidskillhub.R
  * [TINY2] (Collap2).
  */
 enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
-    MEDIA("native media", R.layout.ad_native),
-    NO_MEDIA("native no media", R.layout.ad_native_no_media),
-    BANNER("native banner", R.layout.ad_native_banner),
-    FULLSCREEN("native fullscreen", R.layout.ad_native_fullscreen),
+    MEDIA("native media", R.layout.ad_tpl_big1),
+    NO_MEDIA("native no media", R.layout.ad_tpl_small1),
+    BANNER("native banner", R.layout.ad_tpl_tiny1),
+    FULLSCREEN("native fullscreen", R.layout.ad_tpl_full1),
 
     BIG1("big1", R.layout.ad_tpl_big1),
     BIG2("big2", R.layout.ad_tpl_big2),

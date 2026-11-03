@@ -5,9 +5,9 @@ import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.RatingBar
 import android.widget.TextView
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
@@ -19,7 +19,7 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdLoaderCallba
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.namstd.androidskillhub.R
-import com.namstd.androidskillhub.core.config.NativeTemplate
+import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
@@ -313,47 +313,52 @@ object NativeAds {
         )
     }
 
-    private fun renderDefaultCard(activity: Activity, ad: NativeAd): NativeAdView {
-        val view = LayoutInflater.from(activity).inflate(layoutFor(RemoteConfig.nativeTemplate), null) as NativeAdView
+    private fun renderDefaultCard(activity: Activity, ad: NativeAd): NativeAdView =
+        renderTemplate(activity, ad, RemoteConfig.nativeTemplate)
+
+    /** Inflates [template] and binds [ad] into it - for any screen that wants a specific template. */
+    fun renderTemplate(activity: Activity, ad: NativeAd, template: NativeAdTemplate): NativeAdView {
+        val view = LayoutInflater.from(activity).inflate(template.layout, null) as NativeAdView
         populateView(view, ad)
         return view
     }
 
-    /** Layout native card theo [RemoteConfig.nativeTemplate]. */
-    private fun layoutFor(template: NativeTemplate): Int = when (template) {
-        NativeTemplate.NO_MEDIA -> R.layout.ad_native_no_media
-        NativeTemplate.BANNER -> R.layout.ad_native_banner
-        NativeTemplate.FULLSCREEN -> R.layout.ad_native_fullscreen
-        NativeTemplate.MEDIA -> R.layout.ad_native
-    }
-
     /**
-     * Gắn [ad] vào bất kỳ layout native card nào dùng chung id. `ad_media` (MediaView) và `ad_advertiser`
-     * là tùy chọn theo variant - thiếu thì bỏ qua; MediaView null khi không có.
+     * Gắn [ad] vào bất kỳ layout native card nào dùng chung id (xem [NativeAdTemplate]). Chỉ `ad_headline`
+     * là bắt buộc; các view khác thiếu thì bỏ qua, và view của asset mà ad không có thì ẩn đi.
+     * `ad_call_to_action` có thể là nút chữ hoặc nút icon (Tiny2) - chỉ nút chữ mới được gán text.
      */
     private fun populateView(view: NativeAdView, ad: NativeAd) {
-        val icon = view.findViewById<ImageView>(R.id.ad_icon)
         val headline = view.findViewById<TextView>(R.id.ad_headline)
-        val body = view.findViewById<TextView>(R.id.ad_body)
-        val cta = view.findViewById<Button>(R.id.ad_call_to_action)
+        val icon: ImageView? = view.findViewById(R.id.ad_icon)
+        val body: TextView? = view.findViewById(R.id.ad_body)
+        val cta: View? = view.findViewById(R.id.ad_call_to_action)
         val advertiser: TextView? = view.findViewById(R.id.ad_advertiser)
+        val stars: RatingBar? = view.findViewById(R.id.ad_stars)
+        val price: TextView? = view.findViewById(R.id.ad_price)
         val media: MediaView? = view.findViewById(R.id.ad_media)
 
         view.headlineView = headline
-        view.bodyView = body
-        view.iconView = icon
-        view.callToActionView = cta
+        body?.let { view.bodyView = it }
+        icon?.let { view.iconView = it }
+        cta?.let { view.callToActionView = it }
         advertiser?.let { view.advertiserView = it }
+        stars?.let { view.starRatingView = it }
+        price?.let { view.priceView = it }
 
         headline.text = ad.headline
-        body.text = ad.body
-        cta.text = ad.callToAction
-        icon.setImageDrawable(ad.icon?.drawable)
+        body?.text = ad.body
+        (cta as? TextView)?.text = ad.callToAction
+        icon?.setImageDrawable(ad.icon?.drawable)
         advertiser?.text = ad.advertiser
-        body.visibility = visibility(ad.body)
-        cta.visibility = visibility(ad.callToAction)
-        icon.visibility = visibility(ad.icon)
+        stars?.rating = ad.starRating?.toFloat() ?: 0f
+        price?.text = ad.price
+        body?.visibility = visibility(ad.body)
+        cta?.visibility = visibility(ad.callToAction)
+        icon?.visibility = visibility(ad.icon)
         advertiser?.visibility = visibility(ad.advertiser)
+        stars?.visibility = visibility(ad.starRating)
+        price?.visibility = visibility(ad.price)
         view.registerNativeAd(ad, media)
     }
 

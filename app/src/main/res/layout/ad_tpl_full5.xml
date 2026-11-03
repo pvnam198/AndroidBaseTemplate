@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Full5 (full screen, light): "Next" pill on top / media 1:1 centred / info B / full CTA.
+     ad_next is hidden; the screen showing the ad decides when it appears and what it does. -->
+<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ad_card_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:paddingStart="@dimen/ad_card_padding"
+            android:paddingEnd="@dimen/ad_card_padding">
+
+            <TextView
+                android:id="@+id/ad_next"
+                style="@style/Widget.Ad.Cta.Small"
+                android:layout_height="40dp"
+                android:layout_gravity="end|center_vertical"
+                android:minWidth="72dp"
+                android:text="@string/next"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <com.namstd.androidskillhub.core.ads.template.AdMediaFrame
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:adRatio="1:1">
+
+                <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
+                    android:id="@+id/ad_media"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </com.namstd.androidskillhub.core.ads.template.AdMediaFrame>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <include layout="@layout/ad_tpl_part_info_b" />
+
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                style="@style/Widget.Ad.Cta"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>

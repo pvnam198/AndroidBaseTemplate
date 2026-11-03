@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Small3: XL icon | [Ad] title / body / full CTA. -->
+<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_ad_card"
+    android:padding="@dimen/ad_card_padding">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/ad_icon"
+            style="@style/Widget.Ad.Icon"
+            android:layout_width="@dimen/ad_icon_xl"
+            android:layout_height="@dimen/ad_icon_xl" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/ad_gap"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <include layout="@layout/ad_tpl_part_title_row" />
+
+            <TextView
+                android:id="@+id/ad_body"
+                style="@style/Widget.Ad.Body"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                style="@style/Widget.Ad.Cta"
+                android:layout_height="@dimen/ad_cta_small_height"
+                android:layout_marginTop="@dimen/ad_gap" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>

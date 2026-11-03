@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Big9: media 16:9 / [Ad] title with a compact CTA on the right. -->
+<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_ad_card"
+    android:padding="@dimen/ad_card_padding">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.namstd.androidskillhub.core.ads.template.AdMediaFrame
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:adCornerRadius="@dimen/ad_media_radius"
+            app:adRatio="16:9">
+
+            <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
+                android:id="@+id/ad_media"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </com.namstd.androidskillhub.core.ads.template.AdMediaFrame>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/ad_gap"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <include
+                layout="@layout/ad_tpl_part_title_row"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                style="@style/Widget.Ad.Cta.Small"
+                android:layout_marginStart="@dimen/ad_gap" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Big7: [Ad] title / media 16:9 / full CTA (no icon, no body). -->
+<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_ad_card"
+    android:padding="@dimen/ad_card_padding">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <include layout="@layout/ad_tpl_part_title_row" />
+
+        <com.namstd.androidskillhub.core.ads.template.AdMediaFrame
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/ad_gap"
+            app:adCornerRadius="@dimen/ad_media_radius"
+            app:adRatio="16:9">
+
+            <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
+                android:id="@+id/ad_media"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </com.namstd.androidskillhub.core.ads.template.AdMediaFrame>
+
+        <TextView
+            android:id="@+id/ad_call_to_action"
+            style="@style/Widget.Ad.Cta"
+            android:layout_marginTop="@dimen/ad_gap" />
+    </LinearLayout>
+</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>

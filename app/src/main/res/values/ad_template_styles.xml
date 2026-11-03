@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared atoms for the native ad templates (layout/ad_tpl_*.xml), from Figma "Wavez - ADs" / Atoms v2. -->
+<resources>
+    <dimen name="ad_card_padding">12dp</dimen>
+    <dimen name="ad_card_radius">16dp</dimen>
+    <dimen name="ad_media_radius">12dp</dimen>
+    <dimen name="ad_gap">8dp</dimen>
+    <dimen name="ad_icon_s">40dp</dimen>
+    <dimen name="ad_icon_m">48dp</dimen>
+    <dimen name="ad_icon_l">64dp</dimen>
+    <dimen name="ad_icon_xl">96dp</dimen>
+    <dimen name="ad_cta_height">48dp</dimen>
+    <dimen name="ad_cta_small_height">44dp</dimen>
+
+    <style name="TextAppearance.Ad.Title" parent="">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ad_title</item>
+    </style>
+
+    <style name="TextAppearance.Ad.Body" parent="">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/ad_body</item>
+    </style>
+
+    <style name="TextAppearance.Ad.Title.Dark">
+        <item name="android:textColor">@color/ad_title_dark</item>
+    </style>
+
+    <style name="TextAppearance.Ad.Body.Dark">
+        <item name="android:textColor">@color/ad_body_dark</item>
+    </style>
+
+    <style name="Widget.Ad.Title" parent="">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textAppearance">@style/TextAppearance.Ad.Title</item>
+    </style>
+
+    <style name="Widget.Ad.Body" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:textAppearance">@style/TextAppearance.Ad.Body</item>
+    </style>
+
+    <!-- "Ad" attribution label (required on native ads). -->
+    <style name="Widget.Ad.Badge" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_ad_badge</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:text">@string/ad_label</item>
+        <item name="android:textColor">@color/ad_badge_text</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.Ad.Icon" parent="">
+        <item name="android:layout_width">@dimen/ad_icon_m</item>
+        <item name="android:layout_height">@dimen/ad_icon_m</item>
+        <item name="android:background">@drawable/bg_ad_icon</item>
+        <item name="android:clipToOutline">true</item>
+        <item name="android:contentDescription">@null</item>
+        <item name="android:scaleType">centerCrop</item>
+    </style>
+
+    <style name="Widget.Ad.Stars" parent="Widget.AppCompat.RatingBar.Small">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:isIndicator">true</item>
+        <item name="android:numStars">5</item>
+        <item name="android:stepSize">0.5</item>
+        <item name="android:progressTint">@color/ad_star</item>
+        <item name="android:secondaryProgressTint">@color/ad_star</item>
+        <item name="android:progressBackgroundTint">@color/ad_star_empty</item>
+    </style>
+
+    <style name="Widget.Ad.Price" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/ad_body</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Full-width pill CTA. -->
+    <style name="Widget.Ad.Cta" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/ad_cta_height</item>
+        <item name="android:background">@drawable/bg_ad_cta</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/ad_cta_text</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Compact pill CTA, sized to its text. -->
+    <style name="Widget.Ad.Cta.Small">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/ad_cta_small_height</item>
+        <item name="android:minWidth">88dp</item>
+    </style>
+
+    <!-- Round arrow CTA (Tiny2 / Collap2 small). -->
+    <style name="Widget.Ad.Cta.Circle" parent="">
+        <item name="android:layout_width">@dimen/ad_cta_small_height</item>
+        <item name="android:layout_height">@dimen/ad_cta_small_height</item>
+        <item name="android:background">@drawable/bg_ad_cta_circle</item>
+        <item name="android:contentDescription">@null</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_ad_arrow</item>
+    </style>
+
+    <!-- Small dark round control drawn over the ad (close / collapse). Hidden until a screen shows and wires it. -->
+    <style name="Widget.Ad.Action" parent="">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:background">@drawable/bg_ad_action</item>
+        <item name="android:contentDescription">@null</item>
+        <item name="android:padding">7dp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+</resources>

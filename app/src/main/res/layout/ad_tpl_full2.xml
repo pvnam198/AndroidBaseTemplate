@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma Full2 (full screen, dark): media fills the screen top to bottom panel / Ad label + close on top /
+     dark info panel / full CTA. ad_close is hidden; the screen showing the ad decides when it appears. -->
+<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ad_card_bg_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <com.namstd.androidskillhub.core.ads.template.AdMediaFrame
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:adRatio="9:16">
+
+                <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
+                    android:id="@+id/ad_media"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </com.namstd.androidskillhub.core.ads.template.AdMediaFrame>
+
+            <TextView
+                style="@style/Widget.Ad.Badge"
+                android:layout_gravity="top|start"
+                android:layout_margin="@dimen/ad_card_padding" />
+
+            <ImageView
+                android:id="@+id/ad_close"
+                style="@style/Widget.Ad.Action"
+                android:layout_gravity="top|end"
+                android:layout_margin="@dimen/ad_card_padding"
+                android:src="@drawable/ic_ad_close" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <include layout="@layout/ad_tpl_part_info_dark" />
+
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                style="@style/Widget.Ad.Cta"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>

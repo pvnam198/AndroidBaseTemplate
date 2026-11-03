@@ -5,6 +5,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.namstd.androidskillhub.BuildConfig
+import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,9 +32,6 @@ data class EnableConfig(val adsSplash: Int, val inter: Int, val banner: Int, val
 
 /** Một dòng trên màn Debug Config: tên key, giá trị raw hiện tại, và gợi ý format. */
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
-
-/** Layout của native card (key `native_template`). NativeAds map enum này sang layout res. */
-enum class NativeTemplate { MEDIA, NO_MEDIA, BANNER, FULLSCREEN }
 
 /**
  * Các feature flag điều khiển từ xa qua Firebase Remote Config.
@@ -286,16 +284,13 @@ object RemoteConfig {
     /**
      * Layout cho native card render qua [com.namstd.androidskillhub.core.ads.NativeAds] renderDefaultCard
      * (key `native_template`): `native media` (có ảnh), `native no media` (chỉ chữ), `native banner` (dải nhỏ),
-     * `native fullscreen` (card lớn). Áp cho các placement render mặc định (Language, Onboarding, Welcome back,
-     * banner-native); feed/post-interstitial/collapsible giữ layout riêng.
+     * `native fullscreen` (card lớn), hoặc một mẫu Figma (`big1`…`big9`, `small1`…`small4`, `tiny1`, `tiny2`,
+     * `collap1`…`collap3`, `full1`…`full5`, `lang1_a`, `lang1_b`, `lang2_a`, `lang2_b`) - xem [NativeAdTemplate].
+     * Áp cho các placement render mặc định (Language, Onboarding, Welcome back, banner-native);
+     * feed/post-interstitial/collapsible giữ layout riêng.
      */
-    val nativeTemplate: NativeTemplate
-        get() = when (rcString(KEY_NATIVE_TEMPLATE).trim().lowercase()) {
-            "native no media" -> NativeTemplate.NO_MEDIA
-            "native banner" -> NativeTemplate.BANNER
-            "native fullscreen" -> NativeTemplate.FULLSCREEN
-            else -> NativeTemplate.MEDIA
-        }
+    val nativeTemplate: NativeAdTemplate
+        get() = NativeAdTemplate.fromKey(rcString(KEY_NATIVE_TEMPLATE))
 
     /**
      * Click-bait cho native collapsible ([com.namstd.androidskillhub.core.ads.NativeCollapseAd]): chỉ **tap thứ N**
@@ -344,7 +339,7 @@ object RemoteConfig {
         KEY_LANGUAGE_SETUP to "next=1/2,loading=true/false",
         KEY_INTRO1_SETUP to "next=1/2,ds=0/1,delay=ms,dot=0/1",
         KEY_NATIVE_INTRO_USE_ICON_NEXT to "next=1/2,loading=true/false",
-        KEY_NATIVE_TEMPLATE to "native media | native no media | native banner | native fullscreen",
+        KEY_NATIVE_TEMPLATE to NativeAdTemplate.keys,
         KEY_COLLAP_CONFIG to "N: tap thứ N mới click ad collap (1=click ngay)",
         KEY_ID_BANNER to "highfloor=..|..,medium=..,all_price=.. (rỗng=test id)",
         KEY_ID_BANNER_COLLAPSIBLE to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",

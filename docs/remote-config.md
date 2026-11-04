@@ -29,6 +29,11 @@ Toàn bộ feature flag điều khiển từ xa qua **Firebase Remote Config**.
 
 ## Danh sách key
 
+> **Đơn vị thời gian: mọi key đều tính bằng mili-giây (ms)** - `language_delay_millis`, `wait_time`, `refresh_rate`,
+> `inter_delay_time.time`, `intro1_setup.delay`, `open_open_gap_millis`, `inter_open_gap_millis`. Sheet "Ad Script" của team
+> ghi một số key bằng giây (`wait_time`, `refresh_rate`, `inter_delay_time`, `intro*_setup.delay`): khi đặt trên Firebase phải
+> **nhân 1000** (vd `wait_time` 5s → `5000`). Màn Debug Config ghi `[ms]` ở phần gợi ý mỗi key.
+
 ### Quảng cáo — công tắc toàn app & kịch bản (`ads_enable`)
 
 | Key | Kiểu | Fallback | Ý nghĩa |
@@ -74,7 +79,7 @@ Key `enable` là công tắc xương sống: mỗi vị trí 1 số = bật/tắ
 | Key | Kiểu | Fallback | Ý nghĩa |
 |---|---|---|---|
 | `banner_slot_auto_reload` | Boolean | `false` | Bật timer tự reload banner slot (ô banner của màn) sau mỗi `refresh_rate` khi màn đang hiển thị. Không ảnh hưởng native khác (feed, onboarding, post-interstitial). |
-| `refresh_rate` | Long (giây) | `0` | Chu kỳ reload banner slot ("sau bao nhiêu giây load lại quảng cáo" trong spec). `0` = không có timer. Màn nào reload bằng tay thì bỏ qua giá trị này. Getter nhân ×1000 ra ms. **Đổi tên từ `banner_slot_reload_gap_seconds` cho khớp spec.** |
+| `refresh_rate` | Long (**ms**) | `0` | Chu kỳ reload banner slot ("sau bao lâu load lại quảng cáo" trong spec), vd `20000` = 20s. `0` = không có timer. Màn nào reload bằng tay thì bỏ qua giá trị này. **Đổi tên từ `banner_slot_reload_gap_seconds` cho khớp spec.** |
 
 ### Quảng cáo — khoảng cách (gap) giữa các lần hiển thị
 
@@ -82,9 +87,9 @@ Dùng bởi `AdGapGate`. Getter nhân ×1000 ra ms (trừ `inter_delay_time` —
 
 | Key | Kiểu | Fallback | Ý nghĩa |
 |---|---|---|---|
-| `inter_delay_time` | String | `time=0,ignore=` | Gap giữa 2 Interstitial **+ danh sách loại inter được miễn gap**. Dạng `time=10,ignore=ads_splash\|inter_language\|inter_intro`: `time` = gap (giây), `ignore` = các inter (`InterstitialPlacement.key`: `ads_splash`, `inter_language`, `inter_intro`) luôn hiện bất kể gap. **Thay cho `inter_inter_gap_seconds` cũ.** Parse ra `RemoteConfig.interDelay` (`InterDelayConfig`). |
-| `open_open_gap_seconds` | Long (giây) | `0` | Thời gian tối thiểu giữa 2 lần App Open. |
-| `inter_open_gap_seconds` | Long (giây) | `0` | Thời gian tối thiểu giữa 1 Interstitial và 1 App Open (cả 2 chiều). Phần này **không** bị `ignore` của `inter_delay_time` bỏ qua. |
+| `inter_delay_time` | String | `time=0,ignore=` | Gap giữa 2 Interstitial **+ danh sách loại inter được miễn gap**. Dạng `time=10000,ignore=ads_splash\|inter_language\|inter_intro`: `time` = gap (**ms**), `ignore` = các inter (`InterstitialPlacement.key`: `ads_splash`, `inter_language`, `inter_intro`) luôn hiện bất kể gap. **Thay cho `inter_inter_gap_seconds` cũ.** Parse ra `RemoteConfig.interDelay` (`InterDelayConfig`). |
+| `open_open_gap_millis` | Long (**ms**) | `0` | Thời gian tối thiểu giữa 2 lần App Open. Đổi tên từ `open_open_gap_seconds` khi chuyển sang ms. |
+| `inter_open_gap_millis` | Long (**ms**) | `0` | Thời gian tối thiểu giữa 1 Interstitial và 1 App Open (cả 2 chiều). Đổi tên từ `inter_open_gap_seconds` khi chuyển sang ms. Phần này **không** bị `ignore` của `inter_delay_time` bỏ qua. |
 
 ### Quảng cáo — tần suất interstitial theo lượt
 
@@ -115,7 +120,7 @@ Dùng bởi `PostInterstitialNativeAdDialogFragment` (flow 2 stage).
 | Key | Kiểu | Fallback | Ý nghĩa |
 |---|---|---|---|
 | `post_interstitial_native_ad_count` | Long → Int | `2` | Số native ad hiển thị liên tiếp trong break sau inter. **Clamp 1–2** (dialog chỉ hỗ trợ flow 2 stage). |
-| `wait_time` | Long (giây) | `5` | Số giây đếm ngược trên màn native fullscreen sau interstitial trước khi icon X (đóng) hiện ra — cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng. Getter nhân ×1000 ra ms. |
+| `wait_time` | Long (**ms**) | `5000` | Thời gian đếm ngược trên màn native fullscreen sau interstitial trước khi icon X (đóng) hiện ra — cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng. |
 
 ### UI luồng mở app
 
@@ -124,7 +129,7 @@ Dùng bởi `PostInterstitialNativeAdDialogFragment` (flow 2 stage).
 | `intro_swipe` | Boolean | `true` | Cho phép vuốt (swipe) ở màn Onboarding (`OnboardingActivity`, `ViewPager2.isUserInputEnabled`). `true` = vuốt được (mặc định); `false` = chỉ chuyển trang bằng nút Next. |
 | `language_delay_millis` | Long (**ms**) | `800` | Thời gian chờ trước khi nút xác nhận (`apply_button`) ở màn chọn ngôn ngữ (`LanguageActivity`) hiện ra. `0` = hiện ngay. **Đơn vị đã là mili-giây — getter KHÔNG nhân ×1000** (khác các key gap tính bằng giây). |
 | `language_setup` | String | `next=1,loading=false` | Nút Next màn Language. Dạng `next=1,loading=true`: `next` = kiểu nút (`1` nút chữ, `2` icon mũi tên), `loading` = có hiện vòng loading trong lúc chờ `language_delay_millis` không. Parse ra `RemoteConfig.languageSetup` (`LanguageSetup`). |
-| `intro1_setup` | String | `next=1,ds=1,delay=0,dot=0` | UI màn Onboarding. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` chữ, `2` icon), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next mỗi trang, `dot` = `1` hiện chấm tròn (TabLayout) / `0` hiện text "x/n". Parse ra `RemoteConfig.intro1Setup` (`Intro1Setup`). |
+| `intro1_setup` | String | `next=1,ds=1,delay=0,dot=0` | UI màn Onboarding. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` chữ, `2` icon), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next mỗi trang (vd `1500`), `dot` = `1` hiện chấm tròn (TabLayout) / `0` hiện text "x/n". Parse ra `RemoteConfig.intro1Setup` (`Intro1Setup`). |
 | `native_intro_use_icon_next` | String | `next=1,loading=false` | Control riêng cho trang native fullscreen trong Onboarding (`OnboardingAdFragment`). Dạng `next=1,loading=true`: `next` = `1` mũi tên Next / `2` icon X (cả hai bấm đều sang trang kế); `loading` = có hiện spinner chờ **`wait_time` giây** trước khi hiện control không. Khi ở trang này, nút Next chung ở đáy bị ẩn. Parse ra `RemoteConfig.nativeIntroUseIconNext` (dùng chung `LanguageSetup`). |
 
 ---

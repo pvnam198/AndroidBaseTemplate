@@ -134,7 +134,7 @@ const CASES = [
 [15,"intro1_setup","next=1,ds=1,delay=1500,dot=0","Onboarding","Mỗi trang chờ ~1.5s mới hiện nút Next",""],
 [16,"intro1_setup","next=1,ds=0,delay=0,dot=0","Onboarding","Cụm indicator nằm DƯỚI nút Next",""],
 [17,"native_intro_use_icon_next","next=1,loading=false (default)","Onboarding tới trang quảng cáo (trang ad)","Góc trên-phải có MŨI TÊN Next; nút đáy ẩn ở trang này; bấm sang trang kế",""],
-[18,"native_intro_use_icon_next","next=2,loading=true (+ wait_time=3)","Trang quảng cáo onboarding","Hiện spinner ~3s rồi hiện ICON X; bấm X sang trang kế",""],
+[18,"native_intro_use_icon_next","next=2,loading=true (+ wait_time=3000)","Trang quảng cáo onboarding","Hiện spinner ~3s rồi hiện ICON X; bấm X sang trang kế",""],
 [19,"enable: ads_splash","ads_splash=2,inter=1,banner=2,onresume=1 (default)","MỞ LẠI app","Splash hiện INTERSTITIAL","Chốt ở Splash → phải mở lại app"],
 [20,"enable: ads_splash","ads_splash=3,...","MỞ LẠI app","Splash: inter + sau đó break NATIVE fullscreen","mở lại app"],
 [21,"enable: ads_splash","ads_splash=1,...","MỞ LẠI app","Splash hiện APP OPEN (AOA)","mở lại app"],
@@ -160,15 +160,15 @@ const CASES = [
 [41,"collap_config","2 + banner=4","Tap lần 1","KHÔNG mở",""],
 [42,"collap_config","2 + banner=4","Tap lần 2","MỞ trang quảng cáo",""],
 [43,"collap_config","2 + banner=4","Bấm nút X (close) ở bản lớn","Vẫn thu nhỏ được (close hoạt động)",""],
-[44,"wait_time","5 (default) + inter=3","Kích break native sau inter","Icon X đếm ngược ~5s rồi hiện",""],
-[45,"wait_time","3 + inter=3","Kích break native","Đếm ngược ~3s",""],
+[44,"wait_time","5000 (default) + inter=3","Kích break native sau inter","Icon X đếm ngược ~5s rồi hiện",""],
+[45,"wait_time","3000 + inter=3","Kích break native","Đếm ngược ~3s",""],
 [46,"wait_time","0 + inter=3","Kích break native","X hiện ngay",""],
 [47,"step_count","1 (default)","Mở lại app vài lần","Lần nào cũng có inter (nếu enable cho phép)","inter hiện ở Splash"],
 [48,"step_count","2","Mở app lần 1","Lần 1 KHÔNG inter","bộ đếm lưu qua các lần mở"],
 [49,"step_count","2","Mở app lần 2","Lần 2 CÓ inter","mở lại app"],
-[50,"inter_delay_time","time=30,ignore=","Kích 2 inter cách nhau <30s","Inter thứ 2 bị CHẶN",""],
-[51,"inter_delay_time","time=30,ignore=inter_language","Vừa có inter xong → vào Language bấm Apply","Inter ở Language VẪN hiện (được miễn gap)",""],
-[52,"refresh_rate","banner_slot_auto_reload=true, refresh_rate=20","Ở màn có banner, chờ ~20s","Banner TỰ reload",""],
+[50,"inter_delay_time","time=30000,ignore=","Kích 2 inter cách nhau <30s","Inter thứ 2 bị CHẶN",""],
+[51,"inter_delay_time","time=30000,ignore=inter_language","Vừa có inter xong → vào Language bấm Apply","Inter ở Language VẪN hiện (được miễn gap)",""],
+[52,"refresh_rate","banner_slot_auto_reload=true, refresh_rate=20000","Ở màn có banner, chờ ~20s","Banner TỰ reload",""],
 [53,"refresh_rate","banner_slot_auto_reload=false","Ở màn có banner, chờ","Banner KHÔNG tự reload",""],
 [54,"id_* (rỗng, default)","(rỗng)","Mở app","Mọi QC hiện bằng TEST ID như cũ","mở lại app"],
 [55,"id_interstitial","highfloor=ca-app-pub-9999/9999,medium=ca-app-pub-3940256099942544/1033173712","MỞ LẠI app → kích inter","Inter thử id highfloor (fail) rồi rơi xuống medium (test id) → VẪN hiện (waterfall đúng tầng)","mở lại app; xem log 'Banner/Interstitial: loading <id>'"],
@@ -206,7 +206,7 @@ const RESULTS = /*RESULTS-START*/{19:["pass","Lần mở đầu (default ads_spl
 13:["pass","dot=1: hiện TabLayout chấm tròn (page_dots) phía trên nút Next, không còn text 'x/4'",false],
 14:["pass","next=2: nút Next là icon mũi tên (next_icon), không có nút chữ",false],
 16:["pass","ds=0: text '1 / 4' nằm dưới nút Next",false],
-15:["pass","delay=1500: trang 1 lúc đầu nút ẩn; bấm Next sang 2/4 → nút ẩn ở 0.1–0.7s, hiện lại ở ~1.3s (cộng độ trễ lệnh ≈1.5s)",false],
+15:["pass","delay=1.5: trang 1 lúc đầu nút ẩn; bấm Next sang 2/4 → nút ẩn ở 0.1–0.7s, hiện lại ở ~1.3s (cộng độ trễ lệnh ≈1.5s)",false],
 18:["pass","SAU KHI SỬA. Lần đầu FAIL: spinner chỉ ~1.2s thay vì 3s vì ViewPager2 tạo trước trang ad khi đang ở trang 2 nên bộ đếm chạy sớm. Đã sửa OnboardingAdFragment chờ RESUMED mới đếm → spinner ~3s rồi hiện icon X, bấm X sang trang 4/4",true],
 21:["pass","ads_splash=1: mở lại app, Splash hiện App Open ('Continue to app')",false],
 22:["pass","ads_splash=0: mở lại app vào thẳng Home, không có QC full-screen",false],
@@ -254,17 +254,17 @@ const PARAMS = [
  ]],
  ["Quảng cáo – banner auto reload", [
   ["banner_slot_auto_reload","Boolean","false","Bật timer tự reload banner slot."],
-  ["refresh_rate","Long (giây)","0","Chu kỳ reload banner. 0 = không có timer."]
+  ["refresh_rate","Long (ms)","0","Chu kỳ reload banner, vd 20000 = 20s. 0 = không có timer."]
  ]],
  ["Quảng cáo – khoảng cách giữa các lần hiển thị", [
-  ["inter_delay_time","String","time=0,ignore=","Gap giữa 2 inter (giây) + danh sách inter được miễn gap: <code>ads_splash</code>, <code>inter_language</code>, <code>inter_intro</code> (ngăn bằng <code>|</code>)."],
-  ["open_open_gap_seconds","Long (giây)","0","Tối thiểu giữa 2 lần App Open."],
-  ["inter_open_gap_seconds","Long (giây)","0","Tối thiểu giữa Inter và App Open (cả 2 chiều), không bị <code>ignore</code> bỏ qua."]
+  ["inter_delay_time","String","time=0,ignore=","Gap giữa 2 inter (ms) + danh sách inter được miễn gap: <code>ads_splash</code>, <code>inter_language</code>, <code>inter_intro</code> (ngăn bằng <code>|</code>)."],
+  ["open_open_gap_millis","Long (ms)","0","Tối thiểu giữa 2 lần App Open."],
+  ["inter_open_gap_millis","Long (ms)","0","Tối thiểu giữa Inter và App Open (cả 2 chiều), không bị <code>ignore</code> bỏ qua."]
  ]],
  ["Quảng cáo – tần suất & break native", [
   ["step_count","Int","1","Inter chỉ hiện ở lần chia hết cho N. Bộ đếm lưu qua các lần mở app."],
   ["post_interstitial_native_ad_count","Int (1–2)","2","Số native liên tiếp trong break sau inter."],
-  ["wait_time","Long (giây)","5","Đếm ngược trước khi icon X hiện (native fullscreen, welcome back, spinner native onboarding)."]
+  ["wait_time","Long (ms)","5000","Đếm ngược trước khi icon X hiện (native fullscreen, welcome back, spinner native onboarding)."]
  ]],
  ["Quảng cáo – ID theo tầng", [
   ["id_banner / id_banner_collapsible / id_interstitial / id_native / id_app_open","String","(rỗng = test id)","Dạng <code>highfloor=id1|id2,medium=id3,all_price=id4</code>. Thử lần lượt highfloor → medium → all_price. Chốt 1 lần ở Splash, phải mở lại app."]
@@ -273,8 +273,8 @@ const PARAMS = [
   ["intro_swipe","Boolean","true","Cho phép vuốt ở Onboarding."],
   ["language_delay_millis","Long (ms)","800","Chờ trước khi hiện nút xác nhận màn Language. 0 = hiện ngay. Đơn vị đã là ms."],
   ["language_setup","String","next=1,loading=false","<b>next</b>: 1 nút chữ, 2 icon (dấu check ở thanh tiêu đề). <b>loading</b>: có vòng loading trong lúc chờ <code>language_delay_millis</code> hay không. Hai tham số độc lập nhau."],
-  ["intro1_setup","String","next=1,ds=1,delay=0,dot=0","<b>next</b>: 1 chữ / 2 icon. <b>ds</b>: 1 indicator trên nút, 0 dưới. <b>delay</b>: ms chờ trước khi hiện nút Next mỗi trang. <b>dot</b>: 1 chấm tròn, 0 text 'x/n'."],
-  ["native_intro_use_icon_next","String","next=1,loading=false","Control ở trang native fullscreen trong Onboarding. <b>next</b>: 1 mũi tên Next, 2 icon X. <b>loading</b>: spinner chờ <code>wait_time</code> giây."]
+  ["intro1_setup","String","next=1,ds=1,delay=0,dot=0","<b>next</b>: 1 chữ / 2 icon. <b>ds</b>: 1 indicator trên nút, 0 dưới. <b>delay</b>: ms chờ trước khi hiện nút Next mỗi trang (vd 1500). <b>dot</b>: 1 chấm tròn, 0 text 'x/n'."],
+  ["native_intro_use_icon_next","String","next=1,loading=false","Control ở trang native fullscreen trong Onboarding. <b>next</b>: 1 mũi tên Next, 2 icon X. <b>loading</b>: spinner chờ <code>wait_time</code> ms."]
  ]]
 ];
 

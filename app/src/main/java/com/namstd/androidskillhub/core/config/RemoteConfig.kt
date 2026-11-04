@@ -19,7 +19,8 @@ data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
 /**
  * Giá trị đã parse của key `intro1_setup` (`next=1,ds=1,delay=0,dot=1`).
- * nextStyle: 1=nút chữ, 2=icon. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next. showDots: hiện chấm tròn.
+ * nextStyle: 1=nút chữ, 2=icon. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
+ * showDots: hiện chấm tròn.
  */
 data class Intro1Setup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
 
@@ -84,10 +85,10 @@ object RemoteConfig {
                 KEY_REFRESH_RATE to
                     prefs.getCachedLong(KEY_REFRESH_RATE, 0L),
                 KEY_INTER_DELAY_TIME to prefs.getCachedString(KEY_INTER_DELAY_TIME, DEFAULT_INTER_DELAY_TIME),
-                KEY_OPEN_OPEN_GAP_SECONDS to prefs.getCachedLong(KEY_OPEN_OPEN_GAP_SECONDS, 0L),
-                KEY_INTER_OPEN_GAP_SECONDS to prefs.getCachedLong(KEY_INTER_OPEN_GAP_SECONDS, 0L),
+                KEY_OPEN_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_OPEN_OPEN_GAP_MILLIS, 0L),
+                KEY_INTER_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_INTER_OPEN_GAP_MILLIS, 0L),
                 KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to prefs.getCachedLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT, 2L),
-                KEY_WAIT_TIME to prefs.getCachedLong(KEY_WAIT_TIME, 5L),
+                KEY_WAIT_TIME to prefs.getCachedLong(KEY_WAIT_TIME, 5_000L),
                 KEY_INTRO_SWIPE to prefs.getCachedBoolean(KEY_INTRO_SWIPE, true),
                 KEY_LANGUAGE_DELAY_MILLIS to prefs.getCachedLong(KEY_LANGUAGE_DELAY_MILLIS, 800L),
                 KEY_STEP_COUNT to prefs.getCachedLong(KEY_STEP_COUNT, 1L),
@@ -120,8 +121,8 @@ object RemoteConfig {
         prefs.putCachedBoolean(KEY_BANNER_SLOT_AUTO_RELOAD, remoteConfig.getBoolean(KEY_BANNER_SLOT_AUTO_RELOAD))
         prefs.putCachedLong(KEY_REFRESH_RATE, remoteConfig.getLong(KEY_REFRESH_RATE))
         prefs.putCachedString(KEY_INTER_DELAY_TIME, remoteConfig.getString(KEY_INTER_DELAY_TIME))
-        prefs.putCachedLong(KEY_OPEN_OPEN_GAP_SECONDS, remoteConfig.getLong(KEY_OPEN_OPEN_GAP_SECONDS))
-        prefs.putCachedLong(KEY_INTER_OPEN_GAP_SECONDS, remoteConfig.getLong(KEY_INTER_OPEN_GAP_SECONDS))
+        prefs.putCachedLong(KEY_OPEN_OPEN_GAP_MILLIS, remoteConfig.getLong(KEY_OPEN_OPEN_GAP_MILLIS))
+        prefs.putCachedLong(KEY_INTER_OPEN_GAP_MILLIS, remoteConfig.getLong(KEY_INTER_OPEN_GAP_MILLIS))
         prefs.putCachedLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT, remoteConfig.getLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT))
         prefs.putCachedLong(KEY_WAIT_TIME, remoteConfig.getLong(KEY_WAIT_TIME))
         prefs.putCachedBoolean(KEY_INTRO_SWIPE, remoteConfig.getBoolean(KEY_INTRO_SWIPE))
@@ -175,60 +176,60 @@ object RemoteConfig {
 
     /**
      * Timer reload của banner slot: thời gian từ lúc ad được hiển thị (hoặc load lỗi) tới lần reload kế tiếp -
-     * xem [bannerSlotAutoReload]. Mặc định 0 = không có timer. Màn nào reload bằng tay thì bỏ qua giá trị này.
+     * xem [bannerSlotAutoReload]. Giá trị config tính bằng ms. Mặc định 0 = không có timer. Màn nào reload bằng tay thì bỏ qua giá trị này.
      */
     val refreshRateMs: Long
-        get() = rcLong(KEY_REFRESH_RATE).coerceAtLeast(0L) * 1000
+        get() = rcLong(KEY_REFRESH_RATE).coerceAtLeast(0L)
 
     /**
      * Cấu hình gap giữa các Interstitial + danh sách loại inter được MIỄN gap đó.
-     * Giá trị config dạng chuỗi `time=10,ignore=ads_splash|inter_language|inter_intro`:
-     * `time` = gap giữa 2 inter (giây; getter đổi ra ms), `ignore` = các
+     * Giá trị config dạng chuỗi `time=10000,ignore=ads_splash|inter_language|inter_intro`:
+     * `time` = gap giữa 2 inter (ms), `ignore` = các
      * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key] luôn được hiện bất kể gap.
      * Thay cho key cũ `inter_inter_gap_seconds`. Xem [com.namstd.androidskillhub.core.ads.AdGapGate].
      * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.interDelay].
      */
     val interDelay: InterDelayConfig
         get() {
-            var timeSeconds = 0L
+            var timeMs = 0L
             var ignore = emptySet<String>()
             rcString(KEY_INTER_DELAY_TIME).split(",").forEach { part ->
                 val pair = part.split("=", limit = 2)
                 val value = pair.getOrElse(1) { "" }.trim()
                 when (pair[0].trim()) {
-                    "time" -> timeSeconds = value.toLongOrNull()?.coerceAtLeast(0L) ?: 0L
+                    "time" -> timeMs = value.toLongOrNull()?.coerceAtLeast(0L) ?: 0L
                     "ignore" -> ignore = value.split("|").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
                 }
             }
-            return InterDelayConfig(gapMs = timeSeconds * 1000, ignore = ignore)
+            return InterDelayConfig(gapMs = timeMs, ignore = ignore)
         }
 
     /**
-     * Thời gian tối thiểu giữa 2 lần App Open. Giá trị config tính bằng giây; getter trả về ms. `0` = không có gap.
+     * Thời gian tối thiểu giữa 2 lần App Open, tính bằng ms. `0` = không có gap.
      * Xem [com.namstd.androidskillhub.core.ads.AdGapGate].
      */
     val openOpenGapMs: Long
-        get() = rcLong(KEY_OPEN_OPEN_GAP_SECONDS) * 1000
+        get() = rcLong(KEY_OPEN_OPEN_GAP_MILLIS).coerceAtLeast(0L)
 
     /**
      * Thời gian tối thiểu giữa 1 lần Interstitial và 1 lần App Open, cả 2 chiều (tránh 2 ad full-screen
-     * hiện liên tiếp khác định dạng). Giá trị config tính bằng giây; getter trả về ms. `0` = không có gap.
+     * hiện liên tiếp khác định dạng), tính bằng ms. `0` = không có gap.
      */
     val interOpenGapMs: Long
-        get() = rcLong(KEY_INTER_OPEN_GAP_SECONDS) * 1000
+        get() = rcLong(KEY_INTER_OPEN_GAP_MILLIS).coerceAtLeast(0L)
 
     /** Số native ad hiển thị liên tiếp trong break sau interstitial. Clamp 1-2 - [com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment] chỉ hỗ trợ flow 2 stage. */
     val postInterstitialNativeAdCount: Int
         get() = rcLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT).toInt().coerceIn(1, 2)
 
     /**
-     * Số giây đếm ngược trên màn native fullscreen sau interstitial
+     * Thời gian đếm ngược (ms) trên màn native fullscreen sau interstitial
      * ([com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment]) trước khi
      * icon X (đóng) hiện ra - và cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng.
-     * Giá trị config tính bằng giây; getter trả về ms.
+     * Giá trị config tính bằng ms.
      */
     val waitTimeMs: Long
-        get() = rcLong(KEY_WAIT_TIME) * 1000
+        get() = rcLong(KEY_WAIT_TIME).coerceAtLeast(0L)
 
     /**
      * Thời gian chờ (mili-giây) trước khi nút xác nhận ở màn chọn ngôn ngữ
@@ -272,7 +273,8 @@ object RemoteConfig {
     /**
      * Cấu hình màn Onboarding (key `intro1_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
      * `next` = kiểu nút (1=nút chữ, 2=icon), `ds` = vị trí indicator (1=trên nút Next, 0=dưới),
-     * `delay` = số ms chờ trước khi hiện nút Next mỗi trang, `dot` = 1 hiện chấm tròn / 0 hiện text "x/n".
+     * `delay` = số **mili-giây** chờ trước khi hiện nút Next mỗi trang,
+     * `dot` = 1 hiện chấm tròn / 0 hiện text "x/n".
      */
     val intro1Setup: Intro1Setup
         get() {
@@ -345,16 +347,16 @@ object RemoteConfig {
     private val DEBUG_HINTS: List<Pair<String, String>> = listOf(
         KEY_ADS_ENABLE to "0 tắt · 1 REMOTE · 2 marketing→REMOTE, còn lại BASIC · 3 test ad→BASIC, còn lại REMOTE",
         KEY_ENABLE to "ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0 (0=off)",
-        KEY_INTER_DELAY_TIME to "time=10,ignore=ads_splash|inter_language|inter_intro",
-        KEY_WAIT_TIME to "giây (đếm ngược trước khi hiện X native fullscreen)",
+        KEY_INTER_DELAY_TIME to "time=ms,ignore=ads_splash|inter_language|inter_intro",
+        KEY_WAIT_TIME to "[ms] đếm ngược trước khi hiện X native fullscreen",
         KEY_STEP_COUNT to "số: inter hiện lần chia hết cho N (1=mọi lần)",
-        KEY_REFRESH_RATE to "giây reload banner (0=không)",
+        KEY_REFRESH_RATE to "[ms] reload banner (0=không)",
         KEY_BANNER_SLOT_AUTO_RELOAD to "true/false",
-        KEY_OPEN_OPEN_GAP_SECONDS to "giây gap App Open↔App Open",
-        KEY_INTER_OPEN_GAP_SECONDS to "giây gap Inter↔App Open",
+        KEY_OPEN_OPEN_GAP_MILLIS to "[ms] gap App Open↔App Open",
+        KEY_INTER_OPEN_GAP_MILLIS to "[ms] gap Inter↔App Open",
         KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to "1-2 native sau inter",
         KEY_INTRO_SWIPE to "true/false (vuốt Onboarding)",
-        KEY_LANGUAGE_DELAY_MILLIS to "mili-giây trước khi hiện nút Language",
+        KEY_LANGUAGE_DELAY_MILLIS to "[ms] chờ trước khi hiện nút Language",
         KEY_LANGUAGE_SETUP to "next=1/2,loading=true/false",
         KEY_INTRO1_SETUP to "next=1/2,ds=0/1,delay=ms,dot=0/1",
         KEY_NATIVE_INTRO_USE_ICON_NEXT to "next=1/2,loading=true/false",
@@ -381,8 +383,8 @@ object RemoteConfig {
     private const val KEY_REFRESH_RATE = "refresh_rate"
     private const val KEY_INTER_DELAY_TIME = "inter_delay_time"
     private const val DEFAULT_INTER_DELAY_TIME = "time=0,ignore="
-    private const val KEY_OPEN_OPEN_GAP_SECONDS = "open_open_gap_seconds"
-    private const val KEY_INTER_OPEN_GAP_SECONDS = "inter_open_gap_seconds"
+    private const val KEY_OPEN_OPEN_GAP_MILLIS = "open_open_gap_millis"
+    private const val KEY_INTER_OPEN_GAP_MILLIS = "inter_open_gap_millis"
     private const val KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT = "post_interstitial_native_ad_count"
     private const val KEY_WAIT_TIME = "wait_time"
     private const val KEY_INTRO_SWIPE = "intro_swipe"

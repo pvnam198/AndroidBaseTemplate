@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ads Config – Tài liệu chỉ số</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --surface: #fff; --outline: #e2e5ee; --text: #1b1e2b; --muted: #6b7085;
+    --primary: #4f46e5; --primary-soft: #eef0ff; --code: #f0f1f7;
+    --ok: #16a34a; --ok-soft: #dcfce7; --warn: #a16207; --warn-soft: #fef3c7; --no: #b91c1c; --no-soft: #fee2e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115; --surface: #1a1d26; --outline: #2b3040; --text: #eceef6; --muted: #9aa0b5;
+      --primary: #a5b4fc; --primary-soft: #262a4a; --code: #232735;
+      --ok: #4ade80; --ok-soft: #14321f; --warn: #fbbf24; --warn-soft: #3a2f10; --no: #f87171; --no-soft: #3b1717;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: #3730a3; color: #fff; padding: 22px 20px 26px; border-radius: 0 0 24px 24px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; opacity: .85; font-size: 13px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px; }
+  nav a { text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--outline); padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  nav a:hover { border-color: var(--primary); color: var(--primary); }
+  h2 { margin: 28px 4px 10px; font-size: 18px; }
+  h3 { margin: 18px 4px 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .card { background: var(--surface); border: 1px solid var(--outline); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
+  .note { border-left: 4px solid var(--warn); }
+  .card p { margin: 6px 0; }
+  .card ul { margin: 6px 0; padding-left: 20px; }
+  code, .val { font-family: ui-monospace, Consolas, monospace; background: var(--code); padding: 1px 6px; border-radius: 6px; font-size: 12.5px; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--outline); border-radius: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--outline); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; background: var(--surface); position: sticky; top: 0; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  tr.group td { background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  td.names div { white-space: nowrap; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  td.names div + div { color: var(--muted); }
+  .muted { color: var(--muted); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.part { background: var(--warn-soft); color: var(--warn); }
+  .pill.no { background: var(--no-soft); color: var(--no); }
+  .ask { color: var(--warn); font-weight: 600; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  input[type=search] { flex: 1 1 240px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--outline); background: var(--surface); color: var(--text); font-size: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin: 8px 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .grid .card h4 { margin: 0 0 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ads Config – Tài liệu chỉ số</h1>
+  <p>Ý nghĩa từng chỉ số Remote Config cho quảng cáo: cấu hình chung, từng vị trí đặt quảng cáo, và bảng mã giá trị.</p>
+</header>
+<main>
+  <nav>
+    <a href="#overview">Tổng quan</a>
+    <a href="#settings">Cấu hình chung</a>
+    <a href="#ads-enable">ads_enable</a>
+    <a href="#placements">Vị trí quảng cáo</a>
+    <a href="#columns">Ý nghĩa cột</a>
+    <a href="#codes">Bảng mã enable</a>
+    <a href="#templates">Native template</a>
+    <a href="#status">Trạng thái trong app</a>
+  </nav>
+
+  <section id="overview">
+    <h2>Tổng quan</h2>
+    <div class="card">
+      <p>Cấu hình quảng cáo gồm 2 phần:</p>
+      <ul>
+        <li><b>Cấu hình chung</b> (hàng <code>setting</code>): áp cho cả app, ví dụ delay màn Language, giao diện Onboarding, khoảng cách giữa 2 interstitial.</li>
+        <li><b>Cấu hình theo vị trí</b>: mỗi <code>key</code> là một vị trí đặt quảng cáo trong luồng app (Splash, Language, Intro, Home…). Một key có thể gồm nhiều ad unit (các hàng <code>name1</code> nằm dưới key đó), ví dụ <code>ads_splash</code> gồm AOA, Inter và Native sau Inter của màn Splash.</li>
+      </ul>
+      <p><code>id1</code>, <code>id2</code>, <code>id3</code> là 3 tầng ID quảng cáo cho waterfall theo thứ tự ưu tiên <b>highfloor → medium → all_price</b>: tầng trước không có quảng cáo thì thử tầng sau. Để trống thì dùng test ID.</p>
+    </div>
+    <div class="card note">
+      <p><b>Ghi chú khi đọc tài liệu:</b> những giá trị có nhãn <span class="ask">cần xác nhận</span> là ý nghĩa được suy ra từ tên key và giá trị mẫu, chưa có đặc tả chính thức. Cần xác nhận với người lập bảng trước khi code.</p>
+    </div>
+  </section>
+
+  <section id="settings">
+    <h2>Cấu hình chung</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Key</th><th>Giá trị mẫu</th><th>Kiểu</th><th>Ý nghĩa</th><th>Trong app</th></tr></thead>
+      <tbody id="settingsBody"></tbody>
+    </table></div>
+  </section>
+
+  <section id="ads-enable">
+    <h2>ads_enable – kịch bản A / B</h2>
+    <div class="card">
+      <p>App có 2 kịch bản quảng cáo. <code>ads_enable</code> quyết định mỗi người dùng sẽ thấy kịch bản nào.</p>
+      <ul>
+        <li><b>Kịch bản A</b>: cách hiển thị quảng cáo hiện tại, như mô tả trong tài liệu này.</li>
+        <li><b>Kịch bản B</b>: bộ quảng cáo gọn, cài cố định trong app (không chỉnh qua Remote Config), xem bảng bên dưới.</li>
+      </ul>
+      <p>Trong code, kịch bản A tên là <code>REMOTE</code>, kịch bản B tên là <code>BASIC</code>.</p>
+    </div>
+    <h3>Kịch bản B</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Quảng cáo</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td><code>aoa_splash</code></td><td>Quảng cáo mở app ở màn Splash.</td></tr>
+        <tr><td><code>banner_inapp</code></td><td>Banner ở chân các màn trong app.</td></tr>
+        <tr><td><code>inter_inapp</code></td><td>Quảng cáo toàn màn hình trong app, hai lần hiện cách nhau ít nhất 90 giây.</td></tr>
+        <tr><td><code>onresume</code></td><td>Quảng cáo khi người dùng quay lại app.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Kịch bản B không có quảng cáo native, không có quảng cáo toàn màn hình ở màn chọn ngôn ngữ và giới thiệu, và không có banner ở màn Splash / chọn ngôn ngữ / giới thiệu. Trong app mẫu, quảng cáo toàn màn hình in-app hiện khi bấm mở Cài đặt từ màn chính.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Giá trị</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>0</code></td><td>Tắt toàn bộ quảng cáo.</td></tr>
+        <tr><td><code>1</code></td><td>Mọi người dùng đều thấy kịch bản <b>A</b>.</td></tr>
+        <tr><td><code>2</code></td><td>Xem người dùng đến từ đâu:<br>• Đến từ quảng cáo/marketing → kịch bản <b>A</b><br>• Còn lại → kịch bản <b>B</b></td></tr>
+        <tr><td><code>3</code></td><td>Xem máy có phải máy thử nghiệm không:<br>• Máy thử nghiệm (máy của đội dev/QA, máy kiểm duyệt của Google) → kịch bản <b>B</b><br>• Người dùng bình thường → kịch bản <b>A</b></td></tr>
+        <tr><td>Giá trị khác</td><td>Coi như <code>1</code>: kịch bản <b>A</b>. Nhập nhầm giá trị cũng không làm mất quảng cáo.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="card note">
+      <p><b>Ghi chú</b></p>
+      <ul>
+        <li>Người dùng đã mua Premium thì không bao giờ thấy quảng cáo, bất kể <code>ads_enable</code> là bao nhiêu.</li>
+        <li>Máy thử nghiệm được nhận ra vì Google gửi cho nó quảng cáo mẫu có chữ "Test Ad".</li>
+        <li>Khi app chưa gắn mã quảng cáo thật, mọi máy đều nhận quảng cáo mẫu. Lúc đó đặt <code>3</code> thì mọi người đều ra kịch bản B, nên chỉ dùng <code>3</code> khi đã có mã thật.</li>
+        <li>Ở giá trị <code>2</code>, khi chưa biết người dùng đến từ đâu thì dùng kịch bản B. Ở giá trị <code>3</code>, khi chưa biết có phải máy thử nghiệm không thì dùng kịch bản A.</li>
+        <li>Kết quả kiểm tra được nhớ lại cho những lần mở app sau.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="placements">
+    <h2>Vị trí quảng cáo</h2>
+    <div class="toolbar"><input type="search" id="q" placeholder="Tìm theo tên, key, template…"></div>
+    <div class="legend">
+      <span><span class="pill ok">Có</span> đã có trong app</span>
+      <span><span class="pill part">Một phần</span> app có tính năng tương đương nhưng khác key / cách cấu hình</span>
+      <span><span class="pill no">Chưa có</span> chưa có màn hình / key này</span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Ad unit (name1)</th><th>key</th><th>enable</th><th>step_count</th><th>refresh_rate</th><th>collap_config</th><th>wait_time</th><th>native_template</th><th>Mô tả</th><th>Trong app</th>
+      </tr></thead>
+      <tbody id="placementBody"></tbody>
+    </table></div>
+  </section>
+
+  <section id="columns">
+    <h2>Ý nghĩa cột</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Cột</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><code>name1</code></td><td>Tên ad unit (dùng khi tạo ad unit trên AdMob và khi đọc log). Hàng có <code>key</code> là ad unit chính của vị trí; các hàng ngay dưới có <code>key</code> trống là ad unit phụ của cùng vị trí (ví dụ Native hiện sau Inter).</td></tr>
+        <tr><td><code>id1</code> · <code>id2</code> · <code>id3</code></td><td>ID quảng cáo theo tầng: highfloor → medium → all_price. Trống = test ID.</td></tr>
+        <tr><td><code>key</code></td><td>Tên key Remote Config của vị trí.</td></tr>
+        <tr><td><code>enable</code></td><td>Bật/tắt và chọn loại quảng cáo. Mã khác nhau theo loại vị trí, xem <a href="#codes">Bảng mã enable</a>. <code>0</code> luôn là tắt.</td></tr>
+        <tr><td><code>step_count</code></td><td>Tần suất theo lượt: chỉ hiện ở lần yêu cầu chia hết cho N. Ví dụ <code>2</code> = cứ 2 lần mới hiện 1 lần. Trống = mọi lần.</td></tr>
+        <tr><td><code>refresh_rate</code></td><td>Số giây tự tải lại quảng cáo khi màn đang hiển thị. Trống/0 = không tự tải lại.</td></tr>
+        <tr><td><code>collap_config</code></td><td>Native collapsible "click-bait": chỉ tap thứ N mới mở trang quảng cáo, các tap trước bị bỏ qua. <code>1</code> = mở ngay. <span class="ask">Giá trị <code>24</code> ở NATIVE_RESULT cần xác nhận</span> (có thể là 2 giá trị gộp, hoặc gõ nhầm).</td></tr>
+        <tr><td><code>wait_time</code></td><td>Số giây đếm ngược trên màn native toàn màn hình (sau Inter) trước khi hiện nút đóng/Next.</td></tr>
+        <tr><td><code>native_template</code></td><td>Mẫu giao diện native, theo tên trong Figma "Wavez - ADs" (Big1, Small1, Tiny1, Full1…). Xem <a href="#templates">Native template</a>.</td></tr>
+        <tr><td><code>Ad description</code></td><td>Mô tả vị trí quảng cáo (đang để trống trong bảng gốc; tài liệu này tự điền ở cột "Mô tả").</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="codes">
+    <h2>Bảng mã enable</h2>
+    <div class="grid">
+      <div class="card"><h4>Splash – <code>ads_splash</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> App Open (AOA)</li><li><code>2</code> Interstitial</li><li><code>3</code> Interstitial + Native toàn màn hình sau đó</li></ul></div>
+      <div class="card"><h4>Interstitial – <code>inter_*</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> Interstitial</li><li><code>2</code> Native toàn màn hình thay cho Inter</li><li><code>3</code> Interstitial + Native toàn màn hình sau đó</li></ul></div>
+      <div class="card"><h4>Banner – <code>banner_*</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> Banner thường</li><li><code>2</code> Banner collapsible (AdMob)</li><li><code>3</code> Native trong ô banner</li><li><code>4</code> Native collapsible</li></ul></div>
+      <div class="card"><h4>Quay lại app – <code>on_resume</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> App Open</li><li><code>2</code> Màn Welcome back (native + đếm ngược <code>wait_time</code>)</li></ul></div>
+      <div class="card"><h4>Native – <code>native_*</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> bật</li>
+        <li><code>native_intro = 24</code>: <span class="ask">cần xác nhận</span> – nhiều khả năng là bật native ở trang Intro <b>2</b> và <b>4</b> (mỗi chữ số là một trang)</li>
+        <li><code>native_intro_full = 2</code>, <code>native_get_start = 2</code>: <span class="ask">cần xác nhận</span> – có thể là chọn biến thể 2 (ví dụ Figma "Native Language / Get start enable = 2") hoặc vị trí trang</li></ul></div>
+      <div class="card"><h4>Reward – <code>reward_*</code></h4><ul>
+        <li><code>0</code> tắt</li><li><code>1</code> bật (xem quảng cáo có thưởng để mở khoá theme / icon / widget)</li></ul></div>
+    </div>
+  </section>
+
+  <section id="templates">
+    <h2>Native template</h2>
+    <div class="card">
+      <p>Tên template lấy từ Figma "Wavez - ADs / Mẫu v2". App đã có sẵn layout cho các mẫu: <code>Big1</code>–<code>Big9</code>, <code>Small1</code>–<code>Small4</code>, <code>Tiny1</code>, <code>Tiny2</code>, <code>Collap1</code>–<code>Collap3</code>, <code>Full1</code>–<code>Full5</code>, Native Language (<code>lang1_a</code>, <code>lang1_b</code>, <code>lang2_a</code>, <code>lang2_b</code>). Trong Remote Config viết thường: <code>big4</code>, <code>tiny1</code>…</p>
+      <p>Template dùng trong bảng: <code>Tiny1</code>, <code>Big4</code>, <code>Full1</code>, <code>Small1</code>, <code>Big5</code> (đều đã có), và <span class="ask"><code>Small5</code> – chưa có trong Figma lẫn app, cần xác nhận</span> (REWARD_THEME_SETUP).</p>
+    </div>
+  </section>
+
+  <section id="status">
+    <h2>Trạng thái trong app</h2>
+    <div class="card">
+      <p>App hiện cấu hình quảng cáo bằng <b>một key gộp</b> <code>enable</code> (<code>ads_splash=2,inter=1,banner=2,onresume=1</code>) và các key dùng chung cho mọi vị trí (<code>step_count</code>, <code>refresh_rate</code>, <code>collap_config</code>, <code>wait_time</code>, <code>native_template</code>, <code>id_*</code>). Bảng này chuyển sang <b>mỗi vị trí một key</b>, mỗi key có <code>enable</code>, <code>step_count</code>, <code>wait_time</code>, <code>native_template</code>, ID riêng.</p>
+      <ul>
+        <li><b>Đã có (cùng ý nghĩa, đang là key chung):</b> Splash (AOA / Inter / Inter + Native), Inter ở Language và Intro, Native ở Language / Intro / trang native toàn màn hình, banner Home các kiểu, On resume (AOA / Welcome back), native Welcome back.</li>
+        <li><b>Chưa có màn hình:</b> Get start, Theme setup, Icon setup / dialog icon, Widget, Collection, Result, Wallpaper, Inter khi Back, Inter ở Home, native Splash, reward.</li>
+        <li><b>Cấu hình chung chưa có:</b> <code>release_log</code>, <code>splash_fallback</code>, <code>intro2_setup</code>–<code>intro4_setup</code>, <code>taller_banner_enabled</code>. <code>native_intro_use_icon_next</code> trong bảng là boolean, còn app đang dùng dạng chuỗi <code>next=1,loading=false</code>.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+const OK = '<span class="pill ok">Có</span>', PART = '<span class="pill part">Một phần</span>', NO = '<span class="pill no">Chưa có</span>';
+const ASK = '<span class="ask">cần xác nhận</span>';
+
+// [key, giá trị mẫu, kiểu, ý nghĩa (HTML), trạng thái]
+const SETTINGS = [
+  ["ads_enable", "2", "Int", "Bật/tắt quảng cáo toàn app và chọn kịch bản A hay B cho từng người dùng: <code>0</code> tắt, <code>1</code> A, <code>2</code> theo nguồn người dùng, <code>3</code> theo máy thử nghiệm. Xem <a href=\"#ads-enable\">chi tiết</a>.", OK],
+  ["language_delay_millis", "800", "Long (ms)", "Thời gian chờ trước khi hiện nút xác nhận ở màn Language. <code>0</code> = hiện ngay.", OK],
+  ["release_log", "FALSE", "Boolean", "Bật ghi log debug (quảng cáo, config) ở bản release để kiểm tra trên máy thật.", NO],
+  ["splash_fallback", "inter_language", "String (key)", "Khi quảng cáo Splash không tải kịp: dùng placement này để hiện thay. " + ASK + " cách fallback cụ thể.", NO],
+  ["language_setup", "next=1, loading=true", "String", "Nút xác nhận màn Language. <code>next</code>: 1 nút chữ, 2 icon. <code>loading</code>: hiện vòng loading trong lúc chờ <code>language_delay_millis</code>.", OK],
+  ["intro1_setup … intro4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang Onboarding. <code>next</code>: 1 nút chữ, 2 icon. <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: ms chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 chữ \"x/n\".", PART + ' <span class="muted">app có <code>intro1_setup</code> áp chung cho mọi trang</span>'],
+  ["intro_swipe", "TRUE", "Boolean", "Cho phép vuốt để chuyển trang Onboarding. FALSE = chỉ chuyển bằng nút Next.", OK],
+  ["taller_banner_enabled", "TRUE", "Boolean", "Dùng banner cao hơn (adaptive banner lớn) thay cho banner 50dp. " + ASK + ".", NO],
+  ["inter_delay_time", "time=10,ignore=ads_splash|inter_language|inter_intro", "String", "Khoảng cách tối thiểu (giây) giữa 2 interstitial, và danh sách vị trí được bỏ qua khoảng cách này (ngăn bằng <code>|</code>).", OK],
+  ["native_intro_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding dùng icon Next thay cho nút. App hiện dùng dạng chuỗi <code>next=1,loading=false</code> (1 mũi tên, 2 icon X; có/không loading).", PART],
+];
+
+// [nhóm, [tên ad unit...], key, enable, step_count, refresh_rate, collap_config, wait_time, template, mô tả (HTML), trạng thái]
+const PLACEMENTS = [
+  ["Splash", ["AOA_SPLASH", "INTER_SPLASH", "NATIVE_INTER_SPLASH"], "ads_splash", "3", "", "", "", "5", "",
+    "Quảng cáo khi mở app. <code>3</code> = Interstitial rồi Native toàn màn hình, đếm ngược 5s.", OK],
+  ["Splash", ["NATIVE_SPLASH"], "native_splash", "1", "", "", "", "", "Big5", "Native trên màn Splash.", NO],
+  ["Language", ["NATIVE_LANGUAGE", "NATIVE_LANGUAGE_2"], "native_language", "1", "", "", "", "", "",
+    "Native ở màn chọn ngôn ngữ. Ad unit thứ 2 dùng khi cần native thứ hai (ví dụ sau khi chọn ngôn ngữ). " + ASK + ".", PART],
+  ["Language", ["NATIVE_LANGUAGE_SMALL"], "native_language_small", "1", "", "", "", "", "Tiny1", "Native nhỏ (dải Tiny1) ở màn Language.", NO],
+  ["Language", ["INTER_LANGUAGE", "NATIVE_INTER_LANGUAGE"], "inter_language", "3", "", "", "", "3",
+    "", "Quảng cáo khi bấm xác nhận ngôn ngữ. <code>3</code> = Inter rồi Native toàn màn hình, đếm ngược 3s.", PART],
+  ["Intro", ["NATIVE_INTRO_1", "NATIVE_INTRO_2", "NATIVE_INTRO_3", "NATIVE_INTRO_4"], "native_intro", "24", "", "", "", "", "Big4",
+    "Native trong các trang Onboarding (mỗi trang một ad unit). <code>24</code>: " + ASK + " – nhiều khả năng là bật ở trang 2 và 4.", PART],
+  ["Intro", ["NATIVE_INTRO_FULL"], "native_intro_full", "2", "", "", "", "", "Full1",
+    "Trang native toàn màn hình chen giữa các trang Onboarding. <code>2</code>: " + ASK + " (vị trí trang hoặc biến thể).", PART],
+  ["Intro", ["INTER_INTRO", "NATIVE_INTER_INTRO"], "inter_intro", "1", "", "", "", "5", "",
+    "Quảng cáo khi hoàn tất Onboarding. <code>1</code> = Interstitial.", PART],
+  ["Get start", ["NATIVE_GET_START_1", "NATIVE_GET_START_2"], "native_get_start", "2", "", "", "", "", "",
+    "Native ở màn Get started. <code>2</code>: " + ASK + " – có thể ứng với biến thể Figma \"Get start enable = 2\" (CTA tím phía trên).", NO],
+  ["Get start", ["INTER_START", "NATIVE_INTER_START"], "inter_start", "3", "", "", "", "", "",
+    "Quảng cáo khi bấm Get started. <code>3</code> = Inter rồi Native toàn màn hình.", NO],
+  ["Home", ["BANNER_HOME", "NATIVE_HOME", "NATIVE_COLLAP_HOME"], "banner_home", "4", "", "", "", "", "",
+    "Ô banner ở Home. <code>4</code> = Native collapsible (bản lớn rồi thu gọn thành dải).", PART],
+  ["Home", ["INTER_HOME", "NATIVE_INTER_HOME"], "inter_home", "3", "2", "", "", "", "",
+    "Quảng cáo khi thao tác ở Home. <code>3</code> = Inter rồi Native; <code>step_count 2</code> = cứ 2 lần mới hiện 1 lần.", NO],
+  ["Theme", ["NATIVE_THEME_SETUP"], "native_theme_setup", "1", "", "", "", "", "", "Native ở màn cài đặt theme.", NO],
+  ["Theme", ["REWARD_THEME_SETUP"], "reward_theme_setup", "1", "", "", "", "", "Small5",
+    "Quảng cáo có thưởng để mở khoá theme. Template <code>Small5</code>: " + ASK + " (chưa có trong Figma).", NO],
+  ["Icon", ["INTER_ICON", "NATIVE_INTER_ICON"], "inter_icon", "3", "", "", "", "", "", "Quảng cáo khi vào phần icon. <code>3</code> = Inter rồi Native.", NO],
+  ["Icon", ["REWARD_ICON_SETUP"], "reward_icon_setup", "1", "", "", "", "", "", "Quảng cáo có thưởng để mở khoá icon.", NO],
+  ["Icon", ["NATIVE_DIALOG_ICON"], "native_dialog_icon", "1", "", "", "", "", "Tiny1", "Native trong dialog chọn icon.", NO],
+  ["Icon", ["NATIVE_ICON_SETUP"], "native_icon_setup", "1", "", "", "", "", "Small1", "Native ở màn cài đặt icon.", NO],
+  ["Widget", ["REWARD_WIDGET"], "reward_widget", "1", "", "", "", "", "", "Quảng cáo có thưởng để mở khoá widget.", NO],
+  ["Collection", ["INTER_COLLECTION", "NATIVE_INTER_COLLECTION"], "inter_collection", "3", "", "", "", "", "", "Quảng cáo khi vào bộ sưu tập. <code>3</code> = Inter rồi Native.", NO],
+  ["Result", ["BANNER_RESULT"], "banner_result", "1", "", "", "", "", "", "Banner thường ở màn kết quả.", NO],
+  ["Result", ["NATIVE_RESULT"], "native_result", "1", "", "20", "24", "", "Small1",
+    "Native ở màn kết quả, tự tải lại mỗi 20s. <code>collap_config 24</code>: " + ASK + ".", NO],
+  ["Wallpaper / Setting", ["BANNER_WALLPAPER"], "banner_wallpaper", "1", "", "", "", "", "", "Banner thường ở màn wallpaper.", NO],
+  ["Wallpaper / Setting", ["BANNER_SETTING"], "banner_setting", "1", "", "", "", "", "", "Banner thường ở màn Setting.", PART],
+  ["Back", ["INTER_BACK", "NATIVE_INTER_BACK"], "inter_back", "3", "", "", "", "", "", "Quảng cáo khi bấm Back. <code>3</code> = Inter rồi Native.", NO],
+  ["Quay lại app", ["ON_RESUME"], "on_resume", "2", "", "", "", "", "", "Khi app quay lại từ nền. <code>2</code> = màn Welcome back.", OK],
+  ["Quay lại app", ["INTER_WELCOME_BACK", "NATIVE_INTER_WELCOME_BACK"], "inter_welcome_back", "3", "", "", "", "", "", "Quảng cáo ở màn Welcome back. <code>3</code> = Inter rồi Native.", NO],
+  ["Quay lại app", ["NATIVE_WELCOME_BACK"], "native_welcome_back", "1", "", "", "", "", "Big5", "Native trên màn Welcome back.", PART],
+];
+
+const v = s => s ? `<span class="val">${s}</span>` : '<span class="muted">–</span>';
+
+document.getElementById('settingsBody').innerHTML = SETTINGS.map(r =>
+  `<tr><td><code>${r[0]}</code></td><td>${v(r[1])}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
+
+function renderPlacements(q) {
+  q = (q || '').toLowerCase();
+  let html = '', last = '';
+  PLACEMENTS.forEach(r => {
+    const text = r.flat().join(' ').toLowerCase().replace(/<[^>]+>/g, '');
+    if (q && !text.includes(q)) return;
+    if (r[0] !== last) { html += `<tr class="group"><td colspan="10">${r[0]}</td></tr>`; last = r[0]; }
+    html += `<tr><td class="names">${r[1].map(n => `<div>${n}</div>`).join('')}</td><td><code>${r[2]}</code></td>` +
+      [r[3], r[4], r[5], r[6], r[7], r[8]].map(x => `<td>${v(x)}</td>`).join('') + `<td>${r[9]}</td><td>${r[10]}</td></tr>`;
+  });
+  document.getElementById('placementBody').innerHTML = html || '<tr><td colspan="10" class="muted">Không có vị trí nào khớp.</td></tr>';
+}
+renderPlacements();
+document.getElementById('q').addEventListener('input', e => renderPlacements(e.target.value.trim()));
+</script>
+</body>
+</html>

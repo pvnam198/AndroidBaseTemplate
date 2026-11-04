@@ -6,9 +6,14 @@ import android.view.LayoutInflater
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.AppOpenAds
+import com.namstd.androidskillhub.core.ads.FullScreenAdPlan
+import com.namstd.androidskillhub.core.ads.InterstitialAds
+import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityMainBinding
 import com.namstd.androidskillhub.feature.settings.SettingsActivity
@@ -26,7 +31,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initViews() {
-        AppOpenAds.load()
+        // Only warm an App Open ad when returning to the app can show one (enable.onresume=1).
+        if (AdPolicy.enable.onresume == 1) AppOpenAds.load()
+        val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.IN_APP, AdPolicy.enable)
+        if (inAppPlan == FullScreenAdPlan.INTERSTITIAL || inAppPlan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
+            InterstitialAds.load()
+        }
         // Main reloads its banner slot by hand - on resume and on tab switch - instead of on a timer.
         loadBanner(binding.bannerContainer, autoReload = false)
         binding.mainFeedPager.adapter = object : FragmentStateAdapter(this) {
@@ -49,7 +59,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                 reloadBanner()
             }
         })
-        binding.ivSetting.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
+        binding.ivSetting.setOnClickListener {
+            showInterstitial(InterstitialPlacement.IN_APP) {
+                if (!isFinishing) startActivity(Intent(this, SettingsActivity::class.java))
+            }
+        }
     }
 
     override fun onResume() {

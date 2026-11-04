@@ -32,6 +32,21 @@ class AppPreferences private constructor(context: Context) {
         get() = values.getInt(KEY_INTER_STEP_COUNTER, 0)
         set(value) = values.edit { putInt(KEY_INTER_STEP_COUNTER, value) }
 
+    /** Kết quả kiểm tra nguồn user cho `ads_enable = 2`: true = đến từ marketing, null = attribution chưa về. */
+    var isMarketingUser: Boolean?
+        get() = optionalBoolean(KEY_MARKETING_USER)
+        set(value) = putOptionalBoolean(KEY_MARKETING_USER, value)
+
+    /** Kết quả kiểm tra test ad cho `ads_enable = 3`: true = máy nhận quảng cáo mẫu, null = chưa load native nào. */
+    var isTestAdDevice: Boolean?
+        get() = optionalBoolean(KEY_TEST_AD_DEVICE)
+        set(value) = putOptionalBoolean(KEY_TEST_AD_DEVICE, value)
+
+    private fun optionalBoolean(key: String): Boolean? = if (values.contains(key)) values.getBoolean(key, false) else null
+
+    private fun putOptionalBoolean(key: String, value: Boolean?) =
+        values.edit { if (value == null) remove(key) else putBoolean(key, value) }
+
     fun applyLocale(language: String = selectedLanguage) {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
     }
@@ -65,6 +80,8 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_SETUP_COMPLETE = "setup_completed"
         private const val KEY_PREMIUM = "is_premium"
         private const val KEY_INTER_STEP_COUNTER = "interstitial_step_counter"
+        private const val KEY_MARKETING_USER = "is_marketing_user"
+        private const val KEY_TEST_AD_DEVICE = "is_test_ad_device"
 
         @Volatile private var instance: AppPreferences? = null
 

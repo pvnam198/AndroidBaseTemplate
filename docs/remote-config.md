@@ -29,9 +29,28 @@ Toàn bộ feature flag điều khiển từ xa qua **Firebase Remote Config**.
 
 ## Danh sách key
 
+### Quảng cáo — công tắc toàn app & kịch bản (`ads_enable`)
+
+| Key | Kiểu | Fallback | Ý nghĩa |
+|---|---|---|---|
+| `ads_enable` | Long → Int | `1` | `0` tắt hết · `1` REMOTE · `2` user từ marketing → REMOTE, còn lại (kể cả attribution chưa về) → BASIC · `3` máy nhận test ad → BASIC, còn lại (kể cả chưa load native nào) → REMOTE · giá trị khác → REMOTE. Premium luôn tắt. |
+
+Tài liệu sản phẩm (`ads-config.html`) gọi **REMOTE = kịch bản A**, **BASIC = kịch bản B**. Trong code:
+
+| File | Vai trò |
+|---|---|
+| `core/ads/AdProfile.kt` | `AdProfile` (OFF / REMOTE / BASIC), `resolveAdProfile()` (bảng trên), `BasicAdProfile` (cấu hình cố định của BASIC) |
+| `core/ads/AdAudience.kt` | 2 phép kiểm tra user: marketing (attribution Adjust - `network` không chứa "organic" và khác "Untrusted Devices") và test ad (headline native bắt đầu bằng "Test Ad"). Kết quả lưu trong `AppPreferences` |
+| `core/ads/AdPolicy.kt` | Nguồn duy nhất cho code quảng cáo: `profile`, `enable`, `interDelay`, `stepCount`, `nativeAllowed`, `bannerAllowed(inApp)` |
+
+- **REMOTE** = các key trong tài liệu này (`enable`, `inter_delay_time`, `step_count`, ...).
+- **BASIC** = `BasicAdProfile`: `enable` = `ads_splash=1,inter=0,banner=1,onresume=1,inter_inapp=1`, gap inter 90s, `step_count` = 1, không native nào, banner chỉ ở màn in-app (Splash/Onboarding gọi `loadBanner(inApp = false)`).
+- **OFF** → `AdPolicy.enable` = `EnableConfig.NONE`, native bị chặn.
+- `RemoteConfig.enable` / `interDelay` / `stepCount` luôn trả giá trị thô trên Firebase. Code quảng cáo phải đọc qua `AdPolicy`, không đọc thẳng `RemoteConfig`.
+
 ### Quảng cáo — bật/tắt & chọn loại theo vị trí (`enable`)
 
-Key `enable` là công tắc xương sống: mỗi vị trí 1 số = bật/tắt + chọn loại. Dạng `ads_splash=2,inter=1,banner=2,onresume=1`; `0` = tắt vị trí đó. Parse ra `RemoteConfig.enable` (`EnableConfig`). **Thay cho 2 key cũ `use_custom_interstitial` & `use_native_collapsible`.**
+Key `enable` là công tắc xương sống: mỗi vị trí 1 số = bật/tắt + chọn loại. Dạng `ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0`; `0` = tắt vị trí đó. Parse ra `RemoteConfig.enable` (`EnableConfig`); code quảng cáo đọc qua `AdPolicy.enable`. **Thay cho 2 key cũ `use_custom_interstitial` & `use_native_collapsible`.**
 
 | Vị trí | Giá trị | Ý nghĩa | Nơi áp dụng |
 |---|---|---|---|
@@ -39,6 +58,7 @@ Key `enable` là công tắc xương sống: mỗi vị trí 1 số = bật/tắ
 | `inter` | 0 off · 1 Inter · 2 Native · 3 Inter+Native | Interstitial xen (Language/Onboarding) | `BaseActivity.showInterstitial` + `resolveFullScreenPlan` |
 | `banner` | 0 off · 1 Banner · 2 BannerCollap · 3 Native · 4 NativeCollap | Loại ô banner (mọi màn, hợp nhất) | `BannerAds.load` |
 | `onresume` | 0 off · 1 app-open · 2 welcome back | Khi quay lại app | `AndroidSkillHubApp.onStart` |
+| `inter_inapp` | 0 off · 1 Inter · 2 Native · 3 Inter+Native | Interstitial ở màn in-app (app mẫu: bấm Cài đặt ở màn chính). Thiếu = 0 | `MainActivity` + `InterstitialPlacement.IN_APP` |
 
 **Default `ads_splash=2,inter=1,banner=2,onresume=1`** giữ hành vi cũ (Inter ở splash, Inter xen, banner collapsible, app-open khi quay lại). Lưu ý: hợp nhất banner → Splash/Onboarding đổi từ banner thường → collapsible theo giá trị chung. Loading native/welcome-back dùng `wait_time` làm đếm ngược.
 
@@ -121,6 +141,7 @@ Spec gốc (file `Remote Config.pdf`) mô tả bộ key legacy khác tên. App *
 - [x] `language_setup` — kiểu nút Next + loading màn Language *(26/10/2026)*
 - [x] `intro1_setup` — kiểu nút Next + vị trí indicator + delay + chấm tròn màn Onboarding *(26/10/2026)*
 - [x] `native_intro_use_icon_next` — nút Next/icon X cho native fullscreen onboarding (loading gate bằng `wait_time`) *(26/10/2026)*
+- [x] `ads_enable` — công tắc toàn app + kịch bản A/B (theo nguồn user / test ad), thêm `enable.inter_inapp` *(04/11/2026)*
 - [x] `enable` — bật/tắt + chọn loại QC theo vị trí (gồm AOA splash, native-inter, native-banner, welcome back) *(26/10/2026)*
 - [x] `native_template` — chọn layout native động (media/no media/banner/fullscreen) *(26/10/2026)*
 - [x] `collap_config` — click-bait native collap (tap thứ N mới click) *(26/10/2026)*

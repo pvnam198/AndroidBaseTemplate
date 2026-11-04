@@ -8,6 +8,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.adjust.sdk.Adjust
 import com.adjust.sdk.AdjustConfig
+import com.namstd.androidskillhub.core.ads.AdAudience
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
@@ -24,7 +26,11 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
     override fun onCreate() {
         super<Application>.onCreate()
         val environment = if (BuildConfig.DEBUG) AdjustConfig.ENVIRONMENT_SANDBOX else AdjustConfig.ENVIRONMENT_PRODUCTION
-        Adjust.initSdk(AdjustConfig(this, BuildConfig.ADJUST_APP_TOKEN, environment))
+        val adjustConfig = AdjustConfig(this, BuildConfig.ADJUST_APP_TOKEN, environment)
+        adjustConfig.setOnAttributionChangedListener { AdAudience.onAttribution(it) }
+        Adjust.initSdk(adjustConfig)
+        AdAudience.initialize(this)
+        AdPolicy.initialize(this)
         val preferences = AppPreferences.getInstance(this)
         preferences.applyLocale()
         Ads.adsEnabled = !preferences.isPremium
@@ -38,7 +44,7 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
             currentActivity.get()?.let { activity ->
                 val preferences = AppPreferences.getInstance(this@AndroidSkillHubApp)
                 if (preferences.setupCompleted) {
-                    when (RemoteConfig.enable.onresume) {
+                    when (AdPolicy.enable.onresume) {
                         1 -> Ads.onReturnToForeground(activity)
                         2 -> WelcomeBackActivity.launch(activity)
                         // 0 = không hiện gì khi quay lại app
@@ -50,7 +56,7 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
 
     override fun onStop(owner: LifecycleOwner) {
         // Hâm nóng native cho welcome back khi app xuống nền, để sẵn lúc quay lại.
-        if (RemoteConfig.enable.onresume == 2) NativeAds.preload(NativePlacement.WELCOME_BACK)
+        if (AdPolicy.enable.onresume == 2) NativeAds.preload(NativePlacement.WELCOME_BACK)
     }
 
     override fun onActivityResumed(activity: Activity) {

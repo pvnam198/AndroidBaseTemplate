@@ -5,6 +5,7 @@ import android.content.Intent
 import android.view.LayoutInflater
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.AdUnitIds
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.AppOpenAds
@@ -51,15 +52,15 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
         Ads.initialize(this, AdUnitIds.fromConfig()) { consentGranted ->
             runOnUiThread {
                 if (consentGranted) {
-                    loadBanner(binding.bannerContainer)
+                    loadBanner(binding.bannerContainer, inApp = false)
                     NativeAds.preload(NativePlacement.LANGUAGE)
                     // The Language/Onboarding interstitial needs an ad loaded up front too, even when
                     // the splash itself shows none (ads_splash=0/1) - else the first one is skipped.
-                    val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, RemoteConfig.enable)
+                    val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, AdPolicy.enable)
                     if (inAppPlan == FullScreenAdPlan.INTERSTITIAL || inAppPlan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
                         InterstitialAds.load()
                     }
-                    when (resolveFullScreenPlan(InterstitialPlacement.SPLASH, RemoteConfig.enable)) {
+                    when (resolveFullScreenPlan(InterstitialPlacement.SPLASH, AdPolicy.enable)) {
                         FullScreenAdPlan.APP_OPEN -> {
                             AppOpenAds.load()
                             lifecycleScope.launch { waitForAppOpenThenNavigate() }

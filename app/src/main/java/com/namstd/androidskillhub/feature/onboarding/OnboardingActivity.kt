@@ -62,7 +62,7 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
             root.addView(binding.indicatorContainer, root.indexOfChild(binding.nextContainer) + 1)
         }
 
-        loadBanner(binding.bannerContainer)
+        loadBanner(binding.bannerContainer, inApp = false)
     }
 
     override fun initListeners() {

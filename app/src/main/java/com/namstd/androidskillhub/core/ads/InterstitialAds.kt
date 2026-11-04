@@ -16,12 +16,15 @@ enum class InterstitialState { IDLE, LOADING, READY, FAILED }
 
 /**
  * Các điểm bung interstitial có tên, để đối chiếu với danh sách `ignore` trong
- * [RemoteConfig.interDelay] (inter nằm trong ignore được miễn gap giữa các inter). [key] khớp token trên config.
+ * [AdPolicy.interDelay] (inter nằm trong ignore được miễn gap giữa các inter). [key] khớp token trên config.
  */
 enum class InterstitialPlacement(val key: String) {
     SPLASH("ads_splash"),
     LANGUAGE("inter_language"),
     INTRO("inter_intro"),
+
+    /** Inter ở các màn in-app (sau onboarding) - `enable.inter_inapp`, và là inter của [AdProfile.BASIC]. */
+    IN_APP("inter_inapp"),
 }
 
 object InterstitialAds {
@@ -63,7 +66,7 @@ object InterstitialAds {
         onComplete: () -> Unit = {},
     ): Boolean {
         if (!Ads.adsEnabled) return false
-        val delay = RemoteConfig.interDelay
+        val delay = AdPolicy.interDelay
         if (!AdGapGate.canShowInterstitial(
                 delay.gapMs,
                 RemoteConfig.interOpenGapMs,

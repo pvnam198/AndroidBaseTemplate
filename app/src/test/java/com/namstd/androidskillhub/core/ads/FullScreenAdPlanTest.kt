@@ -5,8 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FullScreenAdPlanTest {
-    private fun cfg(adsSplash: Int = 2, inter: Int = 1) =
-        EnableConfig(adsSplash = adsSplash, inter = inter, banner = 2, onresume = 1)
+    private fun cfg(adsSplash: Int = 2, inter: Int = 1, interInApp: Int = 0) =
+        EnableConfig(adsSplash = adsSplash, inter = inter, banner = 2, onresume = 1, interInApp = interInApp)
 
     @Test
     fun splashMapsAdsSplashValue() {
@@ -24,6 +24,20 @@ class FullScreenAdPlanTest {
             assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(placement, cfg(inter = 3)))
             assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(placement, cfg(inter = 0)))
         }
+    }
+
+    @Test
+    fun inAppPlacementMapsInterInAppValue() {
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.IN_APP, cfg()))
+        assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(InterstitialPlacement.IN_APP, cfg(interInApp = 1)))
+        assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(InterstitialPlacement.IN_APP, BasicAdProfile.enable))
+    }
+
+    @Test
+    fun basicProfileShowsAppOpenAtSplashAndNoOnboardingInter() {
+        assertEquals(FullScreenAdPlan.APP_OPEN, resolveFullScreenPlan(InterstitialPlacement.SPLASH, BasicAdProfile.enable))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, BasicAdProfile.enable))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.INTRO, BasicAdProfile.enable))
     }
 
     @Test

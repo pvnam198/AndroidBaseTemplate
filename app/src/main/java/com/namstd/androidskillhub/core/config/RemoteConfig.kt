@@ -26,9 +26,14 @@ data class Intro1Setup(val nextStyle: Int, val indicatorPosition: Int, val delay
 /**
  * Giá trị đã parse của key `enable`: loại quảng cáo cho từng vị trí (`0` = tắt vị trí đó).
  * ads_splash: 1 AOA/2 Inter/3 Inter+Native · inter: 1 Inter/2 Native/3 Inter+Native ·
- * banner: 1 Banner/2 BannerCollap/3 Native/4 NativeCollap · onresume: 1 app-open/2 welcome back.
+ * banner: 1 Banner/2 BannerCollap/3 Native/4 NativeCollap · onresume: 1 app-open/2 welcome back ·
+ * inter_inapp: inter ở các màn in-app (sau onboarding), cùng mã với inter.
  */
-data class EnableConfig(val adsSplash: Int, val inter: Int, val banner: Int, val onresume: Int)
+data class EnableConfig(val adsSplash: Int, val inter: Int, val banner: Int, val onresume: Int, val interInApp: Int) {
+    companion object {
+        val NONE = EnableConfig(adsSplash = 0, inter = 0, banner = 0, onresume = 0, interInApp = 0)
+    }
+}
 
 /** Một dòng trên màn Debug Config: tên key, giá trị raw hiện tại, và gợi ý format. */
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
@@ -73,6 +78,7 @@ object RemoteConfig {
         )
         remoteConfig.setDefaultsAsync(
             mapOf(
+                KEY_ADS_ENABLE to prefs.getCachedLong(KEY_ADS_ENABLE, 1L),
                 KEY_ENABLE to prefs.getCachedString(KEY_ENABLE, DEFAULT_ENABLE),
                 KEY_BANNER_SLOT_AUTO_RELOAD to prefs.getCachedBoolean(KEY_BANNER_SLOT_AUTO_RELOAD, false),
                 KEY_REFRESH_RATE to
@@ -109,6 +115,7 @@ object RemoteConfig {
      * an override cached here would become the seeded default and outlive "Xoá hết override".
      */
     private fun persistToCache() {
+        prefs.putCachedLong(KEY_ADS_ENABLE, remoteConfig.getLong(KEY_ADS_ENABLE))
         prefs.putCachedString(KEY_ENABLE, remoteConfig.getString(KEY_ENABLE))
         prefs.putCachedBoolean(KEY_BANNER_SLOT_AUTO_RELOAD, remoteConfig.getBoolean(KEY_BANNER_SLOT_AUTO_RELOAD))
         prefs.putCachedLong(KEY_REFRESH_RATE, remoteConfig.getLong(KEY_REFRESH_RATE))
@@ -133,8 +140,16 @@ object RemoteConfig {
     }
 
     /**
+     * Công tắc toàn app + chọn kịch bản (key `ads_enable`): 0 tắt, 1 A, 2 theo nguồn user, 3 theo test ad.
+     * Xem [com.namstd.androidskillhub.core.ads.resolveAdProfile].
+     */
+    val adsEnable: Int
+        get() = rcLong(KEY_ADS_ENABLE).toInt()
+
+    /**
      * Bật/tắt + chọn loại quảng cáo theo từng vị trí (key `enable`, dạng
-     * `ads_splash=2,inter=1,banner=2,onresume=1`; `0` = tắt vị trí đó). Xem [EnableConfig].
+     * `ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0`; `0` = tắt vị trí đó). Xem [EnableConfig].
+     * Giá trị thô trên Firebase - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.enable].
      * Thay cho 2 key cũ use_custom_interstitial & use_native_collapsible. Định tuyến qua
      * [com.namstd.androidskillhub.core.ads.resolveFullScreenPlan] (inter/splash) và [com.namstd.androidskillhub.core.ads.BannerAds] (banner).
      */
@@ -146,6 +161,7 @@ object RemoteConfig {
                 inter = m["inter"]?.toIntOrNull() ?: 1,
                 banner = m["banner"]?.toIntOrNull() ?: 2,
                 onresume = m["onresume"]?.toIntOrNull() ?: 1,
+                interInApp = m["inter_inapp"]?.toIntOrNull() ?: 0,
             )
         }
 
@@ -170,6 +186,7 @@ object RemoteConfig {
      * `time` = gap giữa 2 inter (giây; getter đổi ra ms), `ignore` = các
      * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key] luôn được hiện bất kể gap.
      * Thay cho key cũ `inter_inter_gap_seconds`. Xem [com.namstd.androidskillhub.core.ads.AdGapGate].
+     * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.interDelay].
      */
     val interDelay: InterDelayConfig
         get() {
@@ -225,6 +242,7 @@ object RemoteConfig {
      * Tần suất hiển thị interstitial theo số lần yêu cầu: chỉ hiện ở lần yêu cầu chia hết cho giá trị này
      * (`1` = mọi lần; `2` = cứ 2 lần hiện 1 lần...). Bộ đếm lưu qua các lần mở app
      * ([com.namstd.androidskillhub.core.preferences.AppPreferences.interstitialStepCounter]). Clamp tối thiểu 1.
+     * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.stepCount].
      */
     val stepCount: Int
         get() = rcLong(KEY_STEP_COUNT).toInt().coerceAtLeast(1)
@@ -325,7 +343,8 @@ object RemoteConfig {
         DEBUG_HINTS.map { (key, hint) -> DebugConfigEntry(key, rcString(key), hint) }
 
     private val DEBUG_HINTS: List<Pair<String, String>> = listOf(
-        KEY_ENABLE to "ads_splash=2,inter=1,banner=2,onresume=1 (0=off)",
+        KEY_ADS_ENABLE to "0 tắt · 1 REMOTE · 2 marketing→REMOTE, còn lại BASIC · 3 test ad→BASIC, còn lại REMOTE",
+        KEY_ENABLE to "ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0 (0=off)",
         KEY_INTER_DELAY_TIME to "time=10,ignore=ads_splash|inter_language|inter_intro",
         KEY_WAIT_TIME to "giây (đếm ngược trước khi hiện X native fullscreen)",
         KEY_STEP_COUNT to "số: inter hiện lần chia hết cho N (1=mọi lần)",
@@ -355,8 +374,9 @@ object RemoteConfig {
             if (pair.size == 2) pair[0].trim() to pair[1].trim() else null
         }.toMap()
 
+    private const val KEY_ADS_ENABLE = "ads_enable"
     private const val KEY_ENABLE = "enable"
-    private const val DEFAULT_ENABLE = "ads_splash=2,inter=1,banner=2,onresume=1"
+    private const val DEFAULT_ENABLE = "ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0"
     private const val KEY_BANNER_SLOT_AUTO_RELOAD = "banner_slot_auto_reload"
     private const val KEY_REFRESH_RATE = "refresh_rate"
     private const val KEY_INTER_DELAY_TIME = "inter_delay_time"

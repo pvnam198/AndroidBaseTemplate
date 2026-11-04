@@ -77,7 +77,7 @@ internal class NativeCollapseAd(
 
     fun start(): NativeCollapseAd {
         if (destroyed || state != State.IDLE) return this
-        if (!Ads.isReady || !Ads.adsEnabled) {
+        if (!Ads.isReady || !AdPolicy.nativeAllowed) {
             onStatus("Native collapsible: SDK not ready")
             hide()
             return this

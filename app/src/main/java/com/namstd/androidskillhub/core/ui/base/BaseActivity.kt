@@ -13,6 +13,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.viewbinding.ViewBinding
 import com.namstd.androidskillhub.core.ads.AdHandle
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.BannerAds
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
@@ -45,14 +46,16 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
      * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); a screen can
      * pass its own. Any other reload trigger (resume, tab switch...) is the screen's own code
      * calling [reloadBanner]. For a premium user nothing loads and [container] is hidden.
+     * [inApp] = false for Splash/Language/Onboarding - see [AdPolicy.bannerAllowed].
      */
     protected fun loadBanner(
         container: ViewGroup,
         autoReload: Boolean = RemoteConfig.bannerSlotAutoReload,
         reloadGapMs: Long = RemoteConfig.refreshRateMs,
+        inApp: Boolean = true,
     ) {
         bannerContainer = container
-        if (isPremiumUser()) {
+        if (isPremiumUser() || !AdPolicy.bannerAllowed(inApp)) {
             container.isVisible = false
             return
         }
@@ -105,13 +108,13 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Chạy quảng cáo full-screen cho [placement] theo [RemoteConfig.enable] (xem [resolveFullScreenPlan]),
+     * Chạy quảng cáo full-screen cho [placement] theo [AdPolicy.enable] (xem [resolveFullScreenPlan]),
      * rồi gọi [onComplete]. Loại: plain interstitial / interstitial + native break / native-only / tắt.
      * (APP_OPEN chỉ ở SPLASH và do SplashActivity lo; ở đây coi như tắt.)
      * Single implementation cho toàn app - [BaseFragment.showInterstitial] uỷ quyền về đây.
      */
     internal fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
-        val plan = resolveFullScreenPlan(placement, RemoteConfig.enable)
+        val plan = resolveFullScreenPlan(placement, AdPolicy.enable)
         if (plan == FullScreenAdPlan.OFF || plan == FullScreenAdPlan.APP_OPEN) { onComplete(); return }
         if (!passesInterstitialStepGate()) { onComplete(); return }
         when (plan) {
@@ -136,13 +139,13 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Tần suất interstitial theo lần yêu cầu ([RemoteConfig.stepCount]): tăng bộ đếm (lưu qua các lần mở app)
+     * Tần suất interstitial theo lần yêu cầu ([AdPolicy.stepCount]): tăng bộ đếm (lưu qua các lần mở app)
      * và chỉ cho hiện ở lần chia hết cho stepCount; các lần khác bỏ qua (gọi onComplete luôn). stepCount=1 = mọi lần.
      */
     private fun passesInterstitialStepGate(): Boolean {
         val count = prefs.interstitialStepCounter + 1
         prefs.interstitialStepCounter = count
-        return count % RemoteConfig.stepCount == 0
+        return count % AdPolicy.stepCount == 0
     }
 
     private fun runNativeAdBreak(onComplete: () -> Unit) {

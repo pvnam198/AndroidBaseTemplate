@@ -25,7 +25,7 @@ import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 
 object BannerAds {
     /**
-     * Loads a banner into [container]. Loại do [RemoteConfig.enable] (`banner`) quyết định:
+     * Loads a banner into [container]. Loại do [AdPolicy.enable] (`banner`) quyết định:
      * `0` = tắt (ẩn ô), `1` = AdMob banner thường, `2` = AdMob collapsible, `3` = native thường
      * (làm thật ở Phase 2, tạm fallback banner thường), `4` = native collapsible ([NativeCollapseAd]:
      * 1 native ad to rồi thu nhỏ thành dải). Pure routing - load thật ở [loadAdMobBanner]/[NativeCollapseAd].
@@ -40,7 +40,7 @@ object BannerAds {
         autoReload: Boolean,
         reloadGapMs: Long,
         onStatus: (String) -> Unit = {},
-    ): BannerSlotHandle = when (RemoteConfig.enable.banner) {
+    ): BannerSlotHandle = when (AdPolicy.enable.banner) {
         0 -> {
             container.visibility = View.GONE
             BannerSlotHandle.NONE

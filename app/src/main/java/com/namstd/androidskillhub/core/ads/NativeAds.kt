@@ -148,7 +148,7 @@ object NativeAds {
 
     /** Starts [placement]'s waterfall now, ahead of any screen needing it, if not already loading or cached. */
     fun preload(placement: NativePlacement) {
-        if (!Ads.adsEnabled || !Ads.isReady) return
+        if (!AdPolicy.nativeAllowed || !Ads.isReady) return
         val slot = slotFor(placement)
         if (slot.hasFresh(TTL_MS)) return
         startLoad(placement, slot, onReady = null, onFailed = null)
@@ -160,7 +160,7 @@ object NativeAds {
      * instead of shimmering forever.
      */
     fun isUnavailable(placement: NativePlacement): Boolean =
-        !Ads.adsEnabled || !Ads.isReady || slotFor(placement).failedAndIdle()
+        !AdPolicy.nativeAllowed || !Ads.isReady || slotFor(placement).failedAndIdle()
 
     /**
      * Takes the preloaded ad for [placement], if one is ready, for the caller to display and
@@ -170,7 +170,7 @@ object NativeAds {
      * nothing was preloaded in time; treat that the same as a no-fill.
      */
     fun poll(placement: NativePlacement): NativeAd? {
-        if (!Ads.adsEnabled || !Ads.isReady) return null
+        if (!AdPolicy.nativeAllowed || !Ads.isReady) return null
         val ad = slotFor(placement).take(TTL_MS)
         preload(placement)
         return ad
@@ -184,7 +184,7 @@ object NativeAds {
      */
     fun awaitReady(activity: Activity, placement: NativePlacement, timeoutMs: Long, onDone: () -> Unit) {
         val slot = slotFor(placement)
-        if (!Ads.adsEnabled || !Ads.isReady || slot.hasFresh(TTL_MS)) { onDone(); return }
+        if (!AdPolicy.nativeAllowed || !Ads.isReady || slot.hasFresh(TTL_MS)) { onDone(); return }
         var finished = false
         val finish = { if (!finished) { finished = true; onDone() } }
         val handle = request(activity, placement, onFailed = { finish() }) { ad -> slot.cache(ad); finish() }
@@ -204,7 +204,7 @@ object NativeAds {
         preloadOnShow: Boolean = false,
         render: (Activity, NativeAd) -> NativeAdView = ::renderDefaultCard,
     ): AdHandle {
-        if (!Ads.adsEnabled || !Ads.isReady) {
+        if (!AdPolicy.nativeAllowed || !Ads.isReady) {
             container.visibility = View.GONE
             return AdHandle {}
         }
@@ -300,6 +300,7 @@ object NativeAds {
                 val request = NativeAdRequest.Builder(id, listOf(NativeAd.NativeAdType.NATIVE)).build()
                 NativeAdLoader.load(request, object : NativeAdLoaderCallback {
                     override fun onNativeAdLoaded(nativeAd: NativeAd) {
+                        AdAudience.onNativeLoaded(nativeAd.headline)
                         nativeAd.adEventCallback = object : NativeAdEventCallback {
                             override fun onAdPaid(adValue: AdValue) = AdjustRevenueLogger.log(adValue)
                         }

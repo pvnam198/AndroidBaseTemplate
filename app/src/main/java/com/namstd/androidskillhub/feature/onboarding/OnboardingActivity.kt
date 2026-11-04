@@ -36,23 +36,20 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 
         setup = RemoteConfig.intro1Setup
 
-        // next: 1 = nút chữ, 2 = icon. Ẩn control không dùng.
-        val useIcon = setup.nextStyle == 2
-        nextControl = if (useIcon) binding.nextIcon else binding.nextButton
-        binding.nextButton.isVisible = !useIcon
-        binding.nextIcon.isVisible = useIcon
+        // next: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
+        val useText = setup.nextStyle == 2
+        nextControl = if (useText) binding.nextText else binding.nextButton
+        binding.nextButton.isVisible = !useText
+        binding.nextText.isVisible = useText
         // Có delay thì ẩn trước, onPageSelected sẽ hiện lại sau delay.
         if (setup.delayMs > 0L) nextControl.isVisible = false
 
-        // dot: 1 = chấm tròn (TabLayout), 0 = text "x/n".
+        // dot: 1 = chấm tròn (TabLayout), 0 = ẩn indicator.
+        binding.pageIndicator.isVisible = false
+        binding.pageDots.isVisible = setup.showDots
         if (setup.showDots) {
-            binding.pageIndicator.isVisible = false
-            binding.pageDots.isVisible = true
             dotsMediator = TabLayoutMediator(binding.pageDots, binding.onboardingPager) { _, _ -> }
                 .also { it.attach() }
-        } else {
-            binding.pageDots.isVisible = false
-            binding.pageIndicator.isVisible = true
         }
 
         // ds: 0 = indicator xuống dưới nút Next (mặc định 1 = phía trên).
@@ -69,13 +66,15 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         binding.onboardingPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 binding.pageIndicator.text = "${position + 1} / $PAGE_COUNT"
-                binding.nextButton.setText(if (position == PAGE_COUNT - 1) R.string.get_started else R.string.next)
+                val label = if (position == PAGE_COUNT - 1) R.string.get_started else R.string.next
+                binding.nextButton.setText(label)
+                binding.nextText.setText(label)
                 // Trang quảng cáo native fullscreen có control riêng (xem OnboardingAdFragment) → ẩn nút đáy.
                 if (position == AD_PAGE) nextControl.isVisible = false else revealNextAfterDelay()
             }
         })
         binding.nextButton.setOnClickListener { advanceOnboarding() }
-        binding.nextIcon.setOnClickListener { advanceOnboarding() }
+        binding.nextText.setOnClickListener { advanceOnboarding() }
     }
 
     /** Sang trang onboarding kế tiếp, hoặc kết thúc setup ở trang cuối. Public để [OnboardingAdFragment] gọi từ control riêng của nó. */

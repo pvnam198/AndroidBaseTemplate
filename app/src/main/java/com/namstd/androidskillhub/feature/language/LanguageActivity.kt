@@ -43,7 +43,8 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
         loadNative(binding.nativeContainer, NativePlacement.LANGUAGE)
 
         val setup = RemoteConfig.languageSetup
-        val nextControl = if (setup.nextStyle == 2) binding.applyIcon else binding.applyButton
+        // next: 1 = icon dấu check trên thanh tiêu đề, 2 = nút chữ.
+        val nextControl = if (setup.nextStyle == 1) binding.applyIcon else binding.applyButton
         lifecycleScope.launch {
             if (setup.loading) binding.applyLoading.isVisible = true
             delay(RemoteConfig.languageDelayMillis)

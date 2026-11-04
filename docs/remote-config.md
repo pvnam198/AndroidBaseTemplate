@@ -72,7 +72,7 @@ Key `enable` là công tắc xương sống: mỗi vị trí 1 số = bật/tắ
 | Key | Kiểu | Fallback | Ý nghĩa |
 |---|---|---|---|
 | `native_template` | String | `native media` | Layout của native card render qua `NativeAds.renderDefaultCard`: `native media` (có ảnh), `native no media` (chỉ chữ), `native banner` (dải nhỏ), `native fullscreen` (card lớn) - 4 giá trị này giờ vẽ bằng mẫu Figma big1 / small1 / tiny1 / full1 -, hoặc một mẫu Figma "Wavez - ADs / Mẫu v2": `big1`…`big9` (`big6` = `big5`), `small1`…`small4`, `tiny1`, `tiny2`, `collap1`…`collap3` (bản mở rộng; bản thu gọn là `tiny1`/`tiny2`), `full1`…`full5`, `lang1_a`, `lang1_b`, `lang2_a`, `lang2_b`. Giá trị lạ → `native media`. Áp cho các placement render mặc định (Language, Onboarding, Welcome back, banner-native). **Không** đổi feed / post-interstitial / native collapsible (layout cố định riêng). Parse ra `RemoteConfig.nativeTemplate` (`NativeAdTemplate`). Màn nào muốn dùng một mẫu cố định thì gọi `NativeAds.renderTemplate(activity, ad, NativeAdTemplate.X)`. |
-| `collap_config` | Long → Int | `1` | Click-bait native collapsible (`NativeCollapseAd`): chỉ **tap thứ N** mới bắn click thật (mở trang QC); tap trước bị nuốt. `1` = click đi thẳng như thường. Dùng SDK `enableCustomClickGesture`/`recordCustomClickGesture`. Clamp tối thiểu 1. |
+| `collap_config` | String | `0` | Click-bait native collapsible (`NativeCollapseAd`), tính trên **nút X** (thu gọn): mỗi chữ số là một lần bấm X **mở trang QC thay vì thu gọn**, vd `357` = lần bấm X thứ 3, 5, 7; các lần khác thu gọn như thường. Đếm chung cho mọi thẻ collapsible trong một lần mở app. `0` = tắt. Bấm vào thẻ luôn mở QC như native thường. Logic ở `CollapClickGate`; mở QC bằng `recordCustomClickGesture` (Google phải duyệt custom click gesture cho tài khoản, test ad không mở trang). |
 
 ### Quảng cáo — banner slot auto reload
 
@@ -120,7 +120,7 @@ Dùng bởi `PostInterstitialNativeAdDialogFragment` (flow 2 stage).
 | Key | Kiểu | Fallback | Ý nghĩa |
 |---|---|---|---|
 | `post_interstitial_native_ad_count` | Long → Int | `2` | Số native ad hiển thị liên tiếp trong break sau inter. **Clamp 1–2** (dialog chỉ hỗ trợ flow 2 stage). |
-| `wait_time` | Long (**ms**) | `5000` | Thời gian đếm ngược trên màn native fullscreen sau interstitial trước khi icon X (đóng) hiện ra — cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng. |
+| `wait_time` | Long (**ms**) | `0` | Thời gian đếm ngược trên màn native fullscreen sau interstitial trước khi icon X (đóng) hiện ra — cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng. |
 
 ### UI luồng mở app
 
@@ -128,9 +128,9 @@ Dùng bởi `PostInterstitialNativeAdDialogFragment` (flow 2 stage).
 |---|---|---|---|
 | `intro_swipe` | Boolean | `true` | Cho phép vuốt (swipe) ở màn Onboarding (`OnboardingActivity`, `ViewPager2.isUserInputEnabled`). `true` = vuốt được (mặc định); `false` = chỉ chuyển trang bằng nút Next. |
 | `language_delay_millis` | Long (**ms**) | `800` | Thời gian chờ trước khi nút xác nhận (`apply_button`) ở màn chọn ngôn ngữ (`LanguageActivity`) hiện ra. `0` = hiện ngay. **Đơn vị đã là mili-giây — getter KHÔNG nhân ×1000** (khác các key gap tính bằng giây). |
-| `language_setup` | String | `next=1,loading=false` | Nút Next màn Language. Dạng `next=1,loading=true`: `next` = kiểu nút (`1` nút chữ, `2` icon mũi tên), `loading` = có hiện vòng loading trong lúc chờ `language_delay_millis` không. Parse ra `RemoteConfig.languageSetup` (`LanguageSetup`). |
-| `intro1_setup` | String | `next=1,ds=1,delay=0,dot=0` | UI màn Onboarding. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` chữ, `2` icon), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next mỗi trang (vd `1500`), `dot` = `1` hiện chấm tròn (TabLayout) / `0` hiện text "x/n". Parse ra `RemoteConfig.intro1Setup` (`Intro1Setup`). |
-| `native_intro_use_icon_next` | String | `next=1,loading=false` | Control riêng cho trang native fullscreen trong Onboarding (`OnboardingAdFragment`). Dạng `next=1,loading=true`: `next` = `1` mũi tên Next / `2` icon X (cả hai bấm đều sang trang kế); `loading` = có hiện spinner chờ **`wait_time` giây** trước khi hiện control không. Khi ở trang này, nút Next chung ở đáy bị ẩn. Parse ra `RemoteConfig.nativeIntroUseIconNext` (dùng chung `LanguageSetup`). |
+| `language_setup` | String | `next=2,loading=false` | Nút Next màn Language. Dạng `next=1,loading=true`: `next` = kiểu nút (`1` icon dấu check trên thanh tiêu đề, `2` nút chữ), `loading` = có hiện vòng loading trong lúc chờ `language_delay_millis` không. Parse ra `RemoteConfig.languageSetup` (`LanguageSetup`). |
+| `intro1_setup` | String | `next=1,ds=1,delay=0,dot=1` | UI màn Onboarding. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` nút dạng button, `2` chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next mỗi trang (vd `1500`), `dot` = `1` hiện chấm tròn (TabLayout) / `0` ẩn indicator. Parse ra `RemoteConfig.intro1Setup` (`Intro1Setup`). |
+| `native_intro_use_icon_next` | Boolean | `false` | Control riêng cho trang native fullscreen trong Onboarding (`OnboardingAdFragment`): `true` = icon X, `false` = mũi tên Next (cả hai bấm đều sang trang kế). Nhận cả `1`/`0`. `wait_time` > 0 thì hiện spinner chờ trước khi hiện control. |
 
 ---
 
@@ -149,7 +149,7 @@ Spec gốc (file `Remote Config.pdf`) mô tả bộ key legacy khác tên. App *
 - [x] `ads_enable` — công tắc toàn app + kịch bản A/B (theo nguồn user / test ad), thêm `enable.inter_inapp` *(04/11/2026)*
 - [x] `enable` — bật/tắt + chọn loại QC theo vị trí (gồm AOA splash, native-inter, native-banner, welcome back) *(26/10/2026)*
 - [x] `native_template` — chọn layout native động (media/no media/banner/fullscreen) *(26/10/2026)*
-- [x] `collap_config` — click-bait native collap (tap thứ N mới click) *(26/10/2026)*
+- [x] `collap_config` — click-bait native collap (lần bấm X mở QC, vd `357`) *(26/10/2026)*
 - [x] Tiering ID `highfloor / medium / all_price` (id_banner/_collapsible/_interstitial/_native/_app_open) *(26/10/2026)*
 
 > Khi làm thêm key mới, cập nhật bảng "Danh sách key" và tick mục tương ứng ở đây.

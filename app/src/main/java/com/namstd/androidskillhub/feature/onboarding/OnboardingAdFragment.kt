@@ -21,15 +21,15 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
     override fun initViews() {
         loadNative(binding.nativeContainer, NativePlacement.ONBOARDING_AD)
 
-        val setup = RemoteConfig.nativeIntroUseIconNext
-        val control: View = if (setup.nextStyle == 2) binding.adClose else binding.adNext
-        if (setup.loading) {
+        val control: View = if (RemoteConfig.nativeIntroUseIconNext) binding.adClose else binding.adNext
+        val waitMs = RemoteConfig.waitTimeMs
+        if (waitMs > 0L) {
             binding.adLoading.isVisible = true
             viewLifecycleOwner.lifecycleScope.launch {
                 // ViewPager2 pre-creates this page while the previous one is on screen (it stays
                 // STARTED until selected), so only start the countdown once the page is RESUMED.
                 viewLifecycleOwner.lifecycle.withResumed {}
-                delay(RemoteConfig.waitTimeMs)
+                delay(waitMs)
                 binding.adLoading.isVisible = false
                 control.isVisible = true
             }

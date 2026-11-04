@@ -165,7 +165,7 @@
         <tr><td><code>enable</code></td><td>Bật/tắt và chọn loại quảng cáo. Mã khác nhau theo loại vị trí, xem <a href="#codes">Bảng mã enable</a>. <code>0</code> luôn là tắt.</td></tr>
         <tr><td><code>step_count</code></td><td>Tần suất theo lượt: chỉ hiện ở lần yêu cầu chia hết cho N. Ví dụ <code>2</code> = cứ 2 lần mới hiện 1 lần. Trống = mọi lần.</td></tr>
         <tr><td><code>refresh_rate</code></td><td>Thời gian tự tải lại quảng cáo khi màn đang hiển thị, tính bằng <b>mili-giây</b> (20 giây = <code>20000</code>). Trống/0 = không tự tải lại.</td></tr>
-        <tr><td><code>collap_config</code></td><td>Native collapsible "click-bait": chỉ tap thứ N mới mở trang quảng cáo, các tap trước bị bỏ qua. <code>1</code> = mở ngay. <span class="ask">Giá trị <code>24</code> ở NATIVE_RESULT cần xác nhận</span> (có thể là 2 giá trị gộp, hoặc gõ nhầm).</td></tr>
+        <tr><td><code>collap_config</code></td><td>Native collapsible: lần bấm <b>nút X</b> nào sẽ mở trang quảng cáo thay vì thu gọn. Mỗi chữ số là một lần bấm: <code>357</code> = lần bấm X thứ 3, 5, 7; <code>24</code> = lần thứ 2 và 4. Các lần khác thu gọn như thường. Đếm chung trong một lần mở app. Trống hoặc <code>0</code> = tắt.</td></tr>
         <tr><td><code>wait_time</code></td><td>Thời gian đếm ngược trên màn native toàn màn hình (sau Inter) trước khi hiện nút đóng/Next, tính bằng <b>mili-giây</b> (5 giây = <code>5000</code>).</td></tr>
         <tr><td><code>native_template</code></td><td>Mẫu giao diện native, theo tên trong Figma "Wavez - ADs" (Big1, Small1, Tiny1, Full1…). Xem <a href="#templates">Native template</a>.</td></tr>
         <tr><td><code>Ad description</code></td><td>Mô tả vị trí quảng cáo (đang để trống trong bảng gốc; tài liệu này tự điền ở cột "Mô tả").</td></tr>
@@ -208,7 +208,7 @@
       <ul>
         <li><b>Đã có (cùng ý nghĩa, đang là key chung):</b> Splash (AOA / Inter / Inter + Native), Inter ở Language và Intro, Native ở Language / Intro / trang native toàn màn hình, banner Home các kiểu, On resume (AOA / Welcome back), native Welcome back.</li>
         <li><b>Chưa có màn hình:</b> Get start, Theme setup, Icon setup / dialog icon, Widget, Collection, Result, Wallpaper, Inter khi Back, Inter ở Home, native Splash, reward.</li>
-        <li><b>Cấu hình chung chưa có:</b> <code>release_log</code>, <code>splash_fallback</code>, <code>intro2_setup</code>–<code>intro4_setup</code>, <code>taller_banner_enabled</code>. <code>native_intro_use_icon_next</code> trong bảng là boolean, còn app đang dùng dạng chuỗi <code>next=1,loading=false</code>.</li>
+        <li><b>Cấu hình chung chưa có:</b> <code>release_log</code>, <code>splash_fallback</code>, <code>intro2_setup</code>–<code>intro4_setup</code>, <code>taller_banner_enabled</code>.</li>
       </ul>
     </div>
   </section>
@@ -224,12 +224,12 @@ const SETTINGS = [
   ["language_delay_millis", "800", "Long (ms)", "Thời gian chờ trước khi hiện nút xác nhận ở màn Language. <code>0</code> = hiện ngay.", OK],
   ["release_log", "FALSE", "Boolean", "Bật ghi log debug (quảng cáo, config) ở bản release để kiểm tra trên máy thật.", NO],
   ["splash_fallback", "inter_language", "String (key)", "Khi quảng cáo Splash không tải kịp: dùng placement này để hiện thay. " + ASK + " cách fallback cụ thể.", NO],
-  ["language_setup", "next=1, loading=true", "String", "Nút xác nhận màn Language. <code>next</code>: 1 nút chữ, 2 icon. <code>loading</code>: hiện vòng loading trong lúc chờ <code>language_delay_millis</code>.", OK],
-  ["intro1_setup … intro4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang Onboarding. <code>next</code>: 1 nút chữ, 2 icon. <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: mili-giây chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 chữ \"x/n\".", PART + ' <span class="muted">app có <code>intro1_setup</code> áp chung cho mọi trang</span>'],
+  ["language_setup", "next=1, loading=true", "String", "Nút xác nhận màn Language. <code>next</code>: 1 icon, 2 nút chữ. <code>loading</code>: hiện vòng loading trong lúc chờ <code>language_delay_millis</code>.", OK],
+  ["intro1_setup … intro4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang Onboarding. <code>next</code>: 1 nút dạng button, 2 chữ \"Next\" không có nền (bấm vào chữ để đi tiếp). <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: mili-giây chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 ẩn.", PART + ' <span class="muted">app có <code>intro1_setup</code> áp chung cho mọi trang</span>'],
   ["intro_swipe", "TRUE", "Boolean", "Cho phép vuốt để chuyển trang Onboarding. FALSE = chỉ chuyển bằng nút Next.", OK],
   ["taller_banner_enabled", "TRUE", "Boolean", "Dùng banner cao hơn (adaptive banner lớn) thay cho banner 50dp. " + ASK + ".", NO],
   ["inter_delay_time", "time=10,ignore=ads_splash|inter_language|inter_intro", "String", "Khoảng cách tối thiểu giữa 2 interstitial, tính bằng mili-giây (10 giây = <code>time=10000</code>), và danh sách vị trí được bỏ qua khoảng cách này (ngăn bằng <code>|</code>).", OK],
-  ["native_intro_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding dùng icon Next thay cho nút. App hiện dùng dạng chuỗi <code>next=1,loading=false</code> (1 mũi tên, 2 icon X; có/không loading).", PART],
+  ["native_intro_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding: <code>true</code> = nút X, <code>false</code> = nút Next. Nếu có <code>wait_time</code> thì chờ hết thời gian đó mới hiện nút.", OK],
 ];
 
 // [nhóm, [tên ad unit...], key, enable, step_count, refresh_rate, collap_config, wait_time, template, mô tả (HTML), trạng thái]
@@ -267,7 +267,7 @@ const PLACEMENTS = [
   ["Collection", ["INTER_COLLECTION", "NATIVE_INTER_COLLECTION"], "inter_collection", "3", "", "", "", "", "", "Quảng cáo khi vào bộ sưu tập. <code>3</code> = Inter rồi Native.", NO],
   ["Result", ["BANNER_RESULT"], "banner_result", "1", "", "", "", "", "", "Banner thường ở màn kết quả.", NO],
   ["Result", ["NATIVE_RESULT"], "native_result", "1", "", "20", "24", "", "Small1",
-    "Native ở màn kết quả, tự tải lại mỗi 20s. <code>collap_config 24</code>: " + ASK + ".", NO],
+    "Native ở màn kết quả, tự tải lại mỗi 20s. <code>collap_config 24</code>: lần bấm X thứ 2 và 4 mở quảng cáo.", NO],
   ["Wallpaper / Setting", ["BANNER_WALLPAPER"], "banner_wallpaper", "1", "", "", "", "", "", "Banner thường ở màn wallpaper.", NO],
   ["Wallpaper / Setting", ["BANNER_SETTING"], "banner_setting", "1", "", "", "", "", "", "Banner thường ở màn Setting.", PART],
   ["Back", ["INTER_BACK", "NATIVE_INTER_BACK"], "inter_back", "3", "", "", "", "", "", "Quảng cáo khi bấm Back. <code>3</code> = Inter rồi Native.", NO],

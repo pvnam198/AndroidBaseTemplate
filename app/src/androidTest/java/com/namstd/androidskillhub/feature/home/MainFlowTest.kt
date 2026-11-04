@@ -53,14 +53,14 @@ class MainFlowTest {
             waitUntilDisplayed(withId(R.id.apply_button))
             onView(withId(R.id.apply_button)).perform(click())
 
-            waitUntilDisplayed(withText("1 / 4"))
+            waitUntilDisplayed(withText(R.string.onboarding_title_1))
             onView(withId(R.id.next_button)).perform(click())
-            waitUntilDisplayed(withText("2 / 4"))
+            waitUntilDisplayed(withText(R.string.onboarding_title_2))
             onView(withId(R.id.next_button)).perform(click())
             // Page 3 is the full-screen native page: its own Next control replaces the bottom button.
             waitUntilDisplayed(withId(R.id.ad_next))
             onView(withId(R.id.ad_next)).perform(click())
-            waitUntilDisplayed(withText("4 / 4"))
+            waitUntilDisplayed(withText(R.string.onboarding_title_3))
             onView(withId(R.id.next_button)).perform(click())
 
             waitUntilDisplayed(withId(R.id.main_feed_tabs))

@@ -5,6 +5,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.namstd.androidskillhub.BuildConfig
+import com.namstd.androidskillhub.core.ads.CollapClickGate
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +15,12 @@ import kotlinx.coroutines.flow.asStateFlow
 /** Giá trị đã parse của key `inter_delay_time`: gap giữa các interstitial (ms) + các loại inter được miễn gap. */
 data class InterDelayConfig(val gapMs: Long, val ignore: Set<String>)
 
-/** Giá trị đã parse của key `language_setup` (`next=1,loading=true`). nextStyle: 1=nút chữ, 2=icon. */
+/** Giá trị đã parse của key `language_setup` (`next=1,loading=true`). nextStyle: 1=icon, 2=nút chữ. */
 data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
 /**
  * Giá trị đã parse của key `intro1_setup` (`next=1,ds=1,delay=0,dot=1`).
- * nextStyle: 1=nút chữ, 2=icon. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
+ * nextStyle: 1=nút (button), 2=chữ không nền. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
  * showDots: hiện chấm tròn.
  */
 data class Intro1Setup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
@@ -88,7 +89,7 @@ object RemoteConfig {
                 KEY_OPEN_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_OPEN_OPEN_GAP_MILLIS, 0L),
                 KEY_INTER_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_INTER_OPEN_GAP_MILLIS, 0L),
                 KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to prefs.getCachedLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT, 2L),
-                KEY_WAIT_TIME to prefs.getCachedLong(KEY_WAIT_TIME, 5_000L),
+                KEY_WAIT_TIME to prefs.getCachedLong(KEY_WAIT_TIME, 0L),
                 KEY_INTRO_SWIPE to prefs.getCachedBoolean(KEY_INTRO_SWIPE, true),
                 KEY_LANGUAGE_DELAY_MILLIS to prefs.getCachedLong(KEY_LANGUAGE_DELAY_MILLIS, 800L),
                 KEY_STEP_COUNT to prefs.getCachedLong(KEY_STEP_COUNT, 1L),
@@ -97,7 +98,7 @@ object RemoteConfig {
                 KEY_NATIVE_INTRO_USE_ICON_NEXT to
                     prefs.getCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, DEFAULT_NATIVE_INTRO_USE_ICON_NEXT),
                 KEY_NATIVE_TEMPLATE to prefs.getCachedString(KEY_NATIVE_TEMPLATE, DEFAULT_NATIVE_TEMPLATE),
-                KEY_COLLAP_CONFIG to prefs.getCachedLong(KEY_COLLAP_CONFIG, 1L),
+                KEY_COLLAP_CONFIG to prefs.getCachedLong(KEY_COLLAP_CONFIG, 0L),
                 KEY_ID_BANNER to prefs.getCachedString(KEY_ID_BANNER, ""),
                 KEY_ID_BANNER_COLLAPSIBLE to prefs.getCachedString(KEY_ID_BANNER_COLLAPSIBLE, ""),
                 KEY_ID_INTERSTITIAL to prefs.getCachedString(KEY_ID_INTERSTITIAL, ""),
@@ -258,23 +259,23 @@ object RemoteConfig {
 
     /**
      * Cấu hình nút Next màn chọn ngôn ngữ (key `language_setup`, dạng `next=1,loading=true`):
-     * `next` = kiểu nút (1=nút chữ, 2=icon), `loading` = có hiện vòng loading trong lúc chờ
+     * `next` = kiểu nút (1=icon dấu check trên thanh tiêu đề, 2=nút chữ), `loading` = có hiện vòng loading trong lúc chờ
      * [languageDelayMillis] trước khi hiện Next hay không.
      */
     val languageSetup: LanguageSetup
         get() {
             val m = parseKeyValues(rcString(KEY_LANGUAGE_SETUP))
             return LanguageSetup(
-                nextStyle = m["next"]?.toIntOrNull() ?: 1,
+                nextStyle = m["next"]?.toIntOrNull() ?: 2,
                 loading = m["loading"]?.toBoolean() ?: false,
             )
         }
 
     /**
      * Cấu hình màn Onboarding (key `intro1_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
-     * `next` = kiểu nút (1=nút chữ, 2=icon), `ds` = vị trí indicator (1=trên nút Next, 0=dưới),
+     * `next` = kiểu nút (1=nút dạng button, 2=chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (1=trên nút Next, 0=dưới),
      * `delay` = số **mili-giây** chờ trước khi hiện nút Next mỗi trang,
-     * `dot` = 1 hiện chấm tròn / 0 hiện text "x/n".
+     * `dot` = 1 hiện chấm tròn / 0 ẩn indicator.
      */
     val intro1Setup: Intro1Setup
         get() {
@@ -288,18 +289,12 @@ object RemoteConfig {
         }
 
     /**
-     * Cấu hình control trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`,
-     * dạng `next=1,loading=true`): `next` = kiểu control (`1` = mũi tên Next, `2` = icon X),
-     * `loading` = có hiện spinner chờ [waitTimeMs] trước khi hiện control hay không. Dùng chung kiểu [LanguageSetup].
+     * Control trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`): `true` = icon X,
+     * `false` = mũi tên Next. Nhận cả `1`/`0`. Spinner chờ [waitTimeMs] trước khi hiện control (0 = hiện ngay).
+     * Đọc dạng chuỗi (cache cũng là chuỗi) để bản cũ lưu `next=1,loading=false` không làm crash prefs.
      */
-    val nativeIntroUseIconNext: LanguageSetup
-        get() {
-            val m = parseKeyValues(rcString(KEY_NATIVE_INTRO_USE_ICON_NEXT))
-            return LanguageSetup(
-                nextStyle = m["next"]?.toIntOrNull() ?: 1,
-                loading = m["loading"]?.toBoolean() ?: false,
-            )
-        }
+    val nativeIntroUseIconNext: Boolean
+        get() = rcString(KEY_NATIVE_INTRO_USE_ICON_NEXT).trim().lowercase() in TRUE_VALUES
 
     /**
      * Layout cho native card render qua [com.namstd.androidskillhub.core.ads.NativeAds] renderDefaultCard
@@ -313,11 +308,12 @@ object RemoteConfig {
         get() = NativeAdTemplate.fromKey(rcString(KEY_NATIVE_TEMPLATE))
 
     /**
-     * Click-bait cho native collapsible ([com.namstd.androidskillhub.core.ads.NativeCollapseAd]): chỉ **tap thứ N**
-     * mới bắn click thật (mở trang quảng cáo); các tap trước bị nuốt. `1` = click đi thẳng như thường (không gating).
+     * Click-bait cho native collapsible ([com.namstd.androidskillhub.core.ads.NativeCollapseAd]): lần bấm **nút X**
+     * nào mở trang quảng cáo thay vì thu gọn, mỗi chữ số một lần (`357` = lần bấm X thứ 3, 5, 7; đếm chung trong
+     * một lần mở app). `0` = tắt. Xem [CollapClickGate].
      */
-    val collapConfig: Int
-        get() = rcLong(KEY_COLLAP_CONFIG).toInt().coerceAtLeast(1)
+    val collapConfig: CollapClickGate
+        get() = CollapClickGate(rcString(KEY_COLLAP_CONFIG))
 
     /** Danh sách ID theo tầng cho waterfall (thứ tự highfloor → medium → all_price). Rỗng = để caller fallback test id. */
     val idBanner: List<String> get() = tieredIds(KEY_ID_BANNER)
@@ -357,11 +353,11 @@ object RemoteConfig {
         KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to "1-2 native sau inter",
         KEY_INTRO_SWIPE to "true/false (vuốt Onboarding)",
         KEY_LANGUAGE_DELAY_MILLIS to "[ms] chờ trước khi hiện nút Language",
-        KEY_LANGUAGE_SETUP to "next=1/2,loading=true/false",
-        KEY_INTRO1_SETUP to "next=1/2,ds=0/1,delay=ms,dot=0/1",
-        KEY_NATIVE_INTRO_USE_ICON_NEXT to "next=1/2,loading=true/false",
+        KEY_LANGUAGE_SETUP to "next=1 icon/2 nút chữ,loading=true/false",
+        KEY_INTRO1_SETUP to "next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
+        KEY_NATIVE_INTRO_USE_ICON_NEXT to "true = icon X / false = Next",
         KEY_NATIVE_TEMPLATE to NativeAdTemplate.keys,
-        KEY_COLLAP_CONFIG to "N: tap thứ N mới click ad collap (1=click ngay)",
+        KEY_COLLAP_CONFIG to "lần bấm X mở QC, vd 357 = lần 3,5,7 (0=tắt)",
         KEY_ID_BANNER to "highfloor=..|..,medium=..,all_price=.. (rỗng=test id)",
         KEY_ID_BANNER_COLLAPSIBLE to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",
         KEY_ID_INTERSTITIAL to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",
@@ -391,11 +387,12 @@ object RemoteConfig {
     private const val KEY_LANGUAGE_DELAY_MILLIS = "language_delay_millis"
     private const val KEY_STEP_COUNT = "step_count"
     private const val KEY_LANGUAGE_SETUP = "language_setup"
-    private const val DEFAULT_LANGUAGE_SETUP = "next=1,loading=false"
+    private const val DEFAULT_LANGUAGE_SETUP = "next=2,loading=false"
     private const val KEY_INTRO1_SETUP = "intro1_setup"
-    private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=0"
+    private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=1"
     private const val KEY_NATIVE_INTRO_USE_ICON_NEXT = "native_intro_use_icon_next"
-    private const val DEFAULT_NATIVE_INTRO_USE_ICON_NEXT = "next=1,loading=false"
+    private const val DEFAULT_NATIVE_INTRO_USE_ICON_NEXT = "false"
+    private val TRUE_VALUES = setOf("true", "1", "t", "yes", "y", "on")
     private const val KEY_NATIVE_TEMPLATE = "native_template"
     private const val DEFAULT_NATIVE_TEMPLATE = "native media"
     private const val KEY_COLLAP_CONFIG = "collap_config"

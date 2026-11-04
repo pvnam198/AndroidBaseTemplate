@@ -65,8 +65,6 @@ internal class NativeCollapseAd(
     /** When the current load's shimmer went up, if it has to stay a minimum time (reloads only). */
     private var minShimmerUntil = 0L
 
-    /** Click-bait (collap_config): số tap đã đếm trên presentation hiện tại; cứ đủ N thì bắn click thật. */
-    private var clickCount = 0
     private val revealRunnable = Runnable { revealPending() }
 
     private val lifecycleObserver = object : DefaultLifecycleObserver {
@@ -136,7 +134,6 @@ internal class NativeCollapseAd(
     /** The ad is on screen from here - so this, not the load, is where the reload gap starts. */
     private fun showLarge(ad: NativeAd) {
         currentAd = ad
-        clickCount = 0
         val view = renderLarge(ad)
         overlay.removeAllViews()
         overlay.addView(view)
@@ -290,10 +287,17 @@ internal class NativeCollapseAd(
         binding.adAdvertiser.visibility = visibility(ad.advertiser)
         binding.adCallToAction.visibility = visibility(ad.callToAction)
         val gate = RemoteConfig.collapConfig
-        if (gate > 1) ad.enableCustomClickGesture()
+        if (gate.isEnabled) ad.enableCustomClickGesture()
         view.registerNativeAd(ad, binding.adMedia)
-        if (gate > 1) addClickBaitOverlay(view, ad, gate, keepOnTop = binding.adClose)
-        binding.adClose.setOnClickListener { showSmall() }
+        binding.adClose.setOnClickListener {
+            // collap_config: some X presses open the ad instead of collapsing - see [CollapClickGate].
+            if (gate.opensAd(++closeTapCount)) {
+                onStatus("Native collapsible: X press $closeTapCount opens the ad")
+                ad.recordCustomClickGesture()
+            } else {
+                showSmall()
+            }
+        }
         return view
     }
 
@@ -312,42 +316,14 @@ internal class NativeCollapseAd(
         binding.adIcon.visibility = visibility(ad.icon)
         binding.adBody.visibility = visibility(ad.body)
         binding.adCallToAction.visibility = visibility(ad.callToAction)
-        val gate = RemoteConfig.collapConfig
-        if (gate > 1) ad.enableCustomClickGesture()
         view.registerNativeAd(ad, null)
-        if (gate > 1) addClickBaitOverlay(view, ad, gate, keepOnTop = null)
         return view
     }
 
-    /**
-     * Click-bait ([RemoteConfig.collapConfig] > 1): phủ 1 lớp trong suốt lên card để bắt mọi tap; cứ đủ [gate]
-     * tap mới gọi [NativeAd.recordCustomClickGesture] (cần [NativeAd.enableCustomClickGesture] trước khi register)
-     * để bắn click thật, rồi reset. Các tap trước bị nuốt. [keepOnTop] (nút close) được đưa lên trên để vẫn bấm được.
-     */
-    private fun addClickBaitOverlay(view: NativeAdView, ad: NativeAd, gate: Int, keepOnTop: View?) {
-        val catcher = object : View(activity) {
-            // Fills the card without stretching it: a plain MATCH_PARENT view inside a WRAP_CONTENT card
-            // would claim the whole screen height. Takes a size only once the parent fixes one exactly.
-            override fun onMeasure(widthSpec: Int, heightSpec: Int) =
-                setMeasuredDimension(exactOrZero(widthSpec), exactOrZero(heightSpec))
-        }.apply {
-            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-            isClickable = true
-            setOnClickListener {
-                if (++clickCount >= gate) {
-                    ad.recordCustomClickGesture()
-                    clickCount = 0
-                }
-            }
-        }
-        // Sit in the same parent as [keepOnTop] so bringToFront() really lifts it above the catcher -
-        // bringToFront() only reorders siblings, so the close button stays tappable.
-        (keepOnTop?.parent as? ViewGroup ?: view).addView(catcher)
-        keepOnTop?.bringToFront()
-    }
-
-    private fun exactOrZero(spec: Int) =
-        if (View.MeasureSpec.getMode(spec) == View.MeasureSpec.EXACTLY) View.MeasureSpec.getSize(spec) else 0
-
     private fun visibility(value: Any?) = if (value == null) View.GONE else View.VISIBLE
+
+    private companion object {
+        /** X presses on large collapsible cards this app session - shared across ads and screens (collap_config). */
+        var closeTapCount = 0
+    }
 }

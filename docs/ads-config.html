@@ -200,7 +200,7 @@
     <h2>Native template</h2>
     <div class="card">
       <p>Bộ template native <b>dùng chung cho mọi vị trí</b>: muốn vị trí nào hiện mẫu nào thì ghi đúng tên mẫu vào cột <code>native_template</code> của vị trí đó (không phân biệt hoa thường). Để trống thì dùng <code>Big1</code>.</p>
-      <p>App đã có sẵn: <code>Big1</code>–<code>Big9</code> (<code>Big6</code> giống hệt <code>Big5</code>), <code>Small1</code>–<code>Small4</code>, <code>Tiny1</code>, <code>Tiny2</code>, <code>Collap1</code>–<code>Collap3</code>, <code>Full1</code>–<code>Full5</code>. <span class="ask">Chưa có: <code>Small5</code>, <code>Small6</code>, <code>Small7</code></span> – cần link frame Figma để dựng (sheet đang dùng <code>Small5</code> ở REWARD_THEME_SETUP).</p>
+      <p>App đã có sẵn: <code>Big1</code>–<code>Big9</code> (<code>Big6</code> giống hệt <code>Big5</code>), <code>Small1</code>–<code>Small4</code>, <code>Tiny1</code>, <code>Tiny2</code>, <code>Collap1</code>–<code>Collap3</code>, <code>Full1</code>–<code>Full5</code>. (<code>Small5</code>–<code>Small7</code> team đã bỏ, không dùng.)</p>
       <p>Màn Language / Get start trong Figma: layout 1 (nút Install ở dưới) là <code>Big1</code> hoặc <code>Big2</code>, layout 2 (nút Install ở trên) là <code>Big5</code>.</p>
     </div>
   </section>
@@ -246,7 +246,7 @@
         <li><span class="ask">cần xác nhận</span> <code>intro1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
         <li><span class="ask">cần xác nhận</span> <code>language_setup.loading</code>: sheet ghi "loading khi load native"; app hiện loading trong lúc chờ <code>language_delay_millis</code>.</li>
         <li><span class="ask">cần xác nhận</span> <code>collap_config</code>: cách mở quảng cáo khi bấm X (xem lỗi ở trên).</li>
-        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); template <code>Small5</code>; <code>native_language = 2</code> (layout 2) và <code>native_language_small</code> dùng ở đâu.</li>
+        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>native_language = 2</code> (layout 2) và <code>native_language_small</code> dùng ở đâu.</li>
       </ul>
     </div>
 
@@ -323,8 +323,8 @@ const PLACEMENTS = [
   ["Home", ["INTER_HOME", "NATIVE_INTER_HOME"], "inter_home", "3", "2", "", "", "", "",
     "Quảng cáo khi thao tác ở Home. <code>3</code> = Inter rồi Native; <code>step_count 2</code> = cứ 2 lần mới hiện 1 lần.", OK],
   ["Theme", ["NATIVE_THEME_SETUP"], "native_theme_setup", "1", "", "", "", "", "", "Native ở màn cài đặt theme.", NO],
-  ["Theme", ["REWARD_THEME_SETUP"], "reward_theme_setup", "1", "", "", "", "", "Small5",
-    "Quảng cáo có thưởng để mở khoá theme. Template <code>Small5</code>: " + ASK + " (chưa có trong Figma).", NO],
+  ["Theme", ["REWARD_THEME_SETUP"], "reward_theme_setup", "1", "", "", "", "", "",
+    "Quảng cáo có thưởng để mở khoá theme. (Sheet ghi template <code>Small5</code>, nhưng team đã bỏ mẫu này.)", NO],
   ["Icon", ["INTER_ICON", "NATIVE_INTER_ICON"], "inter_icon", "3", "", "", "", "", "", "Quảng cáo khi vào phần icon. <code>3</code> = Inter rồi Native.", NO],
   ["Icon", ["REWARD_ICON_SETUP"], "reward_icon_setup", "1", "", "", "", "", "", "Quảng cáo có thưởng để mở khoá icon.", NO],
   ["Icon", ["NATIVE_DIALOG_ICON"], "native_dialog_icon", "1", "", "", "", "", "Tiny1", "Native trong dialog chọn icon.", NO],

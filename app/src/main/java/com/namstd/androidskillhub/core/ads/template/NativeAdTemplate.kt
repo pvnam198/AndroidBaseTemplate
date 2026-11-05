@@ -2,6 +2,8 @@ package com.namstd.androidskillhub.core.ads.template
 
 import androidx.annotation.LayoutRes
 import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.config.AdKey
+import com.namstd.androidskillhub.core.config.PlacementConfig
 
 /**
  * Bộ template card native dùng chung cho mọi vị trí, chọn bằng cột `native_template` của vị trí đó trong
@@ -50,6 +52,25 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     ;
 
     companion object {
+        /**
+         * Vị trí chọn layout bằng `enable` thay vì `native_template` (ghi chú sheet: "native_language, native_get_start:
+         * 1 layout 1, 2 layout 2"): layout 1 = nút Install ở dưới ([BIG1]), layout 2 = nút Install ở trên ([BIG5]).
+         */
+        private val LAYOUT_BY_ENABLE: Map<AdKey, Map<Int, NativeAdTemplate>> = mapOf(
+            AdKey.NATIVE_LANGUAGE to mapOf(1 to BIG1, 2 to BIG5),
+            AdKey.NATIVE_GET_START to mapOf(1 to BIG1, 2 to BIG5),
+        )
+
+        /**
+         * Template cho vị trí [key] với cấu hình [config]. Ở [LAYOUT_BY_ENABLE] thì `enable` quyết định và
+         * `native_template` bị bỏ qua (lỡ ghi cả hai cũng không sao; mã lạ thì về layout 1). Các vị trí khác theo
+         * `native_template`.
+         */
+        fun forPlacement(key: AdKey, config: PlacementConfig): NativeAdTemplate {
+            val layouts = LAYOUT_BY_ENABLE[key] ?: return fromKey(config.nativeTemplate)
+            return layouts[config.enableCode] ?: layouts.getValue(1)
+        }
+
         /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [BIG1]. */
         fun fromKey(value: String?): NativeAdTemplate {
             val key = value?.trim()?.lowercase().orEmpty()

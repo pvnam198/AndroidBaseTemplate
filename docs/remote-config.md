@@ -94,7 +94,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `refresh_rate` | Ms tự tải lại banner/native của ô banner. `0` = không tự tải lại. |
 | `collap_config` | Native collapsible: lần bấm **nút X** nào mở quảng cáo thay vì thu gọn (`357` = lần 3, 5, 7). Bộ đếm chung trong một lần mở app. Cần Google duyệt *custom click gesture* cho tài khoản. |
 | `wait_time` | Ms đếm ngược trên màn native toàn màn hình (sau inter, trang native Intro, Welcome back) trước khi cho đóng/đi tiếp. |
-| `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. Small5–Small7 team đã bỏ, không dùng. |
+| `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. **Ngoại lệ:** `native_language` / `native_get_start` chọn layout bằng `enable`, bỏ qua `native_template`. Small5–Small7 team đã bỏ, không dùng. |
 
 ### Các vị trí app đang dùng
 
@@ -102,7 +102,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 |---|---|---|---|---|
 | `ads_splash` | `2` | 1 AOA · 2 Inter · 3 Inter + native sau inter | `AOA_SPLASH`, `INTER_SPLASH`, `NATIVE_INTER_SPLASH` | Cuối màn Splash |
 | `native_splash` | `0` | 0 tắt · 1 bật | `NATIVE_SPLASH` | Native trên màn Splash |
-| `native_language` | `1` | 0 tắt · ≥1 bật *(layout 2 chưa làm)* | `NATIVE_LANGUAGE` | Màn Language |
+| `native_language` | `1` | 0 tắt · 1 layout 1 (nút Install ở dưới = Big1) · 2 layout 2 (nút Install ở trên = Big5). **Layout chỉ theo `enable`, `native_template` bị bỏ qua** (ghi cả hai vẫn theo `enable`); mã lạ → layout 1 | `NATIVE_LANGUAGE`: màn Language **lần đầu cài app**; `NATIVE_LANGUAGE_2`: màn Language **mở từ Cài đặt** | Màn Language |
 | `inter_language` | `1` | 1 Inter · 2 chỉ native · 3 Inter + native | `INTER_LANGUAGE`, `NATIVE_INTER_LANGUAGE` | Bấm Apply ở Language |
 | `native_intro` | `1234` | Mỗi chữ số = trang Intro có native (`24` = trang 2 và 4) | `NATIVE_INTRO_1` … `NATIVE_INTRO_4` | Chân các trang nội dung Intro |
 | `native_intro_full` | `0` | Mỗi chữ số = trang nội dung có trang native toàn màn hình ngay sau (`123` = sau trang 1, 2, 3); không chèn sau trang cuối | `NATIVE_INTRO_FULL` | Trang native toàn màn hình trong Intro (không có chấm tròn) |

@@ -31,7 +31,11 @@ import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 enum class NativePlacement(val unit: AdUnit) {
     /** Native trên màn Splash (`native_splash`). */
     SPLASH(AdUnit.NATIVE_SPLASH),
+    /** Màn Language lần đầu cài app (luồng Splash → Language → Intro). */
     LANGUAGE(AdUnit.NATIVE_LANGUAGE),
+
+    /** Màn Language mở từ Cài đặt - cùng vị trí `native_language` (enable, layout), ad unit `NATIVE_LANGUAGE_2`. */
+    LANGUAGE_SETTING(AdUnit.NATIVE_LANGUAGE_2),
 
     /** Native ở chân các trang nội dung Intro; `native_intro` liệt kê trang có native (`24` = trang 2 và 4). */
     ONBOARDING_1(AdUnit.NATIVE_INTRO_1),
@@ -70,7 +74,7 @@ enum class NativePlacement(val unit: AdUnit) {
         ONBOARDING_2 -> 2 in config.enableDigits
         ONBOARDING_3 -> 3 in config.enableDigits
         ONBOARDING_4 -> 4 in config.enableDigits
-        SPLASH, LANGUAGE, WELCOME_BACK -> config.enableCode > 0
+        SPLASH, LANGUAGE, LANGUAGE_SETTING, WELCOME_BACK -> config.enableCode > 0
         else -> true
     }
 }
@@ -352,9 +356,12 @@ object NativeAds {
         )
     }
 
-    /** Template của [placement]: cột `native_template` của vị trí chứa unit đó; trống thì dùng mẫu mặc định. */
+    /**
+     * Template của [placement]: theo cột `native_template` của vị trí chứa unit đó (trống → Big1), riêng
+     * `native_language` / `native_get_start` theo `enable` - xem [NativeAdTemplate.forPlacement].
+     */
     fun templateFor(placement: NativePlacement): NativeAdTemplate =
-        NativeAdTemplate.fromKey(AdPolicy.config(placement.unit.key).nativeTemplate)
+        NativeAdTemplate.forPlacement(placement.unit.key, AdPolicy.config(placement.unit.key))
 
     /** Inflate [template] và gắn [ad] vào đó - cho bất kỳ màn nào muốn dùng một template cụ thể. */
     fun renderTemplate(activity: Activity, ad: NativeAd, template: NativeAdTemplate): NativeAdView {

@@ -43,23 +43,12 @@
                 android:orientation="horizontal"
                 android:padding="12dp">
 
+                <!-- Mở màn chọn ngôn ngữ (native NATIVE_LANGUAGE_2); chữ trên nút là ngôn ngữ đang dùng. -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/english_button"
+                    android:id="@+id/language_button"
                     style="@style/Widget.App.Button.Outlined"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:text="English" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/vietnamese_button"
-                    style="@style/Widget.App.Button.Outlined"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:text="Tiếng Việt" />
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
 
             <TextView

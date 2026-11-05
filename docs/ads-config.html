@@ -201,7 +201,7 @@
     <div class="card">
       <p>Bộ template native <b>dùng chung cho mọi vị trí</b>: muốn vị trí nào hiện mẫu nào thì ghi đúng tên mẫu vào cột <code>native_template</code> của vị trí đó (không phân biệt hoa thường). Để trống thì dùng <code>Big1</code>.</p>
       <p>App đã có sẵn: <code>Big1</code>–<code>Big9</code> (<code>Big6</code> giống hệt <code>Big5</code>), <code>Small1</code>–<code>Small4</code>, <code>Tiny1</code>, <code>Tiny2</code>, <code>Collap1</code>–<code>Collap3</code>, <code>Full1</code>–<code>Full5</code>. (<code>Small5</code>–<code>Small7</code> team đã bỏ, không dùng.)</p>
-      <p>Màn Language / Get start trong Figma: layout 1 (nút Install ở dưới) là <code>Big1</code> hoặc <code>Big2</code>, layout 2 (nút Install ở trên) là <code>Big5</code>.</p>
+      <p><b>Ngoại lệ</b> – màn Language / Get start (<code>native_language</code>, <code>native_get_start</code>): layout chọn bằng <code>enable</code>, không dùng <code>native_template</code>. <code>1</code> = layout 1, nút Install ở dưới (<code>Big1</code>); <code>2</code> = layout 2, nút Install ở trên (<code>Big5</code>). Lỡ ghi cả <code>native_template</code> thì vẫn theo <code>enable</code>.</p>
     </div>
   </section>
 
@@ -246,7 +246,7 @@
         <li><span class="ask">cần xác nhận</span> <code>intro1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
         <li><span class="ask">cần xác nhận</span> <code>language_setup.loading</code>: sheet ghi "loading khi load native"; app hiện loading trong lúc chờ <code>language_delay_millis</code>.</li>
         <li><span class="ask">cần xác nhận</span> <code>collap_config</code>: cách mở quảng cáo khi bấm X (xem lỗi ở trên).</li>
-        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>native_language = 2</code> (layout 2) và <code>native_language_small</code> dùng ở đâu.</li>
+        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>native_language_small</code> nằm ở đâu trên màn Language.</li>
       </ul>
     </div>
 
@@ -304,7 +304,7 @@ const PLACEMENTS = [
     "Quảng cáo khi mở app. <code>3</code> = Interstitial rồi Native toàn màn hình, đếm ngược 5s.", OK],
   ["Splash", ["NATIVE_SPLASH"], "native_splash", "1", "", "", "", "", "Big5", "Native trên màn Splash.", OK],
   ["Language", ["NATIVE_LANGUAGE", "NATIVE_LANGUAGE_2"], "native_language", "1", "", "", "", "", "",
-    "Native ở màn chọn ngôn ngữ. Ad unit thứ 2 dùng khi cần native thứ hai (ví dụ sau khi chọn ngôn ngữ). " + ASK + ".", PART + ' <span class="muted">chưa có layout 2 và NATIVE_LANGUAGE_2</span>'],
+    "Native ở màn chọn ngôn ngữ. <code>enable</code> chọn layout: <code>1</code> = nút Install ở dưới (Big1), <code>2</code> = nút Install ở trên (Big5). Vị trí này không dùng <code>native_template</code> (lỡ ghi cũng theo <code>enable</code>). <code>NATIVE_LANGUAGE</code> dùng ở màn chọn ngôn ngữ lần đầu cài app; <code>NATIVE_LANGUAGE_2</code> dùng khi mở màn chọn ngôn ngữ từ Cài đặt.", OK],
   ["Language", ["NATIVE_LANGUAGE_SMALL"], "native_language_small", "1", "", "", "", "", "Tiny1", "Native nhỏ (dải Tiny1) ở màn Language.", NO],
   ["Language", ["INTER_LANGUAGE", "NATIVE_INTER_LANGUAGE"], "inter_language", "3", "", "", "", "3",
     "", "Quảng cáo khi bấm xác nhận ngôn ngữ. <code>3</code> = Inter rồi Native toàn màn hình, đếm ngược 3s.", OK],

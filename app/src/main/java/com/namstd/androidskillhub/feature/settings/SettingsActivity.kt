@@ -12,6 +12,7 @@ import com.namstd.androidskillhub.core.language.AppLanguage
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivitySettingsBinding
 import com.namstd.androidskillhub.feature.debug.DebugConfigActivity
+import com.namstd.androidskillhub.feature.language.LanguageActivity
 import com.namstd.androidskillhub.feature.premium.PremiumActivity
 
 class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
@@ -25,10 +26,13 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
         loadBanner(binding.bannerContainer, BannerPlacement.SETTING)
     }
 
+    override fun onResume() {
+        super.onResume()
+        binding.languageButton.text = (AppLanguage.fromCode(prefs.selectedLanguage) ?: AppLanguage.default).displayName
+    }
+
     override fun initListeners() {
-        fun language(language: AppLanguage) { prefs.selectedLanguage = language.code; prefs.applyLocale(language.code) }
-        binding.englishButton.setOnClickListener { language(AppLanguage.ENGLISH) }
-        binding.vietnameseButton.setOnClickListener { language(AppLanguage.VIETNAMESE) }
+        binding.languageButton.setOnClickListener { LanguageActivity.openFromSettings(this) }
         binding.privacyButton.setOnClickListener { Ads.showPrivacyOptions(this) }
         binding.resetOnboardingButton.setOnClickListener {
             prefs.resetOnboarding()

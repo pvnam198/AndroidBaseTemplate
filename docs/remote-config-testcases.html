@@ -171,7 +171,10 @@ const CASES = [
 [52,"inter_home","1","Màn chính bấm Cài đặt","Interstitial rồi vào Cài đặt",""],
 [53,"premium","-","Settings → Premium → Upgrade, quay lại app","Tắt mọi quảng cáo",""],
 [54,"ad_config","{\"settings\":{\"ads_enable\":1,…},\"ads_splash\":{\"enable\":3,\"wait_time\":3000},\"inter_language\":{\"enable\":1},\"native_intro\":{\"enable\":24},\"inter_intro\":{\"enable\":0},\"banner_home\":{\"enable\":4}}","Dán cả khối vào dòng ad_config, đi hết luồng","Inter + native sau inter (3s) ở Splash; inter ở Language; native trang 2, 4; không inter cuối Intro; native collapsible ở màn chính",""],
-[55,"inter_language (dòng riêng)","ad_config có inter_language enable 1 + dòng inter_language = 0","Language bấm Apply","Không có inter (dòng riêng thắng ad_config)",""]
+[55,"inter_language (dòng riêng)","ad_config có inter_language enable 1 + dòng inter_language = 0","Language bấm Apply","Không có inter (dòng riêng thắng ad_config)",""],
+[56,"native_language","2","Vào màn Language","Native layout 2: nút Install ở trên ảnh (Big5)",""],
+[57,"native_language","{\"enable\":2,\"native_template\":\"Big1\"}","Vào màn Language","Vẫn layout 2 (nút Install ở trên) - native_template bị bỏ qua",""],
+[58,"native_language (NATIVE_LANGUAGE_2)","1 (default)","Cài đặt → bấm nút ngôn ngữ","Mở màn chọn ngôn ngữ có native (ad unit NATIVE_LANGUAGE_2); chọn ngôn ngữ, bấm Apply → lưu và quay lại Cài đặt, không có inter",""]
 ];
 const GROUPS = [
   ["Debug Config", id => id >= 1 && id <= 3],
@@ -188,7 +191,8 @@ const GROUPS = [
   ["banner_setting", id => id >= 51 && id <= 51],
   ["inter_home", id => id >= 52 && id <= 52],
   ["Regression", id => id >= 53 && id <= 53],
-  ["ad_config", id => id >= 54 && id <= 55]
+  ["ad_config", id => id >= 54 && id <= 55],
+  ["native_language (layout)", id => id >= 56 && id <= 58]
 ];
 const RESTART = new Set([4,5,6,7,21,22,25,26,27,28,29,30,44,45]);
 const groupOf = id => GROUPS.find(g => g[1](id))[0];
@@ -225,7 +229,10 @@ const RESULTS = /*RESULTS-START*/{5:["pass","Luồng mặc định (case 25, 31,
 36:["pass","Theo format ad_config (id1 hỏng, id2 test): waterfall sang id2, inter hiện",false],
 45:["pass","settings.on_resume = 2: về nền rồi mở lại → màn Welcome back",false],
 54:["pass","Splash inter ~6s, native sau inter đếm 1 → X; Language inter; Intro native trang 2, 4; không inter cuối Intro; màn chính có thẻ collapsible",false],
-55:["pass","Không có inter",false]}/*RESULTS-END*/;
+55:["pass","Không có inter",false],
+56:["pass","enable 2 (kèm native_template Big1): nút Install y=1599 nằm trên ảnh y=2017 → layout 2 (Big5). Máy 23090RA98G",false],
+57:["pass","enable 2 + native_template Big1 → vẫn layout 2; ngược lại enable 1 + native_template Big5 → nút Install y=2462 dưới ảnh y=1849 → layout 1. native_template bị bỏ qua đúng",false],
+58:["pass","Cài đặt → nút ngôn ngữ → màn Language: với test ID có native; cho NATIVE_LANGUAGE_2 ID hỏng thì không có native (còn màn Language lần đầu vẫn có) → đúng ad unit riêng. Bấm Apply quay lại Cài đặt, không có inter",false]}/*RESULTS-END*/;
 
 const PARAMS = [
  ["Cấu hình chung (settings trong ad_config)", [

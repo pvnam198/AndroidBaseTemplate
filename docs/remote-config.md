@@ -164,9 +164,10 @@ Spec gốc (file `Remote Config.pdf`) mô tả bộ key legacy khác tên. App *
 - [x] `intro1_setup` … `intro4_setup`: mỗi trang nội dung một key, trống thì dùng intro1; Onboarding thành 4 trang nội dung; trang native toàn màn hình chuyển thành tuỳ chọn `native_intro_full` = danh sách trang (vd `123` = sau trang 1, 2, 3; mặc định không có) *(05/11/2026)*
 - [ ] **Lỗi:** `collap_config` khác 0 thì bấm vào thẻ collapsible không mở QC (test case 43) - chờ chọn cách mở QC
 - [ ] Cần team xác nhận: `ads_enable = 2` có xét thêm test ad không; inter của kịch bản B; `intro1_setup.ds`; `language_setup.loading`; bộ đếm `collap_config` chung hay theo vị trí
-- [ ] Chưa làm: cấu hình riêng cho từng vị trí (`enable` / `step_count` / `wait_time` / `collap_config` / `native_template` / ID theo vị trí), `refresh_rate` cho native, `release_log`, `time_out_init`, `mt_native_cta_only`, các vị trí `_first`
+- [ ] Chưa làm: cấu hình riêng cho từng vị trí (`enable` / `step_count` / `wait_time` / `collap_config` / `native_template` / ID theo vị trí), `refresh_rate` cho native, `time_out_init`, `mt_native_cta_only`, các vị trí `_first`
 
 - [x] `splash_fallback`: Splash không kịp hiện QC thì inter bù ở Language khi bấm Apply *(05/11/2026)*
+- [x] Bỏ `release_log`: sheet không ghi rõ ý nghĩa, app không có key này *(05/11/2026)*
 - [x] Bỏ `taller_banner_enabled`: app luôn dùng banner co giãn theo chiều rộng màn hình (tablet tự cao hơn), không có công tắc *(05/11/2026)*
 
 Chi tiết trạng thái từng phần: mục "Trạng thái trong app" trong `ads-config.html`.

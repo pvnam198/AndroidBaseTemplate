@@ -19,11 +19,11 @@ data class InterDelayConfig(val gapMs: Long, val ignore: Set<String>)
 data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
 /**
- * Giá trị đã parse của key `intro1_setup` (`next=1,ds=1,delay=0,dot=1`).
+ * Giá trị đã parse của một key `intro1_setup` … `intro4_setup` (`next=1,ds=1,delay=0,dot=1`), mỗi key cho một trang nội dung.
  * nextStyle: 1=nút (button), 2=chữ không nền. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
  * showDots: hiện chấm tròn.
  */
-data class Intro1Setup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
+data class IntroSetup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
 
 /**
  * Giá trị đã parse của key `enable`: loại quảng cáo cho từng vị trí (`0` = tắt vị trí đó).
@@ -95,6 +95,11 @@ object RemoteConfig {
                 KEY_STEP_COUNT to prefs.getCachedLong(KEY_STEP_COUNT, 1L),
                 KEY_LANGUAGE_SETUP to prefs.getCachedString(KEY_LANGUAGE_SETUP, DEFAULT_LANGUAGE_SETUP),
                 KEY_INTRO1_SETUP to prefs.getCachedString(KEY_INTRO1_SETUP, DEFAULT_INTRO1_SETUP),
+                // intro2-4 không có default: thiếu thì dùng lại intro1 (xem [introSetup]).
+                KEY_INTRO2_SETUP to prefs.getCachedString(KEY_INTRO2_SETUP, ""),
+                KEY_INTRO3_SETUP to prefs.getCachedString(KEY_INTRO3_SETUP, ""),
+                KEY_INTRO4_SETUP to prefs.getCachedString(KEY_INTRO4_SETUP, ""),
+                KEY_NATIVE_INTRO_FULL to prefs.getCachedString(KEY_NATIVE_INTRO_FULL, ""),
                 KEY_NATIVE_INTRO_USE_ICON_NEXT to
                     prefs.getCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, DEFAULT_NATIVE_INTRO_USE_ICON_NEXT),
                 KEY_NATIVE_TEMPLATE to prefs.getCachedString(KEY_NATIVE_TEMPLATE, DEFAULT_NATIVE_TEMPLATE),
@@ -131,6 +136,10 @@ object RemoteConfig {
         prefs.putCachedLong(KEY_STEP_COUNT, remoteConfig.getLong(KEY_STEP_COUNT))
         prefs.putCachedString(KEY_LANGUAGE_SETUP, remoteConfig.getString(KEY_LANGUAGE_SETUP))
         prefs.putCachedString(KEY_INTRO1_SETUP, remoteConfig.getString(KEY_INTRO1_SETUP))
+        prefs.putCachedString(KEY_INTRO2_SETUP, remoteConfig.getString(KEY_INTRO2_SETUP))
+        prefs.putCachedString(KEY_INTRO3_SETUP, remoteConfig.getString(KEY_INTRO3_SETUP))
+        prefs.putCachedString(KEY_INTRO4_SETUP, remoteConfig.getString(KEY_INTRO4_SETUP))
+        prefs.putCachedString(KEY_NATIVE_INTRO_FULL, remoteConfig.getString(KEY_NATIVE_INTRO_FULL))
         prefs.putCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, remoteConfig.getString(KEY_NATIVE_INTRO_USE_ICON_NEXT))
         prefs.putCachedString(KEY_NATIVE_TEMPLATE, remoteConfig.getString(KEY_NATIVE_TEMPLATE))
         prefs.putCachedLong(KEY_COLLAP_CONFIG, remoteConfig.getLong(KEY_COLLAP_CONFIG))
@@ -272,21 +281,30 @@ object RemoteConfig {
         }
 
     /**
-     * Cấu hình màn Onboarding (key `intro1_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
+     * Cấu hình trang nội dung thứ [page] (1-4) của Onboarding (key `intro{page}_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
      * `next` = kiểu nút (1=nút dạng button, 2=chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (1=trên nút Next, 0=dưới),
-     * `delay` = số **mili-giây** chờ trước khi hiện nút Next mỗi trang,
-     * `dot` = 1 hiện chấm tròn / 0 ẩn indicator.
+     * `delay` = số **mili-giây** chờ trước khi hiện nút Next, `dot` = 1 hiện chấm tròn / 0 ẩn indicator.
+     * Trang native toàn màn hình không tính là trang nội dung. Key của trang nào để trống thì dùng lại `intro1_setup`.
      */
-    val intro1Setup: Intro1Setup
-        get() {
-            val m = parseKeyValues(rcString(KEY_INTRO1_SETUP))
-            return Intro1Setup(
-                nextStyle = m["next"]?.toIntOrNull() ?: 1,
-                indicatorPosition = m["ds"]?.toIntOrNull() ?: 1,
-                delayMs = m["delay"]?.toLongOrNull()?.coerceAtLeast(0L) ?: 0L,
-                showDots = m["dot"]?.toIntOrNull() == 1,
-            )
-        }
+    fun introSetup(page: Int): IntroSetup {
+        val key = INTRO_SETUP_KEYS.getOrElse(page - 1) { KEY_INTRO1_SETUP }
+        val raw = rcString(key).ifBlank { rcString(KEY_INTRO1_SETUP) }
+        val m = parseKeyValues(raw)
+        return IntroSetup(
+            nextStyle = m["next"]?.toIntOrNull() ?: 1,
+            indicatorPosition = m["ds"]?.toIntOrNull() ?: 1,
+            delayMs = m["delay"]?.toLongOrNull()?.coerceAtLeast(0L) ?: 0L,
+            showDots = m["dot"]?.toIntOrNull() == 1,
+        )
+    }
+
+    /**
+     * Trang native toàn màn hình trong Onboarding (key `native_intro_full`): mỗi chữ số là một trang nội dung có
+     * trang native full chèn ngay sau nó. `123` = sau trang 1, 2 và 3; `2` = chỉ sau trang 2; `0`/trống = không có.
+     * Chữ số không có trang nội dung tương ứng phía sau (vd `4` khi Intro có 4 trang) bị bỏ qua.
+     */
+    val nativeIntroFullPages: Set<Int>
+        get() = rcString(KEY_NATIVE_INTRO_FULL).filter { it.isDigit() }.map { it.digitToInt() }.filter { it >= 1 }.toSet()
 
     /**
      * Control trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`): `true` = icon X,
@@ -354,7 +372,11 @@ object RemoteConfig {
         KEY_INTRO_SWIPE to "true/false (vuốt Onboarding)",
         KEY_LANGUAGE_DELAY_MILLIS to "[ms] chờ trước khi hiện nút Language",
         KEY_LANGUAGE_SETUP to "next=1 icon/2 nút chữ,loading=true/false",
-        KEY_INTRO1_SETUP to "next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
+        KEY_INTRO1_SETUP to "trang nội dung 1: next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
+        KEY_INTRO2_SETUP to "trang nội dung 2, cùng dạng intro1 (trống = dùng intro1)",
+        KEY_INTRO3_SETUP to "trang nội dung 3, cùng dạng intro1 (trống = dùng intro1)",
+        KEY_INTRO4_SETUP to "trang nội dung 4, cùng dạng intro1 (trống = dùng intro1)",
+        KEY_NATIVE_INTRO_FULL to "mỗi chữ số = trang có native full ngay sau, vd 123 = sau trang 1,2,3 (0 = không có)",
         KEY_NATIVE_INTRO_USE_ICON_NEXT to "true = icon X / false = Next",
         KEY_NATIVE_TEMPLATE to NativeAdTemplate.keys,
         KEY_COLLAP_CONFIG to "lần bấm X mở QC, vd 357 = lần 3,5,7 (0=tắt)",
@@ -389,6 +411,11 @@ object RemoteConfig {
     private const val KEY_LANGUAGE_SETUP = "language_setup"
     private const val DEFAULT_LANGUAGE_SETUP = "next=2,loading=false"
     private const val KEY_INTRO1_SETUP = "intro1_setup"
+    private const val KEY_INTRO2_SETUP = "intro2_setup"
+    private const val KEY_INTRO3_SETUP = "intro3_setup"
+    private const val KEY_INTRO4_SETUP = "intro4_setup"
+    private val INTRO_SETUP_KEYS = listOf(KEY_INTRO1_SETUP, KEY_INTRO2_SETUP, KEY_INTRO3_SETUP, KEY_INTRO4_SETUP)
+    private const val KEY_NATIVE_INTRO_FULL = "native_intro_full"
     private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=1"
     private const val KEY_NATIVE_INTRO_USE_ICON_NEXT = "native_intro_use_icon_next"
     private const val DEFAULT_NATIVE_INTRO_USE_ICON_NEXT = "false"

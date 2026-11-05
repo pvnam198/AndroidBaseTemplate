@@ -57,10 +57,10 @@ class MainFlowTest {
             onView(withId(R.id.next_button)).perform(click())
             waitUntilDisplayed(withText(R.string.onboarding_title_2))
             onView(withId(R.id.next_button)).perform(click())
-            // Page 3 is the full-screen native page: its own Next control replaces the bottom button.
-            waitUntilDisplayed(withId(R.id.ad_next))
-            onView(withId(R.id.ad_next)).perform(click())
             waitUntilDisplayed(withText(R.string.onboarding_title_3))
+            onView(withId(R.id.next_button)).perform(click())
+            // No full-screen native page by default (native_intro_full = 0): four content pages in a row.
+            waitUntilDisplayed(withText(R.string.onboarding_title_4))
             onView(withId(R.id.next_button)).perform(click())
 
             waitUntilDisplayed(withId(R.id.main_feed_tabs))

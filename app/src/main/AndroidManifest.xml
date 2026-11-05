@@ -18,6 +18,7 @@
             android:value="@string/admob_app_id" />
         <activity
             android:name=".feature.splash.SplashActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,26 +28,33 @@
         </activity>
         <activity
             android:name=".feature.language.LanguageActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".feature.onboarding.OnboardingActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".feature.main.MainActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".feature.settings.SettingsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".feature.premium.PremiumActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".feature.welcome.WelcomeBackActivity"
+            android:screenOrientation="portrait"
             android:exported="false"
             android:launchMode="singleTop"
             android:noHistory="true" />
         <activity
             android:name=".feature.debug.DebugConfigActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
     </application>
 

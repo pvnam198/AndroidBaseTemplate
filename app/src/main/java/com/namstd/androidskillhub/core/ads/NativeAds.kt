@@ -24,7 +24,7 @@ import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 enum class NativePlacement {
-    LANGUAGE, ONBOARDING_1, ONBOARDING_2, ONBOARDING_3, ONBOARDING_AD, HOME_FEED, POST_INTERSTITIAL,
+    LANGUAGE, ONBOARDING_1, ONBOARDING_2, ONBOARDING_3, ONBOARDING_4, ONBOARDING_AD, HOME_FEED, POST_INTERSTITIAL,
 
     /** Shared app-wide slot for [NativeCollapseAd] - one placement for every collapsible call site. */
     NATIVE_COLLAPSIBLE,

@@ -7,57 +7,44 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.tabs.TabLayoutMediator
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
-import com.namstd.androidskillhub.core.config.Intro1Setup
+import com.namstd.androidskillhub.core.config.IntroSetup
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityOnboardingBinding
 import com.namstd.androidskillhub.feature.main.MainActivity
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
-    private lateinit var setup: Intro1Setup
-    private lateinit var nextControl: View
-    private var dotsMediator: TabLayoutMediator? = null
+    /**
+     * What each pager position shows: a content page index (0-based, reads `intro{index + 1}_setup`), or
+     * [AD_PAGE] for a full-screen native page that `native_intro_full` inserts after a content page.
+     */
+    private lateinit var pages: List<Int>
+    private var revealJob: Job? = null
 
     override fun inflateBinding(inflater: LayoutInflater): ActivityOnboardingBinding =
         ActivityOnboardingBinding.inflate(inflater)
 
     override fun initViews() {
+        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, RemoteConfig.nativeIntroFullPages)
         binding.onboardingPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount() = PAGE_COUNT
+            override fun getItemCount() = pages.size
             override fun createFragment(position: Int) =
-                if (position == AD_PAGE) OnboardingAdFragment() else OnboardingPageFragment.newInstance(contentIndex(position))
+                if (pages[position] == AD_PAGE) OnboardingAdFragment() else OnboardingPageFragment.newInstance(pages[position])
         }
         binding.onboardingPager.isUserInputEnabled = RemoteConfig.introSwipe
-
-        setup = RemoteConfig.intro1Setup
-
-        // next: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
-        val useText = setup.nextStyle == 2
-        nextControl = if (useText) binding.nextText else binding.nextButton
-        binding.nextButton.isVisible = !useText
-        binding.nextText.isVisible = useText
-        // Có delay thì ẩn trước, onPageSelected sẽ hiện lại sau delay.
-        if (setup.delayMs > 0L) nextControl.isVisible = false
-
-        // dot: 1 = chấm tròn (TabLayout), 0 = ẩn indicator.
         binding.pageIndicator.isVisible = false
-        binding.pageDots.isVisible = setup.showDots
-        if (setup.showDots) {
-            dotsMediator = TabLayoutMediator(binding.pageDots, binding.onboardingPager) { _, _ -> }
-                .also { it.attach() }
+        // One dot per content page - the full-screen native pages get no dot. Dots only show progress, so not tappable.
+        repeat(OnboardingPageFragment.CONTENT_PAGE_COUNT) {
+            binding.pageDots.addTab(binding.pageDots.newTab().also { tab -> tab.view.isClickable = false })
         }
-
-        // ds: 0 = indicator xuống dưới nút Next (mặc định 1 = phía trên).
-        if (setup.indicatorPosition == 0) {
-            val root = binding.root
-            root.removeView(binding.indicatorContainer)
-            root.addView(binding.indicatorContainer, root.indexOfChild(binding.nextContainer) + 1)
-        }
+        // ViewPager2 reports page 0 from inside its own layout pass, where visibility changes don't get laid out -
+        // so the first page's setup goes on before the first layout. Page 0 is always a content page.
+        applySetup(RemoteConfig.introSetup(pages.first() + 1))
 
         loadBanner(binding.bannerContainer, inApp = false)
     }
@@ -65,35 +52,61 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     override fun initListeners() {
         binding.onboardingPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                binding.pageIndicator.text = "${position + 1} / $PAGE_COUNT"
-                val label = if (position == PAGE_COUNT - 1) R.string.get_started else R.string.next
+                val label = if (position == pages.lastIndex) R.string.get_started else R.string.next
                 binding.nextButton.setText(label)
                 binding.nextText.setText(label)
-                // Trang quảng cáo native fullscreen có control riêng (xem OnboardingAdFragment) → ẩn nút đáy.
-                if (position == AD_PAGE) nextControl.isVisible = false else revealNextAfterDelay()
+                if (pages[position] == AD_PAGE) {
+                    // Trang quảng cáo native fullscreen có control riêng (xem OnboardingAdFragment) → ẩn nút đáy,
+                    // và không có chấm (INVISIBLE, không GONE, để trang không nhảy chiều cao).
+                    revealJob?.cancel()
+                    binding.nextButton.isVisible = false
+                    binding.nextText.isVisible = false
+                    if (binding.pageDots.isVisible) binding.pageDots.visibility = View.INVISIBLE
+                } else {
+                    binding.pageDots.getTabAt(pages[position])?.select()
+                    applySetup(RemoteConfig.introSetup(pages[position] + 1))
+                }
             }
         })
         binding.nextButton.setOnClickListener { advanceOnboarding() }
         binding.nextText.setOnClickListener { advanceOnboarding() }
     }
 
-    /** Sang trang onboarding kế tiếp, hoặc kết thúc setup ở trang cuối. Public để [OnboardingAdFragment] gọi từ control riêng của nó. */
-    fun advanceOnboarding() {
-        if (binding.onboardingPager.currentItem < PAGE_COUNT - 1) binding.onboardingPager.currentItem += 1 else finishSetup()
-    }
+    /** Áp `intro{n}_setup` của trang đang hiện: kiểu nút Next, chấm tròn, vị trí cụm chấm, delay trước khi hiện Next. */
+    private fun applySetup(setup: IntroSetup) {
+        // next: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
+        val useText = setup.nextStyle == 2
+        val nextControl: View = if (useText) binding.nextText else binding.nextButton
+        (if (useText) binding.nextButton else binding.nextText).isVisible = false
 
-    /** Hiện nút Next sau [Intro1Setup.delayMs] (ẩn trước nếu có delay). */
-    private fun revealNextAfterDelay() {
-        if (setup.delayMs <= 0L) { nextControl.isVisible = true; return }
-        nextControl.isVisible = false
-        lifecycleScope.launch {
-            delay(setup.delayMs)
+        // dot: 1 = chấm tròn, 0 = ẩn.
+        binding.pageDots.isVisible = setup.showDots
+
+        // ds: 0 = cụm chấm xuống dưới nút Next, 1 = phía trên.
+        val root = binding.root
+        val indicatorBelow = root.indexOfChild(binding.indicatorContainer) > root.indexOfChild(binding.nextContainer)
+        if (indicatorBelow != (setup.indicatorPosition == 0)) {
+            root.removeView(binding.indicatorContainer)
+            val nextIndex = root.indexOfChild(binding.nextContainer)
+            root.addView(binding.indicatorContainer, if (setup.indicatorPosition == 0) nextIndex + 1 else nextIndex)
+        }
+
+        revealJob?.cancel()
+        if (setup.delayMs <= 0L) {
             nextControl.isVisible = true
+        } else {
+            nextControl.isVisible = false
+            revealJob = lifecycleScope.launch {
+                delay(setup.delayMs)
+                nextControl.isVisible = true
+            }
         }
     }
 
-    /** Maps a page position to its content index, skipping the full-ad page at [AD_PAGE]. */
-    private fun contentIndex(position: Int) = if (position > AD_PAGE) position - 1 else position
+    /** Sang trang onboarding kế tiếp, hoặc kết thúc setup ở trang cuối. Public để [OnboardingAdFragment] gọi từ control riêng của nó. */
+    fun advanceOnboarding() {
+        if (binding.onboardingPager.currentItem < pages.lastIndex) binding.onboardingPager.currentItem += 1 else finishSetup()
+    }
 
     private fun finishSetup() {
         prefs.setupCompleted = true
@@ -106,13 +119,20 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     }
 
     override fun releaseResources() {
-        dotsMediator?.detach()
-        dotsMediator = null
+        revealJob?.cancel()
         binding.onboardingPager.adapter = null
     }
 
     companion object {
-        private const val PAGE_COUNT = 4
-        private const val AD_PAGE = 2
+        private const val AD_PAGE = -1
+
+        /**
+         * Content pages 0 until [contentCount], with an [AD_PAGE] after each content page listed in [adAfterPages]
+         * (1-based). Never after the last content page - Onboarding always ends on content.
+         */
+        internal fun buildPages(contentCount: Int, adAfterPages: Set<Int>): List<Int> =
+            (0 until contentCount).flatMap { index ->
+                if (index + 1 in adAfterPages && index + 1 < contentCount) listOf(index, AD_PAGE) else listOf(index)
+            }
     }
 }

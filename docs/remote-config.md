@@ -129,7 +129,8 @@ Dùng bởi `PostInterstitialNativeAdDialogFragment` (flow 2 stage).
 | `intro_swipe` | Boolean | `true` | Cho phép vuốt (swipe) ở màn Onboarding (`OnboardingActivity`, `ViewPager2.isUserInputEnabled`). `true` = vuốt được (mặc định); `false` = chỉ chuyển trang bằng nút Next. |
 | `language_delay_millis` | Long (**ms**) | `800` | Thời gian chờ trước khi nút xác nhận (`apply_button`) ở màn chọn ngôn ngữ (`LanguageActivity`) hiện ra. `0` = hiện ngay. **Đơn vị đã là mili-giây — getter KHÔNG nhân ×1000** (khác các key gap tính bằng giây). |
 | `language_setup` | String | `next=2,loading=false` | Nút Next màn Language. Dạng `next=1,loading=true`: `next` = kiểu nút (`1` icon dấu check trên thanh tiêu đề, `2` nút chữ), `loading` = có hiện vòng loading trong lúc chờ `language_delay_millis` không. Parse ra `RemoteConfig.languageSetup` (`LanguageSetup`). |
-| `intro1_setup` | String | `next=1,ds=1,delay=0,dot=1` | UI màn Onboarding. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` nút dạng button, `2` chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next mỗi trang (vd `1500`), `dot` = `1` hiện chấm tròn (TabLayout) / `0` ẩn indicator. Parse ra `RemoteConfig.intro1Setup` (`Intro1Setup`). |
+| `intro1_setup` … `intro4_setup` | String | intro1: `next=1,ds=1,delay=0,dot=1`; intro2-4: trống | UI **từng trang nội dung** của Onboarding: `introN_setup` áp cho trang nội dung thứ N (trang native toàn màn hình không tính). App có 4 trang nội dung; app có ít trang hơn thì key thừa bị bỏ qua. Key nào trống thì trang đó dùng lại `intro1_setup`. Dạng `next=1,ds=1,delay=0,dot=1`: `next` = kiểu nút (`1` nút dạng button, `2` chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (`1` trên nút Next, `0` dưới), `delay` = **ms** chờ trước khi hiện nút Next (vd `1500`), `dot` = `1` hiện chấm tròn / `0` ẩn. Đọc qua `RemoteConfig.introSetup(page)` (`IntroSetup`). |
+| `native_intro_full` | String | trống | Trang native toàn màn hình trong Onboarding: **mỗi chữ số là một trang nội dung có trang native full chèn ngay sau nó**. Intro có 4 trang thì giá trị đầy đủ là `123` = sau trang 1, 2 và 3 (7 trang); `2` = chỉ sau trang 2; `13` = sau trang 1 và 3; `0`/trống = không có. Không bao giờ chèn sau trang cuối (chữ số `4` bị bỏ qua). Trang native full **không có chấm tròn**: chấm chỉ đếm trang nội dung (luôn 4 chấm). Đọc qua `RemoteConfig.nativeIntroFullPages`. |
 | `native_intro_use_icon_next` | Boolean | `false` | Control riêng cho trang native fullscreen trong Onboarding (`OnboardingAdFragment`): `true` = icon X, `false` = mũi tên Next (cả hai bấm đều sang trang kế). Nhận cả `1`/`0`. `wait_time` > 0 thì hiện spinner chờ trước khi hiện control. |
 
 ---
@@ -149,7 +150,21 @@ Spec gốc (file `Remote Config.pdf`) mô tả bộ key legacy khác tên. App *
 - [x] `ads_enable` — công tắc toàn app + kịch bản A/B (theo nguồn user / test ad), thêm `enable.inter_inapp` *(04/11/2026)*
 - [x] `enable` — bật/tắt + chọn loại QC theo vị trí (gồm AOA splash, native-inter, native-banner, welcome back) *(26/10/2026)*
 - [x] `native_template` — chọn layout native động (media/no media/banner/fullscreen) *(26/10/2026)*
-- [x] `collap_config` — click-bait native collap (lần bấm X mở QC, vd `357`) *(26/10/2026)*
+- [x] `collap_config` — click-bait native collap *(26/10/2026; đổi sang đếm nút X 05/11/2026)*
 - [x] Tiering ID `highfloor / medium / all_price` (id_banner/_collapsible/_interstitial/_native/_app_open) *(26/10/2026)*
+
+### Cập nhật theo sheet "Template Info" (04–05/11/2026)
+
+- [x] Mọi key thời gian chuyển sang **ms**; `open_open_gap_seconds` / `inter_open_gap_seconds` đổi tên thành `*_millis`; `wait_time` mặc định `0` *(04–05/11/2026)*
+- [x] `language_setup.next`: `1` icon, `2` nút chữ (mặc định `next=2`) *(05/11/2026)*
+- [x] `intro1_setup.next=2`: chữ "Next" không nền; `dot=0` ẩn indicator (mặc định `dot=1`) *(05/11/2026)*
+- [x] `native_intro_use_icon_next`: boolean (`true` X / `false` Next) *(05/11/2026)*
+- [x] `collap_config`: đếm số lần bấm **nút X**, lần được chọn mở QC thay vì thu gọn (mặc định `0`) *(05/11/2026)*
+- [x] `intro1_setup` … `intro4_setup`: mỗi trang nội dung một key, trống thì dùng intro1; Onboarding thành 4 trang nội dung; trang native toàn màn hình chuyển thành tuỳ chọn `native_intro_full` = danh sách trang (vd `123` = sau trang 1, 2, 3; mặc định không có) *(05/11/2026)*
+- [ ] **Lỗi:** `collap_config` khác 0 thì bấm vào thẻ collapsible không mở QC (test case 43) - chờ chọn cách mở QC
+- [ ] Cần team xác nhận: `ads_enable = 2` có xét thêm test ad không; inter của kịch bản B; `intro1_setup.ds`; `language_setup.loading`; bộ đếm `collap_config` chung hay theo vị trí
+- [ ] Chưa làm: cấu hình riêng cho từng vị trí (`enable` / `step_count` / `wait_time` / `collap_config` / `native_template` / ID theo vị trí), `refresh_rate` cho native, `release_log`, `splash_fallback`, `taller_banner_enabled`, `time_out_init`, `mt_native_cta_only`, các vị trí `_first`
+
+Chi tiết trạng thái từng phần: mục "Trạng thái trong app" trong `ads-config.html`.
 
 > Khi làm thêm key mới, cập nhật bảng "Danh sách key" và tick mục tương ứng ở đây.

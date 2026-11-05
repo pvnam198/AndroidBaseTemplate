@@ -17,6 +17,7 @@ import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityLanguageBinding
 import com.namstd.androidskillhub.feature.main.MainActivity
 import com.namstd.androidskillhub.feature.onboarding.OnboardingActivity
+import com.namstd.androidskillhub.feature.onboarding.OnboardingPageFragment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -28,12 +29,8 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
 
     override fun initConfig(savedInstanceState: Bundle?) {
         selectedLanguage = AppLanguage.fromCode(prefs.selectedLanguage) ?: AppLanguage.default
-        listOf(
-            NativePlacement.ONBOARDING_1,
-            NativePlacement.ONBOARDING_2,
-            NativePlacement.ONBOARDING_3,
-            NativePlacement.ONBOARDING_AD,
-        ).forEach(NativeAds::preload)
+        OnboardingPageFragment.PLACEMENTS.forEach(NativeAds::preload)
+        if (RemoteConfig.nativeIntroFullPages.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
     }
 
     override fun initViews() {

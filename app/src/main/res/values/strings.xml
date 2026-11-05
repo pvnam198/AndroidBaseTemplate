@@ -33,8 +33,10 @@
     <string name="onboarding_body_1">Short examples help you make progress every day.</string>
     <string name="onboarding_title_2">Keep your momentum</string>
     <string name="onboarding_body_2">Your progress is saved automatically as you go.</string>
-    <string name="onboarding_title_3">You are ready</string>
-    <string name="onboarding_body_3">Explore the sample and its privacy controls.</string>
+    <string name="onboarding_title_3">Learn at your own pace</string>
+    <string name="onboarding_body_3">Pick a topic and come back whenever it suits you.</string>
+    <string name="onboarding_title_4">You are ready</string>
+    <string name="onboarding_body_4">Explore the sample and its privacy controls.</string>
     <string name="action_may_display_ad">This action may display an ad.</string>
     <string name="welcome_back_title">Welcome back</string>
     <string name="welcome_back_message">Thanks for coming back!</string>

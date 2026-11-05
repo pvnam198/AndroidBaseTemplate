@@ -21,7 +21,9 @@
     <string name="onboarding_body_1">Ví dụ ngắn giúp bạn tiến bộ mỗi ngày.</string>
     <string name="onboarding_title_2">Giữ nhịp tiến bộ</string>
     <string name="onboarding_body_2">Tiến trình của bạn được tự động lưu lại.</string>
-    <string name="onboarding_title_3">Bạn đã sẵn sàng</string>
-    <string name="onboarding_body_3">Khám phá app mẫu và các tùy chọn riêng tư.</string>
+    <string name="onboarding_title_3">Học theo nhịp của bạn</string>
+    <string name="onboarding_body_3">Chọn một chủ đề và quay lại bất cứ khi nào bạn muốn.</string>
+    <string name="onboarding_title_4">Bạn đã sẵn sàng</string>
+    <string name="onboarding_body_4">Khám phá app mẫu và các tùy chọn riêng tư.</string>
     <string name="action_may_display_ad">Hành động này có thể hiển thị quảng cáo.</string>
 </resources>

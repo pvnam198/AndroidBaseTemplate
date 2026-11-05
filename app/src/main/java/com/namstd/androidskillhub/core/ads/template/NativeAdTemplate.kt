@@ -4,10 +4,11 @@ import androidx.annotation.LayoutRes
 import com.namstd.androidskillhub.R
 
 /**
- * Các layout card native ad, chọn bằng key Remote Config `native_template` ([key] là giá trị cần đặt).
+ * Bộ template card native dùng chung cho mọi vị trí, chọn bằng cột `native_template` của vị trí đó trong
+ * `ad_config`. [key] là đúng tên mẫu trong tài liệu / Figma "Wavez - ADs" (Big1…Big9, Small1…, Tiny1, Tiny2,
+ * Collap1…, Full1…), không phân biệt hoa thường; màn nào cần mẫu nào thì ghi đúng tên đó.
  *
- * Mọi layout đều là template Figma "Wavez - ADs" / "Mẫu v2" (layout/ad_tpl_*.xml); bốn cái đầu là các
- * giá trị key ban đầu, nay được vẽ bằng template Figma gần nhất. Mọi layout dùng chung view id, nên
+ * Mọi layout (layout/ad_tpl_*.xml) dùng chung view id, nên
  * [com.namstd.androidskillhub.core.ads.NativeAds] có thể bind bất kỳ cái nào:
  * `ad_headline` (bắt buộc), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`, `ad_price`,
  * `ad_advertiser` (đều tùy chọn), cộng thêm các control ẩn `ad_close` / `ad_collapse` / `ad_next` mà chỉ
@@ -17,11 +18,6 @@ import com.namstd.androidskillhub.R
  * [TINY2] (Collap2).
  */
 enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
-    MEDIA("native media", R.layout.ad_tpl_big1),
-    NO_MEDIA("native no media", R.layout.ad_tpl_small1),
-    BANNER("native banner", R.layout.ad_tpl_tiny1),
-    FULLSCREEN("native fullscreen", R.layout.ad_tpl_full1),
-
     BIG1("big1", R.layout.ad_tpl_big1),
     BIG2("big2", R.layout.ad_tpl_big2),
     BIG3("big3", R.layout.ad_tpl_big3),
@@ -51,21 +47,13 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     FULL3("full3", R.layout.ad_tpl_full3),
     FULL4("full4", R.layout.ad_tpl_full4),
     FULL5("full5", R.layout.ad_tpl_full5),
-
-    /** "Native Language, Get start enable = 1": card trên (= Big1) và card dưới (= Big2). */
-    LANG1_A("lang1_a", R.layout.ad_tpl_big1),
-    LANG1_B("lang1_b", R.layout.ad_tpl_big2),
-
-    /** "Native Language, Get start enable = 2": card trên (CTA màu tím) và card dưới (= Big5). */
-    LANG2_A("lang2_a", R.layout.ad_tpl_lang2),
-    LANG2_B("lang2_b", R.layout.ad_tpl_big5),
     ;
 
     companion object {
-        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [MEDIA]. */
+        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [BIG1]. */
         fun fromKey(value: String?): NativeAdTemplate {
             val key = value?.trim()?.lowercase().orEmpty()
-            return entries.firstOrNull { it.key == key } ?: MEDIA
+            return entries.firstOrNull { it.key == key } ?: BIG1
         }
 
         /** Toàn bộ key, dùng cho gợi ý ở Debug Config. */

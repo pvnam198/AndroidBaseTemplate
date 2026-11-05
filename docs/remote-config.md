@@ -59,7 +59,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 
 - **Mỗi object con có `name1` là một ad unit** (một dòng `name1` của sheet). Tên object con (`inter`, `native_inter`, `native_language1`…) **không quan trọng**: app nhận ra ad unit qua `name1`. `name1` phải viết đúng tên app định nghĩa (xem `AdUnit`).
 - **`id1`, `id2`, `id3`** của ad unit: thứ tự waterfall highfloor → medium → all_price. Không có ID nào → dùng **test ID** của Google. Kịch bản B dùng ID của kịch bản A.
-- **Cột thiếu** dùng mặc định: `step_count` 1, `refresh_rate` 0, `collap_config` trống, `wait_time` 0, `native_template` trống (→ mẫu mặc định), `enable` theo bảng dưới. Vị trí không có trong `ad_config` cũng dùng `enable` mặc định.
+- **Cột thiếu** dùng mặc định: `step_count` 1, `refresh_rate` 0, `collap_config` trống, `wait_time` 0, `native_template` trống (→ `Big1`), `enable` theo bảng dưới. Vị trí không có trong `ad_config` cũng dùng `enable` mặc định.
 - **`on_resume`** nằm trong `settings` (`on_resume` = enable, `on_resume_id` = ID App Open khi quay lại app), không phải object riêng.
 - `release_log`, `taller_banner_enabled` trong mẫu: app bỏ qua (đã bỏ).
 - **JSON hỏng** → coi như `ad_config` rỗng (mọi thứ về mặc định).
@@ -94,7 +94,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `refresh_rate` | Ms tự tải lại banner/native của ô banner. `0` = không tự tải lại. |
 | `collap_config` | Native collapsible: lần bấm **nút X** nào mở quảng cáo thay vì thu gọn (`357` = lần 3, 5, 7). Bộ đếm chung trong một lần mở app. Cần Google duyệt *custom click gesture* cho tài khoản. |
 | `wait_time` | Ms đếm ngược trên màn native toàn màn hình (sau inter, trang native Intro, Welcome back) trước khi cho đóng/đi tiếp. |
-| `native_template` | Mẫu native (Big1…Big9, Small1…Small4, Tiny1, Tiny2, Collap1…3, Full1…Full5, Lang1_a…Lang2_b), không phân biệt hoa thường. |
+| `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. Chưa có Small5–Small7 (thiếu Figma). |
 
 ### Các vị trí app đang dùng
 

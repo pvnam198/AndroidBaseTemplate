@@ -6,10 +6,12 @@ import android.view.LayoutInflater
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
-import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.config.AdKey
+import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.language.AppLanguage
 import com.namstd.androidskillhub.core.navigation.AppRouter
 import com.namstd.androidskillhub.core.navigation.StartDestination
@@ -29,8 +31,8 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
 
     override fun initConfig(savedInstanceState: Bundle?) {
         selectedLanguage = AppLanguage.fromCode(prefs.selectedLanguage) ?: AppLanguage.default
-        OnboardingPageFragment.PLACEMENTS.forEach(NativeAds::preload)
-        if (RemoteConfig.nativeIntroFullPages.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
+        OnboardingPageFragment.PLACEMENTS.filter(AdPolicy::nativeEnabled).forEach(NativeAds::preload)
+        if (AdPolicy.config(AdKey.NATIVE_INTRO_FULL).enableDigits.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
     }
 
     override fun initViews() {

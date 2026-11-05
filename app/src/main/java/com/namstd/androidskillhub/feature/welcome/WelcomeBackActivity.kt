@@ -5,18 +5,19 @@ import android.content.Intent
 import android.os.CountDownTimer
 import android.view.LayoutInflater
 import androidx.core.view.isVisible
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.FullScreenGate
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
-import com.namstd.androidskillhub.core.config.RemoteConfig
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityWelcomeBackBinding
 import kotlin.math.ceil
 
 /**
  * Màn "Welcome back" khi quay lại app nếu `enable.onresume=2` (thay cho App Open ad).
- * Hiện 1 native ad + đếm ngược [RemoteConfig.waitTimeMs] rồi mới cho đóng. Mở qua [launch].
+ * Hiện 1 native ad + đếm ngược `wait_time` của `native_welcome_back` rồi mới cho đóng. Mở qua [launch].
  */
 class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     private var countdown: CountDownTimer? = null
@@ -37,7 +38,7 @@ class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     }
 
     private fun startCountdown() {
-        val total = RemoteConfig.waitTimeMs
+        val total = AdPolicy.config(AdKey.NATIVE_WELCOME_BACK).waitTimeMs
         if (total <= 0L) {
             binding.ivClose.isVisible = true
             return

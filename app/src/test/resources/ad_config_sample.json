@@ -1,0 +1,116 @@
+{
+  "settings": {
+    "ads_enable": 2,
+    "language_delay_millis": 800,
+    "release_log": false,
+    "splash_fallback": "inter_language",
+    "language_setup": "next=1, loading=true",
+    "intro1_setup": "next=1,ds=1,delay=0,dot=1",
+    "intro2_setup": "next=1,ds=1,delay=0,dot=1",
+    "intro3_setup": "next=1,ds=1,delay=0,dot=1",
+    "intro4_setup": "next=1,ds=1,delay=0,dot=1",
+    "intro_swipe": true,
+    "taller_banner_enabled": true,
+    "inter_delay_time": "time=10,ignore=ads_splash|inter_language|inter_intro",
+    "native_intro_use_icon_next": false,
+    "on_resume": 2,
+    "on_resume_id": "ca-app-pub-1234567890123456/1111111127"
+  },
+  "native_splash": {
+    "enable": 1,
+    "native_template": "Big5",
+    "native": {
+      "name1": "NATIVE_SPLASH",
+      "id1": "ca-app-pub-1234567890123456/1111111111",
+      "id2": "ca-app-pub-1234567890123456/2222222222",
+      "id3": "ca-app-pub-1234567890123456/3333333333"
+    }
+  },
+  "ads_splash": {
+    "enable": 3,
+    "wait_time": 5,
+    "app_open": {
+      "name1": "AOA_SPLASH",
+      "id1": "ca-app-pub-1234567890123456/1111111112",
+      "id2": "ca-app-pub-1234567890123456/2222222223",
+      "id3": "ca-app-pub-1234567890123456/3333333334"
+    },
+    "inter": {
+      "name1": "INTER_SPLASH",
+      "id1": "ca-app-pub-1234567890123456/1111111113",
+      "id2": "ca-app-pub-1234567890123456/2222222224",
+      "id3": "ca-app-pub-1234567890123456/3333333335"
+    },
+    "native_inter": {
+      "name1": "NATIVE_INTER_SPLASH",
+      "id1": "ca-app-pub-1234567890123456/1111111114",
+      "id2": "ca-app-pub-1234567890123456/2222222225",
+      "id3": "ca-app-pub-1234567890123456/3333333336"
+    }
+  },
+  "native_language": {
+    "enable": 1,
+    "native_language1": {
+      "name1": "NATIVE_LANGUAGE",
+      "id1": "ca-app-pub-1234567890123456/1111111115",
+      "id2": "ca-app-pub-1234567890123456/2222222226",
+      "id3": "ca-app-pub-1234567890123456/3333333337"
+    },
+    "native_language2": {
+      "name1": "NATIVE_LANGUAGE_2",
+      "id1": "ca-app-pub-1234567890123456/1111111116",
+      "id2": "ca-app-pub-1234567890123456/2222222227",
+      "id3": "ca-app-pub-1234567890123456/3333333338"
+    }
+  },
+  "inter_language": {
+    "enable": 3,
+    "wait_time": 3,
+    "inter": {
+      "name1": "INTER_LANGUAGE",
+      "id1": "ca-app-pub-1234567890123456/1111111118",
+      "id2": "ca-app-pub-1234567890123456/2222222229",
+      "id3": "ca-app-pub-1234567890123456/3333333340"
+    },
+    "native_inter": {
+      "name1": "NATIVE_INTER_LANGUAGE",
+      "id1": "ca-app-pub-1234567890123456/1111111119"
+    }
+  },
+  "native_intro": {
+    "enable": 24,
+    "native_template": "Big4",
+    "native_intro1": { "name1": "NATIVE_INTRO_1", "id1": "ca-app-pub-1234567890123456/1111111120" },
+    "native_intro2": { "name1": "NATIVE_INTRO_2", "id1": "ca-app-pub-1234567890123456/1111111121" }
+  },
+  "native_intro_full": {
+    "enable": 2,
+    "native_template": "Full1",
+    "native": { "name1": "NATIVE_INTRO_FULL" }
+  },
+  "banner_home": {
+    "enable": 4,
+    "banner": { "name1": "BANNER_HOME" },
+    "banner_collap": { "name1": "BANNER_HOME" },
+    "native": { "name1": "NATIVE_HOME" }
+  },
+  "inter_home": {
+    "enable": 3,
+    "refresh_rate": 2,
+    "inter": { "name1": "INTER_HOME" },
+    "native_inter": { "name1": "NATIVE_INTER_HOME" }
+  },
+  "native_result": {
+    "enable": 1,
+    "refresh_rate": 20,
+    "collap_config": 24,
+    "native_template": "Small1",
+    "native": { "name1": "NATIVE_RESULT" }
+  },
+  "banner_setting": {
+    "enable": 1,
+    "banner": { "name1": "BANNER_SETTING" },
+    "banner_collap": { "name1": "BANNER_SETTING" },
+    "native": {}
+  }
+}

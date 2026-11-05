@@ -20,20 +20,59 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
-import com.namstd.androidskillhub.core.config.RemoteConfig
+import com.namstd.androidskillhub.core.config.PlacementConfig
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
-enum class NativePlacement {
-    LANGUAGE, ONBOARDING_1, ONBOARDING_2, ONBOARDING_3, ONBOARDING_4, ONBOARDING_AD, HOME_FEED, POST_INTERSTITIAL,
+/**
+ * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit trong sheet ([unit] - lấy ID và `native_template` từ
+ * vị trí của unit đó). Mỗi chỗ có slot cache riêng, nên hai chỗ dùng chung một unit (vd [HOME_FEED] và
+ * [BANNER_NATIVE] cùng là `NATIVE_HOME`) vẫn không giành ad của nhau.
+ */
+enum class NativePlacement(val unit: AdUnit) {
+    /** Native trên màn Splash (`native_splash`). */
+    SPLASH(AdUnit.NATIVE_SPLASH),
+    LANGUAGE(AdUnit.NATIVE_LANGUAGE),
 
-    /** Slot dùng chung toàn app cho [NativeCollapseAd] - một placement cho mọi chỗ gọi collapsible. */
-    NATIVE_COLLAPSIBLE,
+    /** Native ở chân các trang nội dung Intro; `native_intro` liệt kê trang có native (`24` = trang 2 và 4). */
+    ONBOARDING_1(AdUnit.NATIVE_INTRO_1),
+    ONBOARDING_2(AdUnit.NATIVE_INTRO_2),
+    ONBOARDING_3(AdUnit.NATIVE_INTRO_3),
+    ONBOARDING_4(AdUnit.NATIVE_INTRO_4),
 
-    /** Native ad hiển thị như một slot banner thường (enable.banner=3) - xem [BannerAds]. */
-    BANNER_NATIVE,
+    /** Trang native toàn màn hình trong Intro (`native_intro_full`). */
+    ONBOARDING_AD(AdUnit.NATIVE_INTRO_FULL),
 
-    /** Native ad trên màn welcome-back (enable.onresume=2) - xem WelcomeBackActivity. */
-    WELCOME_BACK,
+    /** Native xen trong feed màn chính - sheet không có dòng riêng, dùng ID của `NATIVE_HOME`. */
+    HOME_FEED(AdUnit.NATIVE_HOME),
+
+    /** Native toàn màn hình hiện sau inter của từng vị trí (`NATIVE_INTER_*`). */
+    AFTER_INTER_SPLASH(AdUnit.NATIVE_INTER_SPLASH),
+    AFTER_INTER_LANGUAGE(AdUnit.NATIVE_INTER_LANGUAGE),
+    AFTER_INTER_INTRO(AdUnit.NATIVE_INTER_INTRO),
+    AFTER_INTER_HOME(AdUnit.NATIVE_INTER_HOME),
+
+    /** Native collapsible ở ô banner màn chính (`banner_home` = 4) - xem [NativeCollapseAd]. */
+    NATIVE_COLLAPSIBLE(AdUnit.NATIVE_COLLAP_HOME),
+
+    /** Native hiển thị như một slot banner thường (`banner_home` = 3) - xem [BannerAds]. */
+    BANNER_NATIVE(AdUnit.NATIVE_HOME),
+
+    /** Native trên màn welcome-back (`on_resume` = 2) - xem WelcomeBackActivity. */
+    WELCOME_BACK(AdUnit.NATIVE_WELCOME_BACK);
+
+    /**
+     * Chỗ này có bật theo `enable` của vị trí ([config]) không. Native Intro đọc theo chữ số (trang có native);
+     * native Splash / Language / Welcome back cần `enable` > 0; các chỗ còn lại do vị trí cha quyết định
+     * (inter, banner, trang native full) nên luôn được phép ở đây.
+     */
+    fun isEnabled(config: PlacementConfig): Boolean = when (this) {
+        ONBOARDING_1 -> 1 in config.enableDigits
+        ONBOARDING_2 -> 2 in config.enableDigits
+        ONBOARDING_3 -> 3 in config.enableDigits
+        ONBOARDING_4 -> 4 in config.enableDigits
+        SPLASH, LANGUAGE, WELCOME_BACK -> config.enableCode > 0
+        else -> true
+    }
 }
 
 /**
@@ -201,7 +240,7 @@ object NativeAds {
         placement: NativePlacement,
         container: FrameLayout,
         preloadOnShow: Boolean = false,
-        render: (Activity, NativeAd) -> NativeAdView = ::renderDefaultCard,
+        render: (Activity, NativeAd) -> NativeAdView = { a, ad -> renderTemplate(a, ad, templateFor(placement)) },
     ): AdHandle {
         if (!AdPolicy.nativeAllowed || !Ads.isReady) {
             container.visibility = View.GONE
@@ -294,7 +333,7 @@ object NativeAds {
         onFailed: ((String) -> Unit)?,
     ) {
         if (!slot.requestLoad(onReady, onFailed)) return
-        WaterfallLoader<NativeAd>(Ads.ids.native[placement].orEmpty()).load(
+        WaterfallLoader<NativeAd>(placement.unit.ids()).load(
             attempt = { id, loaded, failed ->
                 val request = NativeAdRequest.Builder(id, listOf(NativeAd.NativeAdType.NATIVE)).build()
                 NativeAdLoader.load(request, object : NativeAdLoaderCallback {
@@ -313,8 +352,9 @@ object NativeAds {
         )
     }
 
-    private fun renderDefaultCard(activity: Activity, ad: NativeAd): NativeAdView =
-        renderTemplate(activity, ad, RemoteConfig.nativeTemplate)
+    /** Template của [placement]: cột `native_template` của vị trí chứa unit đó; trống thì dùng mẫu mặc định. */
+    fun templateFor(placement: NativePlacement): NativeAdTemplate =
+        NativeAdTemplate.fromKey(AdPolicy.config(placement.unit.key).nativeTemplate)
 
     /** Inflate [template] và gắn [ad] vào đó - cho bất kỳ màn nào muốn dùng một template cụ thể. */
     fun renderTemplate(activity: Activity, ad: NativeAd, template: NativeAdTemplate): NativeAdView {

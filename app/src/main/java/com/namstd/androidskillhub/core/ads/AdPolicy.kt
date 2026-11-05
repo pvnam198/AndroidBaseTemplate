@@ -1,8 +1,9 @@
 package com.namstd.androidskillhub.core.ads
 
 import android.content.Context
-import com.namstd.androidskillhub.core.config.EnableConfig
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.InterDelayConfig
+import com.namstd.androidskillhub.core.config.PlacementConfig
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 
@@ -27,21 +28,19 @@ object AdPolicy {
             isTestAdDevice = AdAudience.isTestAdDevice,
         )
 
-    /** Loại quảng cáo theo vị trí - xem [EnableConfig]. OFF = tắt hết. */
-    val enable: EnableConfig
-        get() = when (profile) {
-            AdProfile.OFF -> EnableConfig.NONE
-            AdProfile.REMOTE -> RemoteConfig.enable
-            AdProfile.BASIC -> BasicAdProfile.enable
-        }
+    /**
+     * Cấu hình vị trí [key] cho user này: OFF = tắt hết, REMOTE = đúng như Remote Config, BASIC = `enable` cố định
+     * của [BasicAdProfile] (các cột khác, kể cả ID, vẫn lấy từ Remote Config).
+     */
+    fun config(key: AdKey): PlacementConfig = when (profile) {
+        AdProfile.OFF -> PlacementConfig.OFF
+        AdProfile.REMOTE -> RemoteConfig.placement(key)
+        AdProfile.BASIC -> RemoteConfig.placement(key).copy(enable = BasicAdProfile.enable(key), stepCount = 1)
+    }
 
     /** Gap giữa các interstitial - xem [RemoteConfig.interDelay]. */
     val interDelay: InterDelayConfig
         get() = if (profile == AdProfile.BASIC) BasicAdProfile.interDelay else RemoteConfig.interDelay
-
-    /** Tần suất interstitial theo lần yêu cầu - xem [RemoteConfig.stepCount]. */
-    val stepCount: Int
-        get() = if (profile == AdProfile.BASIC) BasicAdProfile.STEP_COUNT else RemoteConfig.stepCount
 
     /** Vị trí inter bù khi Splash không kịp hiện quảng cáo - chỉ ở [AdProfile.REMOTE]. Xem [SplashFallback]. */
     val splashFallback: InterstitialPlacement?
@@ -51,10 +50,7 @@ object AdPolicy {
     val nativeAllowed: Boolean
         get() = Ads.adsEnabled && profile == AdProfile.REMOTE
 
-    /** [inApp] = false cho Splash/Language/Onboarding: [AdProfile.BASIC] chỉ có banner ở màn in-app. */
-    fun bannerAllowed(inApp: Boolean): Boolean = when (profile) {
-        AdProfile.OFF -> false
-        AdProfile.REMOTE -> true
-        AdProfile.BASIC -> inApp
-    }
+    /** Native ở [placement] có được bật không: theo [nativeAllowed] và `enable` của vị trí đó. */
+    fun nativeEnabled(placement: NativePlacement): Boolean =
+        nativeAllowed && placement.isEnabled(config(placement.unit.key))
 }

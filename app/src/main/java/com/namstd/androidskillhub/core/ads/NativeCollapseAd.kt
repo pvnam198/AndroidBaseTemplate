@@ -16,7 +16,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
-import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 import com.namstd.androidskillhub.databinding.AdNativeCollapseBinding
 import com.namstd.androidskillhub.databinding.AdNativeCollapseSmallBinding
@@ -41,6 +40,7 @@ internal class NativeCollapseAd(
     private val activity: Activity,
     private val container: ViewGroup,
     private val placement: NativePlacement = NativePlacement.NATIVE_COLLAPSIBLE,
+    private val collapGate: CollapClickGate,
     autoReload: Boolean,
     reloadGapMs: Long,
     private val onStatus: (String) -> Unit = {},
@@ -285,7 +285,7 @@ internal class NativeCollapseAd(
         binding.adBody.visibility = visibility(ad.body)
         binding.adAdvertiser.visibility = visibility(ad.advertiser)
         binding.adCallToAction.visibility = visibility(ad.callToAction)
-        val gate = RemoteConfig.collapConfig
+        val gate = collapGate
         if (gate.isEnabled) ad.enableCustomClickGesture()
         view.registerNativeAd(ad, binding.adMedia)
         binding.adClose.setOnClickListener {

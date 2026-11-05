@@ -16,6 +16,7 @@ import com.namstd.androidskillhub.core.ads.AdHandle
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.BannerAds
+import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
 import com.namstd.androidskillhub.core.ads.FullScreenAdPlan
 import com.namstd.androidskillhub.core.ads.FullScreenGate
@@ -24,8 +25,7 @@ import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.ads.SplashFallback
-import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
-import com.namstd.androidskillhub.core.config.RemoteConfig
+import com.namstd.androidskillhub.core.ads.fullScreenPlan
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment
 
@@ -42,26 +42,18 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     private var nativeContainer: FrameLayout? = null
 
     /**
-     * Load banner vào [container] và tự huỷ nó trong [onDestroy].
-     * [autoReload] / [reloadGapMs] đặt bộ hẹn giờ reload, mặc định lấy theo Remote Config
-     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); màn hình có thể
-     * truyền giá trị riêng. Mọi kiểu reload khác (resume, đổi tab...) là code riêng của màn hình
-     * gọi [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
-     * [inApp] = false cho Splash/Language/Onboarding - xem [AdPolicy.bannerAllowed].
+     * Load banner của [placement] vào [container] và tự huỷ nó trong [onDestroy]. Loại banner và timer
+     * reload theo `enable` / `refresh_rate` của vị trí đó; [autoReload] = false cho màn tự reload bằng tay
+     * (resume, đổi tab...) qua [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
-    protected fun loadBanner(
-        container: ViewGroup,
-        autoReload: Boolean = RemoteConfig.bannerSlotAutoReload,
-        reloadGapMs: Long = RemoteConfig.refreshRateMs,
-        inApp: Boolean = true,
-    ) {
+    protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {
         bannerContainer = container
-        if (isPremiumUser() || !AdPolicy.bannerAllowed(inApp)) {
+        if (isPremiumUser()) {
             container.isVisible = false
             return
         }
         container.post {
-            if (!isPremiumUser()) bannerHandle = BannerAds.load(this, container, autoReload, reloadGapMs)
+            if (!isPremiumUser()) bannerHandle = BannerAds.load(this, container, placement, autoReload)
         }
     }
 
@@ -72,12 +64,12 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
     /**
      * Load native ad cho [placement] vào [container] và tự huỷ nó trong
-     * [onDestroy]. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium thì không load gì
-     * và [container] bị ẩn.
+     * [onDestroy]. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium, hoặc khi `enable` của
+     * vị trí tắt chỗ này ([AdPolicy.nativeEnabled]), thì không load gì và [container] bị ẩn.
      */
     protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
         nativeContainer = container
-        if (isPremiumUser()) {
+        if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
             return
         }
@@ -108,7 +100,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Chạy quảng cáo full-screen cho [placement] theo [AdPolicy.enable] (xem [resolveFullScreenPlan]),
+     * Chạy quảng cáo full-screen cho [placement] theo `enable` của vị trí đó (xem [fullScreenPlan]),
      * rồi gọi [onComplete]. Loại: plain interstitial / interstitial + native break / native-only / tắt.
      * (APP_OPEN chỉ ở SPLASH và do SplashActivity lo; ở đây coi như tắt.)
      * Chỉ một implementation cho toàn app - [BaseFragment.showInterstitial] uỷ quyền về đây.
@@ -120,9 +112,9 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
             if (!InterstitialAds.show(this, placement, ignoreGap = true, onComplete = onComplete)) onComplete()
             return
         }
-        val plan = resolveFullScreenPlan(placement, AdPolicy.enable)
+        val plan = fullScreenPlan(placement)
         if (plan == FullScreenAdPlan.OFF || plan == FullScreenAdPlan.APP_OPEN) { onComplete(); return }
-        if (!passesInterstitialStepGate()) { onComplete(); return }
+        if (!passesInterstitialStepGate(placement)) { onComplete(); return }
         when (plan) {
             FullScreenAdPlan.INTERSTITIAL ->
                 if (!InterstitialAds.show(this, placement, onComplete = onComplete)) onComplete()
@@ -130,14 +122,14 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
                 if (!Ads.adsEnabled || FullScreenGate.isBusy()) { onComplete(); return }
                 // Không có interstitial phía trước để che thời gian load, nên đợi (có giới hạn) ad #1 trước -
                 // nếu không, break sẽ poll một slot rỗng và đóng trước khi kịp hiện gì.
-                NativeAds.awaitReady(this, NativePlacement.POST_INTERSTITIAL, NATIVE_ONLY_WAIT_MS) {
-                    runNativeAdBreak(onComplete)
+                NativeAds.awaitReady(this, placement.nativePlacement, NATIVE_ONLY_WAIT_MS) {
+                    runNativeAdBreak(placement, onComplete)
                 }
             }
             FullScreenAdPlan.INTER_PLUS_NATIVE -> {
                 if (!Ads.adsEnabled || FullScreenGate.isBusy()) { onComplete(); return }
-                NativeAds.preload(NativePlacement.POST_INTERSTITIAL)
-                val afterInterstitial = { runNativeAdBreak(onComplete) }
+                NativeAds.preload(placement.nativePlacement)
+                val afterInterstitial = { runNativeAdBreak(placement, onComplete) }
                 if (!InterstitialAds.show(this, placement, onComplete = afterInterstitial)) afterInterstitial()
             }
             else -> onComplete()
@@ -145,21 +137,23 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Tần suất interstitial theo lần yêu cầu ([AdPolicy.stepCount]): tăng bộ đếm (lưu qua các lần mở app)
-     * và chỉ cho hiện ở lần chia hết cho stepCount; các lần khác bỏ qua (gọi onComplete luôn). stepCount=1 = mọi lần.
+     * Tần suất interstitial theo lần yêu cầu (`step_count` của vị trí): tăng bộ đếm riêng của vị trí (lưu qua các
+     * lần mở app) và chỉ cho hiện ở lần chia hết cho step_count; các lần khác bỏ qua (gọi onComplete luôn).
+     * step_count = 1 = mọi lần.
      */
-    private fun passesInterstitialStepGate(): Boolean {
-        val count = prefs.interstitialStepCounter + 1
-        prefs.interstitialStepCounter = count
-        return count % AdPolicy.stepCount == 0
+    private fun passesInterstitialStepGate(placement: InterstitialPlacement): Boolean {
+        val count = prefs.interstitialStepCounter(placement.key) + 1
+        prefs.setInterstitialStepCounter(placement.key, count)
+        return count % AdPolicy.config(placement.adKey).stepCount == 0
     }
 
-    private fun runNativeAdBreak(onComplete: () -> Unit) {
+    private fun runNativeAdBreak(placement: InterstitialPlacement, onComplete: () -> Unit) {
         if (isFinishing || isDestroyed) return
         supportFragmentManager.setFragmentResultListener(
             PostInterstitialNativeAdDialogFragment.REQUEST_KEY, this,
         ) { _, _ -> onComplete() }
-        PostInterstitialNativeAdDialogFragment().show(supportFragmentManager, PostInterstitialNativeAdDialogFragment.TAG)
+        PostInterstitialNativeAdDialogFragment.newInstance(placement)
+            .show(supportFragmentManager, PostInterstitialNativeAdDialogFragment.TAG)
     }
 
     protected abstract fun inflateBinding(inflater: LayoutInflater): VB
@@ -220,5 +214,5 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 }
 
-/** Thời gian một native-only break (enable.inter=2) đợi ad đầu tiên trước khi bỏ cuộc và đi tiếp. */
+/** Thời gian một native-only break (`enable` = 2 của vị trí inter) đợi ad đầu tiên trước khi bỏ cuộc và đi tiếp. */
 private const val NATIVE_ONLY_WAIT_MS = 5_000L

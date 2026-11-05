@@ -54,12 +54,13 @@
             android:indeterminate="true"
             android:indeterminateTint="?attr/colorPrimary" />
 
+        <!-- Native trên màn Splash (`native_splash`), template mặc định Big5. -->
         <FrameLayout
-            android:id="@+id/banner_container"
+            android:id="@+id/native_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:minHeight="50dp" />
+            android:visibility="gone" />
 
     </LinearLayout>
 

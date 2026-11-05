@@ -6,7 +6,9 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withResumed
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseFragment
 import com.namstd.androidskillhub.databinding.FragmentOnboardingAdBinding
@@ -22,7 +24,7 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
         loadNative(binding.nativeContainer, NativePlacement.ONBOARDING_AD)
 
         val control: View = if (RemoteConfig.nativeIntroUseIconNext) binding.adClose else binding.adNext
-        val waitMs = RemoteConfig.waitTimeMs
+        val waitMs = AdPolicy.config(AdKey.NATIVE_INTRO_FULL).waitTimeMs
         if (waitMs > 0L) {
             binding.adLoading.isVisible = true
             viewLifecycleOwner.lifecycleScope.launch {

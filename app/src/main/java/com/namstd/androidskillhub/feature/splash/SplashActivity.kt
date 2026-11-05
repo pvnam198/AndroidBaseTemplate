@@ -5,18 +5,16 @@ import android.content.Intent
 import android.view.LayoutInflater
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import com.namstd.androidskillhub.core.ads.AdPolicy
-import com.namstd.androidskillhub.core.ads.AdUnitIds
+import com.namstd.androidskillhub.core.ads.AdUnit
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.AppOpenAds
 import com.namstd.androidskillhub.core.ads.FullScreenAdPlan
 import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
-import com.namstd.androidskillhub.core.ads.InterstitialState
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.ads.SplashFallback
-import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
+import com.namstd.androidskillhub.core.ads.fullScreenPlan
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivitySplashBinding
@@ -41,7 +39,6 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
 
     override fun initViews() {
         if (prefs.isPremium) {
-            binding.bannerContainer.isVisible = false
             lifecycleScope.launch {
                 delay(MIN_DELAY_MS)
                 waitForRemoteConfig()
@@ -50,20 +47,18 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
             return
         }
 
-        Ads.initialize(this, AdUnitIds.fromConfig()) { consentGranted ->
+        Ads.initialize(this) { consentGranted ->
             runOnUiThread {
                 if (consentGranted) {
-                    loadBanner(binding.bannerContainer, inApp = false)
+                    binding.nativeContainer.isVisible = true
+                    loadNative(binding.nativeContainer, NativePlacement.SPLASH)
                     NativeAds.preload(NativePlacement.LANGUAGE)
-                    // Interstitial ở Language/Onboarding cũng cần load sẵn ad từ trước, kể cả khi
-                    // bản thân splash không hiện ad nào (ads_splash=0/1) - nếu không cái đầu tiên sẽ bị bỏ qua.
-                    val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, AdPolicy.enable)
-                    if (inAppPlan == FullScreenAdPlan.INTERSTITIAL || inAppPlan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
-                        InterstitialAds.load()
-                    }
-                    when (resolveFullScreenPlan(InterstitialPlacement.SPLASH, AdPolicy.enable)) {
+                    // Interstitial ở Language cũng cần load sẵn ad từ trước, kể cả khi bản thân splash
+                    // không hiện ad nào (ads_splash=0/1) - nếu không cái đầu tiên sẽ bị bỏ qua.
+                    InterstitialAds.preload(InterstitialPlacement.LANGUAGE)
+                    when (fullScreenPlan(InterstitialPlacement.SPLASH)) {
                         FullScreenAdPlan.APP_OPEN -> {
-                            AppOpenAds.load()
+                            AppOpenAds.load(AdUnit.AOA_SPLASH)
                             lifecycleScope.launch { waitForAppOpenThenNavigate() }
                         }
                         FullScreenAdPlan.OFF -> lifecycleScope.launch {
@@ -72,14 +67,13 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                             navigateToMain()
                         }
                         else -> {
-                            InterstitialAds.load()
+                            InterstitialAds.load(AdUnit.INTER_SPLASH)
                             lifecycleScope.launch { waitForAdThenNavigate() }
                         }
                     }
                 } else {
                     // Tắt quảng cáo (Ads.adsEnabled = false) hoặc consent bị từ chối: không có ad nào để chờ, nhưng
                     // splash vẫn phải đi tiếp - nếu không user sẽ kẹt ở đây mãi.
-                    binding.bannerContainer.isVisible = false
                     lifecycleScope.launch {
                         delay(MIN_DELAY_MS)
                         waitForRemoteConfig()
@@ -93,25 +87,25 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
     private suspend fun waitForAdThenNavigate() {
         delay(MIN_DELAY_MS)
         var waitedMs = MIN_DELAY_MS
-        while (InterstitialAds.state.value != InterstitialState.READY && waitedMs < MAX_DELAY_MS) {
+        while (!InterstitialAds.isReady(AdUnit.INTER_SPLASH) && waitedMs < MAX_DELAY_MS) {
             delay(CHECK_INTERVAL_MS)
             waitedMs += CHECK_INTERVAL_MS
         }
         waitForRemoteConfig(waitedMs)
-        if (InterstitialAds.state.value != InterstitialState.READY) SplashFallback.arm()
+        if (!InterstitialAds.isReady(AdUnit.INTER_SPLASH)) SplashFallback.arm()
         showInterstitial(InterstitialPlacement.SPLASH, ::navigateToMain)
     }
 
-    /** Luồng App Open ở Splash (enable.ads_splash=1): chờ AOA trong giới hạn thời gian, hiện nó, rồi chuyển màn. */
+    /** Luồng App Open ở Splash (ads_splash = 1): chờ AOA trong giới hạn thời gian, hiện nó, rồi chuyển màn. */
     private suspend fun waitForAppOpenThenNavigate() {
         delay(MIN_DELAY_MS)
         var waitedMs = MIN_DELAY_MS
-        while (!AppOpenAds.isLoaded() && waitedMs < MAX_DELAY_MS) {
+        while (!AppOpenAds.isLoaded(AdUnit.AOA_SPLASH) && waitedMs < MAX_DELAY_MS) {
             delay(CHECK_INTERVAL_MS)
             waitedMs += CHECK_INTERVAL_MS
         }
         waitForRemoteConfig(waitedMs)
-        if (!AppOpenAds.show(this) { navigateToMain() }) {
+        if (!AppOpenAds.show(this, AdUnit.AOA_SPLASH) { navigateToMain() }) {
             SplashFallback.arm()
             navigateToMain()
         }

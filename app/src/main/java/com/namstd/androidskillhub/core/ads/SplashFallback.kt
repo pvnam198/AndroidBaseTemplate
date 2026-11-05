@@ -12,7 +12,7 @@ object SplashFallback {
     /** Splash lỡ quảng cáo: kích hoạt placement đã cấu hình, và bắt đầu load sẵn interstitial mà nó sẽ cần. */
     fun arm() {
         pending = AdPolicy.splashFallback
-        if (pending != null) InterstitialAds.load()
+        pending?.let { InterstitialAds.load(it.interUnit) }
     }
 
     /** Màn sau Splash không có placement fallback (vd Home với user cũ). */

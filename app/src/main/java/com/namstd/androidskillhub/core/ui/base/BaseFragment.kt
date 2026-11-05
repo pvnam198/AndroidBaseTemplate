@@ -9,12 +9,13 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.namstd.androidskillhub.core.ads.AdHandle
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.BannerAds
+import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
-import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 
 abstract class BaseFragment<VB : ViewBinding> : Fragment() {
@@ -33,17 +34,11 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     protected val prefs: AppPreferences get() = AppPreferences.getInstance(requireContext())
 
     /**
-     * Load banner vào [container] và tự huỷ nó khi view bị huỷ.
-     * [autoReload] / [reloadGapMs] đặt bộ hẹn giờ reload, mặc định lấy theo Remote Config
-     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); màn hình có thể
-     * truyền giá trị riêng. Mọi kiểu reload khác (resume, đổi tab...) là code riêng của màn hình
-     * gọi [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
+     * Load banner của [placement] vào [container] và tự huỷ nó khi view bị huỷ. Loại banner và timer reload
+     * theo `enable` / `refresh_rate` của vị trí đó; [autoReload] = false cho màn tự reload bằng tay qua
+     * [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
-    protected fun loadBanner(
-        container: ViewGroup,
-        autoReload: Boolean = RemoteConfig.bannerSlotAutoReload,
-        reloadGapMs: Long = RemoteConfig.refreshRateMs,
-    ) {
+    protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {
         bannerContainer = container
         if (isPremiumUser()) {
             container.isVisible = false
@@ -51,7 +46,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         }
         container.post {
             if (_binding != null && !isPremiumUser()) {
-                bannerHandle = BannerAds.load(requireActivity(), container, autoReload, reloadGapMs)
+                bannerHandle = BannerAds.load(requireActivity(), container, placement, autoReload)
             }
         }
     }
@@ -68,7 +63,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
      */
     protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
         nativeContainer = container
-        if (isPremiumUser()) {
+        if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
             return
         }

@@ -5,48 +5,35 @@ import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.namstd.androidskillhub.BuildConfig
-import com.namstd.androidskillhub.core.ads.CollapClickGate
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
-import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Giá trị đã parse của key `inter_delay_time`: gap giữa các interstitial (ms) + các loại inter được miễn gap. */
+/** Giá trị đã parse của `inter_delay_time`: gap giữa các interstitial (ms) + các loại inter được miễn gap. */
 data class InterDelayConfig(val gapMs: Long, val ignore: Set<String>)
 
-/** Giá trị đã parse của key `language_setup` (`next=1,loading=true`). nextStyle: 1=icon, 2=nút chữ. */
+/** Giá trị đã parse của `language_setup` (`next=1,loading=true`). nextStyle: 1=icon, 2=nút chữ. */
 data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
 /**
- * Giá trị đã parse của một key `intro1_setup` … `intro4_setup` (`next=1,ds=1,delay=0,dot=1`), mỗi key cho một trang nội dung.
+ * Giá trị đã parse của một `intro1_setup` … `intro4_setup` (`next=1,ds=1,delay=0,dot=1`), mỗi key cho một trang nội dung.
  * nextStyle: 1=nút (button), 2=chữ không nền. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
  * showDots: hiện chấm tròn.
  */
 data class IntroSetup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
 
-/**
- * Giá trị đã parse của key `enable`: loại quảng cáo cho từng vị trí (`0` = tắt vị trí đó).
- * ads_splash: 1 AOA/2 Inter/3 Inter+Native · inter: 1 Inter/2 Native/3 Inter+Native ·
- * banner: 1 Banner/2 BannerCollap/3 Native/4 NativeCollap · onresume: 1 app-open/2 welcome back ·
- * inter_inapp: inter ở các màn in-app (sau onboarding), cùng mã với inter.
- */
-data class EnableConfig(val adsSplash: Int, val inter: Int, val banner: Int, val onresume: Int, val interInApp: Int) {
-    companion object {
-        val NONE = EnableConfig(adsSplash = 0, inter = 0, banner = 0, onresume = 0, interInApp = 0)
-    }
-}
-
 /** Một dòng trên màn Debug Config: tên key, giá trị thô hiện tại, và gợi ý định dạng. */
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
 
 /**
- * Các feature flag điều khiển từ xa qua Firebase Remote Config.
+ * Cấu hình quảng cáo và luồng mở app từ Firebase Remote Config, theo sheet "Ad Script": toàn bộ nằm trong **một key
+ * JSON `ad_config`** - object `settings` (cấu hình chung) + mỗi vị trí quảng cáo một object (xem [AdConfigDocument],
+ * [PlacementConfig]). Thời gian tính bằng mili-giây.
  *
- * Tài liệu đầy đủ (mỗi key làm gì, kiểu dữ liệu, fallback, ví dụ giá trị trên Firebase console) nằm ở
- * `docs/remote-config.md`. Thêm một key = 4 chỗ phải sửa trong file này: một hằng `KEY_*`, một dòng seed
- * trong `setDefaultsAsync`, một dòng trong `persistToCache()`, và một getter. Giữ tài liệu đó đồng bộ với file này.
+ * Bản debug cho override từng giá trị (tên trong `settings`, hoặc key vị trí) ở màn Debug Config - override thắng
+ * `ad_config`. Tài liệu đầy đủ ở `docs/remote-config.md`; giữ tài liệu đó đồng bộ với file này.
  */
 object RemoteConfig {
     // Dùng getter, không phải field: Firebase tự cache instance của nó, giữ instance trong object này sẽ bị lint báo StaticFieldLeak.
@@ -57,9 +44,22 @@ object RemoteConfig {
     private fun debugOverride(key: String): String? =
         if (BuildConfig.DEBUG) DebugOverrides.get(key)?.takeIf { it.isNotBlank() } else null
 
-    private fun rcString(key: String): String = debugOverride(key) ?: remoteConfig.getString(key)
-    private fun rcLong(key: String): Long = debugOverride(key)?.toLongOrNull() ?: remoteConfig.getLong(key)
-    private fun rcBoolean(key: String): Boolean = debugOverride(key)?.toBooleanStrictOrNull() ?: remoteConfig.getBoolean(key)
+    /** Parse lại `ad_config` chỉ khi chuỗi thô đổi (vd sau khi fetch, hoặc khi đổi override). */
+    private var cachedRaw: String? = null
+    private var cachedDocument = AdConfigDocument("")
+
+    @Synchronized
+    private fun document(): AdConfigDocument {
+        val raw = debugOverride(KEY_AD_CONFIG) ?: remoteConfig.getString(KEY_AD_CONFIG)
+        if (raw != cachedRaw) {
+            cachedDocument = AdConfigDocument(raw)
+            cachedRaw = raw
+        }
+        return cachedDocument
+    }
+
+    /** Một giá trị trong `settings` (override debug nếu có), null nếu không đặt. */
+    private fun setting(name: String): String? = debugOverride(name) ?: document().setting(name)
 
     private val _isReady = MutableStateFlow(false)
 
@@ -67,9 +67,8 @@ object RemoteConfig {
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     /**
-     * [context] dùng để seed [RemoteConfig] bằng các giá trị đã lưu (trong file [AppPreferences] dùng chung
-     * của app) từ lần fetch thành công gần nhất, để các getter bên dưới trả về giá trị tốt gần nhất ngay khi
-     * app vừa mở, thay vì fallback cứng, trong lúc [fetchAndActivate] còn đang chạy.
+     * Seed `ad_config` bằng bản đã lưu (trong [AppPreferences]) từ lần fetch thành công gần nhất, để ngay khi app vừa
+     * mở các getter đã trả giá trị tốt gần nhất thay vì mặc định cứng, trong lúc [fetchAndActivate] còn chạy.
      */
     fun initialize(context: Context) {
         prefs = AppPreferences.getInstance(context)
@@ -79,134 +78,39 @@ object RemoteConfig {
                 minimumFetchIntervalInSeconds = if (BuildConfig.DEBUG) 0 else 3600
             },
         )
-        remoteConfig.setDefaultsAsync(
-            mapOf(
-                KEY_ADS_ENABLE to prefs.getCachedLong(KEY_ADS_ENABLE, 1L),
-                KEY_ENABLE to prefs.getCachedString(KEY_ENABLE, DEFAULT_ENABLE),
-                KEY_BANNER_SLOT_AUTO_RELOAD to prefs.getCachedBoolean(KEY_BANNER_SLOT_AUTO_RELOAD, false),
-                KEY_REFRESH_RATE to
-                    prefs.getCachedLong(KEY_REFRESH_RATE, 0L),
-                KEY_INTER_DELAY_TIME to prefs.getCachedString(KEY_INTER_DELAY_TIME, DEFAULT_INTER_DELAY_TIME),
-                KEY_OPEN_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_OPEN_OPEN_GAP_MILLIS, 0L),
-                KEY_INTER_OPEN_GAP_MILLIS to prefs.getCachedLong(KEY_INTER_OPEN_GAP_MILLIS, 0L),
-                KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to prefs.getCachedLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT, 2L),
-                KEY_WAIT_TIME to prefs.getCachedLong(KEY_WAIT_TIME, 0L),
-                KEY_INTRO_SWIPE to prefs.getCachedBoolean(KEY_INTRO_SWIPE, true),
-                KEY_LANGUAGE_DELAY_MILLIS to prefs.getCachedLong(KEY_LANGUAGE_DELAY_MILLIS, 800L),
-                KEY_STEP_COUNT to prefs.getCachedLong(KEY_STEP_COUNT, 1L),
-                KEY_LANGUAGE_SETUP to prefs.getCachedString(KEY_LANGUAGE_SETUP, DEFAULT_LANGUAGE_SETUP),
-                KEY_INTRO1_SETUP to prefs.getCachedString(KEY_INTRO1_SETUP, DEFAULT_INTRO1_SETUP),
-                // intro2-4 không có default: thiếu thì dùng lại intro1 (xem [introSetup]).
-                KEY_INTRO2_SETUP to prefs.getCachedString(KEY_INTRO2_SETUP, ""),
-                KEY_INTRO3_SETUP to prefs.getCachedString(KEY_INTRO3_SETUP, ""),
-                KEY_INTRO4_SETUP to prefs.getCachedString(KEY_INTRO4_SETUP, ""),
-                KEY_NATIVE_INTRO_FULL to prefs.getCachedString(KEY_NATIVE_INTRO_FULL, ""),
-                KEY_SPLASH_FALLBACK to prefs.getCachedString(KEY_SPLASH_FALLBACK, ""),
-                KEY_NATIVE_INTRO_USE_ICON_NEXT to
-                    prefs.getCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, DEFAULT_NATIVE_INTRO_USE_ICON_NEXT),
-                KEY_NATIVE_TEMPLATE to prefs.getCachedString(KEY_NATIVE_TEMPLATE, DEFAULT_NATIVE_TEMPLATE),
-                KEY_COLLAP_CONFIG to prefs.getCachedLong(KEY_COLLAP_CONFIG, 0L),
-                KEY_ID_BANNER to prefs.getCachedString(KEY_ID_BANNER, ""),
-                KEY_ID_BANNER_COLLAPSIBLE to prefs.getCachedString(KEY_ID_BANNER_COLLAPSIBLE, ""),
-                KEY_ID_INTERSTITIAL to prefs.getCachedString(KEY_ID_INTERSTITIAL, ""),
-                KEY_ID_NATIVE to prefs.getCachedString(KEY_ID_NATIVE, ""),
-                KEY_ID_APP_OPEN to prefs.getCachedString(KEY_ID_APP_OPEN, ""),
-            ),
-        )
+        remoteConfig.setDefaultsAsync(mapOf(KEY_AD_CONFIG to prefs.getCachedString(CACHE_AD_CONFIG, "")))
         remoteConfig.fetchAndActivate().addOnCompleteListener {
-            persistToCache()
+            // Cache giá trị thô của Firebase - không bao giờ cache qua getter, vì getter đã tính cả override debug.
+            prefs.putCachedString(CACHE_AD_CONFIG, remoteConfig.getString(KEY_AD_CONFIG))
             _isReady.value = true
         }
     }
 
     /**
-     * Cache các giá trị thô từ Firebase/default - không bao giờ cache qua getter, vì getter đã tính cả [DebugOverrides]:
-     * override nào bị cache ở đây sẽ thành default được seed và vẫn còn sau khi bấm "Xoá hết override".
-     */
-    private fun persistToCache() {
-        prefs.putCachedLong(KEY_ADS_ENABLE, remoteConfig.getLong(KEY_ADS_ENABLE))
-        prefs.putCachedString(KEY_ENABLE, remoteConfig.getString(KEY_ENABLE))
-        prefs.putCachedBoolean(KEY_BANNER_SLOT_AUTO_RELOAD, remoteConfig.getBoolean(KEY_BANNER_SLOT_AUTO_RELOAD))
-        prefs.putCachedLong(KEY_REFRESH_RATE, remoteConfig.getLong(KEY_REFRESH_RATE))
-        prefs.putCachedString(KEY_INTER_DELAY_TIME, remoteConfig.getString(KEY_INTER_DELAY_TIME))
-        prefs.putCachedLong(KEY_OPEN_OPEN_GAP_MILLIS, remoteConfig.getLong(KEY_OPEN_OPEN_GAP_MILLIS))
-        prefs.putCachedLong(KEY_INTER_OPEN_GAP_MILLIS, remoteConfig.getLong(KEY_INTER_OPEN_GAP_MILLIS))
-        prefs.putCachedLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT, remoteConfig.getLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT))
-        prefs.putCachedLong(KEY_WAIT_TIME, remoteConfig.getLong(KEY_WAIT_TIME))
-        prefs.putCachedBoolean(KEY_INTRO_SWIPE, remoteConfig.getBoolean(KEY_INTRO_SWIPE))
-        prefs.putCachedLong(KEY_LANGUAGE_DELAY_MILLIS, remoteConfig.getLong(KEY_LANGUAGE_DELAY_MILLIS))
-        prefs.putCachedLong(KEY_STEP_COUNT, remoteConfig.getLong(KEY_STEP_COUNT))
-        prefs.putCachedString(KEY_LANGUAGE_SETUP, remoteConfig.getString(KEY_LANGUAGE_SETUP))
-        prefs.putCachedString(KEY_INTRO1_SETUP, remoteConfig.getString(KEY_INTRO1_SETUP))
-        prefs.putCachedString(KEY_INTRO2_SETUP, remoteConfig.getString(KEY_INTRO2_SETUP))
-        prefs.putCachedString(KEY_INTRO3_SETUP, remoteConfig.getString(KEY_INTRO3_SETUP))
-        prefs.putCachedString(KEY_INTRO4_SETUP, remoteConfig.getString(KEY_INTRO4_SETUP))
-        prefs.putCachedString(KEY_NATIVE_INTRO_FULL, remoteConfig.getString(KEY_NATIVE_INTRO_FULL))
-        prefs.putCachedString(KEY_SPLASH_FALLBACK, remoteConfig.getString(KEY_SPLASH_FALLBACK))
-        prefs.putCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, remoteConfig.getString(KEY_NATIVE_INTRO_USE_ICON_NEXT))
-        prefs.putCachedString(KEY_NATIVE_TEMPLATE, remoteConfig.getString(KEY_NATIVE_TEMPLATE))
-        prefs.putCachedLong(KEY_COLLAP_CONFIG, remoteConfig.getLong(KEY_COLLAP_CONFIG))
-        prefs.putCachedString(KEY_ID_BANNER, remoteConfig.getString(KEY_ID_BANNER))
-        prefs.putCachedString(KEY_ID_BANNER_COLLAPSIBLE, remoteConfig.getString(KEY_ID_BANNER_COLLAPSIBLE))
-        prefs.putCachedString(KEY_ID_INTERSTITIAL, remoteConfig.getString(KEY_ID_INTERSTITIAL))
-        prefs.putCachedString(KEY_ID_NATIVE, remoteConfig.getString(KEY_ID_NATIVE))
-        prefs.putCachedString(KEY_ID_APP_OPEN, remoteConfig.getString(KEY_ID_APP_OPEN))
-    }
-
-    /**
-     * Công tắc toàn app + chọn kịch bản (key `ads_enable`): 0 tắt, 1 A, 2 theo nguồn user, 3 theo test ad.
+     * Công tắc toàn app + chọn kịch bản (`settings.ads_enable`): 0 tắt, 1 A, 2 theo nguồn user, 3 theo test ad.
      * Xem [com.namstd.androidskillhub.core.ads.resolveAdProfile].
      */
     val adsEnable: Int
-        get() = rcLong(KEY_ADS_ENABLE).toInt()
+        get() = setting("ads_enable")?.trim()?.toIntOrNull() ?: 1
 
     /**
-     * Bật/tắt + chọn loại quảng cáo theo từng vị trí (key `enable`, dạng
-     * `ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0`; `0` = tắt vị trí đó). Xem [EnableConfig].
-     * Giá trị thô trên Firebase - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.enable].
-     * Thay cho 2 key cũ use_custom_interstitial & use_native_collapsible. Định tuyến qua
-     * [com.namstd.androidskillhub.core.ads.resolveFullScreenPlan] (inter/splash) và [com.namstd.androidskillhub.core.ads.BannerAds] (banner).
+     * Cấu hình vị trí quảng cáo [key] (object cùng tên trong `ad_config`, xem [PlacementConfig]). Giá trị thô - code
+     * quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.config], nơi áp kịch bản BASIC / OFF.
      */
-    val enable: EnableConfig
-        get() {
-            val m = parseKeyValues(rcString(KEY_ENABLE))
-            return EnableConfig(
-                adsSplash = m["ads_splash"]?.toIntOrNull() ?: 2,
-                inter = m["inter"]?.toIntOrNull() ?: 1,
-                banner = m["banner"]?.toIntOrNull() ?: 2,
-                onresume = m["onresume"]?.toIntOrNull() ?: 1,
-                interInApp = m["inter_inapp"]?.toIntOrNull() ?: 0,
-            )
-        }
+    fun placement(key: AdKey): PlacementConfig =
+        debugOverride(key.key)?.let { PlacementConfig.parseOverride(it, key) } ?: document().placement(key)
 
     /**
-     * Banner slot - thứ mà [com.namstd.androidskillhub.core.ads.BannerAds.load] đặt vào ô banner của một màn
-     * (loại do [enable] quyết định) - có tự reload mỗi [refreshRateMs] khi màn đang hiển thị hay không. Không ảnh hưởng
-     * tới native ad khác trong app (feed, onboarding, post-interstitial).
-     */
-    val bannerSlotAutoReload: Boolean
-        get() = rcBoolean(KEY_BANNER_SLOT_AUTO_RELOAD)
-
-    /**
-     * Timer reload của banner slot: thời gian từ lúc ad được hiển thị (hoặc load lỗi) tới lần reload kế tiếp -
-     * xem [bannerSlotAutoReload]. Giá trị config tính bằng ms. Mặc định 0 = không có timer. Màn nào reload bằng tay thì bỏ qua giá trị này.
-     */
-    val refreshRateMs: Long
-        get() = rcLong(KEY_REFRESH_RATE).coerceAtLeast(0L)
-
-    /**
-     * Cấu hình gap giữa các Interstitial + danh sách loại inter được MIỄN gap đó.
-     * Giá trị config dạng chuỗi `time=10000,ignore=ads_splash|inter_language|inter_intro`:
-     * `time` = gap giữa 2 inter (ms), `ignore` = các
+     * Gap giữa các Interstitial + danh sách loại inter được MIỄN gap đó (`settings.inter_delay_time`, dạng
+     * `time=10000,ignore=ads_splash|inter_language|inter_intro`): `time` = gap (ms), `ignore` = các
      * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key] luôn được hiện bất kể gap.
-     * Thay cho key cũ `inter_inter_gap_seconds`. Xem [com.namstd.androidskillhub.core.ads.AdGapGate].
      * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.interDelay].
      */
     val interDelay: InterDelayConfig
         get() {
             var timeMs = 0L
             var ignore = emptySet<String>()
-            rcString(KEY_INTER_DELAY_TIME).split(",").forEach { part ->
+            setting("inter_delay_time").orEmpty().split(",").forEach { part ->
                 val pair = part.split("=", limit = 2)
                 val value = pair.getOrElse(1) { "" }.trim()
                 when (pair[0].trim()) {
@@ -217,66 +121,21 @@ object RemoteConfig {
             return InterDelayConfig(gapMs = timeMs, ignore = ignore)
         }
 
-    /**
-     * Thời gian tối thiểu giữa 2 lần App Open, tính bằng ms. `0` = không có gap.
-     * Xem [com.namstd.androidskillhub.core.ads.AdGapGate].
-     */
-    val openOpenGapMs: Long
-        get() = rcLong(KEY_OPEN_OPEN_GAP_MILLIS).coerceAtLeast(0L)
-
-    /**
-     * Thời gian tối thiểu giữa 1 lần Interstitial và 1 lần App Open, cả 2 chiều (tránh 2 ad full-screen
-     * hiện liên tiếp khác định dạng), tính bằng ms. `0` = không có gap.
-     */
-    val interOpenGapMs: Long
-        get() = rcLong(KEY_INTER_OPEN_GAP_MILLIS).coerceAtLeast(0L)
-
-    /** Số native ad hiển thị liên tiếp trong quãng nghỉ sau interstitial. Giới hạn 1-2 - [com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment] chỉ hỗ trợ luồng 2 stage. */
-    val postInterstitialNativeAdCount: Int
-        get() = rcLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT).toInt().coerceIn(1, 2)
-
-    /**
-     * Thời gian đếm ngược (ms) trên màn native fullscreen sau interstitial
-     * ([com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment]) trước khi
-     * icon X (đóng) hiện ra - và cũng là thời gian mỗi stage đứng trước khi nút Next khả dụng.
-     * Giá trị config tính bằng ms.
-     */
-    val waitTimeMs: Long
-        get() = rcLong(KEY_WAIT_TIME).coerceAtLeast(0L)
-
-    /**
-     * Thời gian chờ (mili-giây) trước khi nút xác nhận ở màn chọn ngôn ngữ
-     * ([com.namstd.androidskillhub.feature.language.LanguageActivity]) hiện ra. `0` = hiện ngay.
-     * Giá trị config đã tính bằng ms (không nhân thêm).
-     */
+    /** Chờ (ms) trước khi nút xác nhận màn Language hiện ra (`settings.language_delay_millis`). `0` = hiện ngay. */
     val languageDelayMillis: Long
-        get() = rcLong(KEY_LANGUAGE_DELAY_MILLIS).coerceAtLeast(0L)
+        get() = (setting("language_delay_millis")?.trim()?.toLongOrNull() ?: 800L).coerceAtLeast(0L)
 
-    /**
-     * Tần suất hiển thị interstitial theo số lần yêu cầu: chỉ hiện ở lần yêu cầu chia hết cho giá trị này
-     * (`1` = mọi lần; `2` = cứ 2 lần hiện 1 lần...). Bộ đếm lưu qua các lần mở app
-     * ([com.namstd.androidskillhub.core.preferences.AppPreferences.interstitialStepCounter]). Tối thiểu là 1.
-     * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.stepCount].
-     */
-    val stepCount: Int
-        get() = rcLong(KEY_STEP_COUNT).toInt().coerceAtLeast(1)
-
-    /**
-     * Màn Onboarding ([com.namstd.androidskillhub.feature.onboarding.OnboardingActivity]) có cho phép vuốt
-     * (`ViewPager2.isUserInputEnabled`) hay không. `true` (mặc định) = vuốt giữa các trang được;
-     * `false` = chỉ chuyển trang bằng nút Next. Fallback mặc định là `true` để giữ đúng hành vi gốc của ViewPager2.
-     */
+    /** Cho vuốt chuyển trang ở Intro (`settings.intro_swipe`), mặc định `true`. */
     val introSwipe: Boolean
-        get() = rcBoolean(KEY_INTRO_SWIPE)
+        get() = setting("intro_swipe")?.let(::parseBoolean) ?: true
 
     /**
-     * Cấu hình nút Next màn chọn ngôn ngữ (key `language_setup`, dạng `next=1,loading=true`):
-     * `next` = kiểu nút (1=icon dấu check trên thanh tiêu đề, 2=nút chữ), `loading` = có hiện vòng loading trong lúc chờ
-     * [languageDelayMillis] trước khi hiện Next hay không.
+     * Nút Next màn Language (`settings.language_setup`, dạng `next=1,loading=true`): `next` = 1 icon dấu check trên
+     * thanh tiêu đề / 2 nút chữ, `loading` = vòng loading trong lúc chờ [languageDelayMillis].
      */
     val languageSetup: LanguageSetup
         get() {
-            val m = parseKeyValues(rcString(KEY_LANGUAGE_SETUP))
+            val m = parseKeyValues(setting("language_setup") ?: DEFAULT_LANGUAGE_SETUP)
             return LanguageSetup(
                 nextStyle = m["next"]?.toIntOrNull() ?: 2,
                 loading = m["loading"]?.toBoolean() ?: false,
@@ -284,14 +143,14 @@ object RemoteConfig {
         }
 
     /**
-     * Cấu hình trang nội dung thứ [page] (1-4) của Onboarding (key `intro{page}_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
-     * `next` = kiểu nút (1=nút dạng button, 2=chữ "Next" không nền, bấm vào chữ để đi tiếp), `ds` = vị trí indicator (1=trên nút Next, 0=dưới),
-     * `delay` = số **mili-giây** chờ trước khi hiện nút Next, `dot` = 1 hiện chấm tròn / 0 ẩn indicator.
-     * Trang native toàn màn hình không tính là trang nội dung. Key của trang nào để trống thì dùng lại `intro1_setup`.
+     * Cấu hình trang nội dung thứ [page] (1-4) của Intro (`settings.intro{page}_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
+     * `next` 1 nút button / 2 chữ "Next" không nền, `ds` 1 chấm trên nút Next / 0 dưới, `delay` ms chờ trước khi hiện
+     * Next, `dot` 1 hiện chấm / 0 ẩn. Trang native toàn màn hình không tính. Trang nào không có thì dùng `intro1_setup`.
      */
     fun introSetup(page: Int): IntroSetup {
-        val key = INTRO_SETUP_KEYS.getOrElse(page - 1) { KEY_INTRO1_SETUP }
-        val raw = rcString(key).ifBlank { rcString(KEY_INTRO1_SETUP) }
+        val raw = setting("intro${page}_setup")?.takeIf { it.isNotBlank() }
+            ?: setting("intro1_setup")?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_INTRO1_SETUP
         val m = parseKeyValues(raw)
         return IntroSetup(
             nextStyle = m["next"]?.toIntOrNull() ?: 1,
@@ -302,104 +161,58 @@ object RemoteConfig {
     }
 
     /**
-     * Vị trí inter bù khi Splash không kịp hiện quảng cáo (key `splash_fallback`, vd `inter_language`): khớp
+     * Vị trí inter bù khi Splash không kịp hiện quảng cáo (`settings.splash_fallback`, vd `inter_language`): khớp
      * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key]. Trống hoặc không khớp = tắt.
      * Code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.splashFallback].
      */
     val splashFallback: InterstitialPlacement?
-        get() = rcString(KEY_SPLASH_FALLBACK).trim().let { key ->
+        get() = setting("splash_fallback")?.trim().let { key ->
             InterstitialPlacement.entries.firstOrNull { it.key == key && it != InterstitialPlacement.SPLASH }
         }
 
     /**
-     * Trang native toàn màn hình trong Onboarding (key `native_intro_full`): mỗi chữ số là một trang nội dung có
-     * trang native full chèn ngay sau nó. `123` = sau trang 1, 2 và 3; `2` = chỉ sau trang 2; `0`/trống = không có.
-     * Chữ số không có trang nội dung tương ứng phía sau (vd `4` khi Intro có 4 trang) bị bỏ qua.
-     */
-    val nativeIntroFullPages: Set<Int>
-        get() = rcString(KEY_NATIVE_INTRO_FULL).filter { it.isDigit() }.map { it.digitToInt() }.filter { it >= 1 }.toSet()
-
-    /**
-     * Nút điều khiển trên trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`): `true` = icon X,
-     * `false` = mũi tên Next. Nhận cả `1`/`0`. Vòng loading chờ [waitTimeMs] trước khi hiện nút (0 = hiện ngay).
-     * Đọc dạng chuỗi (cache cũng là chuỗi) để bản cũ lưu `next=1,loading=false` không làm crash prefs.
+     * Nút trên trang native toàn màn hình trong Intro (`settings.native_intro_use_icon_next`): `true` = icon X,
+     * `false` = mũi tên Next. Nhận cả `1`/`0`.
      */
     val nativeIntroUseIconNext: Boolean
-        get() = rcString(KEY_NATIVE_INTRO_USE_ICON_NEXT).trim().lowercase() in TRUE_VALUES
+        get() = setting("native_intro_use_icon_next")?.let(::parseBoolean) ?: false
 
     /**
-     * Layout cho native card được render qua [com.namstd.androidskillhub.core.ads.NativeAds] renderDefaultCard
-     * (key `native_template`): `native media` (có ảnh), `native no media` (chỉ chữ), `native banner` (dải nhỏ),
-     * `native fullscreen` (card lớn), hoặc một mẫu Figma (`big1`…`big9`, `small1`…`small4`, `tiny1`, `tiny2`,
-     * `collap1`…`collap3`, `full1`…`full5`, `lang1_a`, `lang1_b`, `lang2_a`, `lang2_b`) - xem [NativeAdTemplate].
-     * Áp dụng cho các placement dùng cách render mặc định (Language, Onboarding, Welcome back, banner-native);
-     * feed/post-interstitial/collapsible giữ layout riêng.
+     * [DEBUG] Các dòng cho màn Debug Config: `ad_config` (cả khối), rồi từng giá trị `settings`, rồi từng vị trí -
+     * mỗi dòng hiện giá trị đang có hiệu lực (override nếu có, không thì từ `ad_config`).
      */
-    val nativeTemplate: NativeAdTemplate
-        get() = NativeAdTemplate.fromKey(rcString(KEY_NATIVE_TEMPLATE))
-
-    /**
-     * Click-bait cho native collapsible ([com.namstd.androidskillhub.core.ads.NativeCollapseAd]): lần bấm **nút X**
-     * nào mở trang quảng cáo thay vì thu gọn, mỗi chữ số một lần (`357` = lần bấm X thứ 3, 5, 7; đếm chung trong
-     * một lần mở app). `0` = tắt. Xem [CollapClickGate].
-     */
-    val collapConfig: CollapClickGate
-        get() = CollapClickGate(rcString(KEY_COLLAP_CONFIG))
-
-    /** Danh sách ID theo tầng cho waterfall (thứ tự highfloor → medium → all_price). Rỗng = để caller fallback test id. */
-    val idBanner: List<String> get() = tieredIds(KEY_ID_BANNER)
-    val idBannerCollapsible: List<String> get() = tieredIds(KEY_ID_BANNER_COLLAPSIBLE)
-    val idInterstitial: List<String> get() = tieredIds(KEY_ID_INTERSTITIAL)
-    val idNative: List<String> get() = tieredIds(KEY_ID_NATIVE)
-    val idAppOpen: List<String> get() = tieredIds(KEY_ID_APP_OPEN)
-
-    /**
-     * Parse chuỗi ID theo tầng `highfloor=id1|id2,medium=id3,all_price=id4` thành 1 list đã xếp ưu tiên
-     * highfloor → medium → all_price (nhiều id/tầng ngăn bằng `|`; tầng thiếu thì bỏ qua). Rỗng nếu chưa set.
-     */
-    private fun tieredIds(key: String): List<String> {
-        val m = parseKeyValues(rcString(key))
-        return listOf("highfloor", "medium", "all_price").flatMap { tier ->
-            m[tier]?.split("|")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
-        }
+    fun debugEntries(): List<DebugConfigEntry> {
+        val doc = document()
+        return listOf(
+            DebugConfigEntry(KEY_AD_CONFIG, debugOverride(KEY_AD_CONFIG) ?: remoteConfig.getString(KEY_AD_CONFIG), AD_CONFIG_HINT),
+        ) + SETTING_HINTS.map { (name, hint) -> DebugConfigEntry(name, setting(name).orEmpty(), hint) } +
+            AdKey.entries.filter { it != AdKey.ON_RESUME }.map {
+                DebugConfigEntry(it.key, debugOverride(it.key) ?: doc.placementJson(it), "$PLACEMENT_HINT · mặc định enable=${it.defaultEnable}")
+            }
     }
 
-    /**
-     * [DEBUG] Mọi key + giá trị thô hiện tại (override nếu có, không thì Firebase/default) + gợi ý định dạng,
-     * cho màn Debug Config. Firebase lưu mọi kiểu dạng string nên [rcString] đọc được cả Long/Boolean.
-     */
-    fun debugEntries(): List<DebugConfigEntry> =
-        DEBUG_HINTS.map { (key, hint) -> DebugConfigEntry(key, rcString(key), hint) }
-
-    private val DEBUG_HINTS: List<Pair<String, String>> = listOf(
-        KEY_ADS_ENABLE to "0 tắt · 1 REMOTE · 2 marketing→REMOTE, còn lại BASIC · 3 test ad→BASIC, còn lại REMOTE",
-        KEY_ENABLE to "ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0 (0=off)",
-        KEY_INTER_DELAY_TIME to "time=ms,ignore=ads_splash|inter_language|inter_intro",
-        KEY_WAIT_TIME to "[ms] đếm ngược trước khi hiện X native fullscreen",
-        KEY_STEP_COUNT to "số: inter hiện lần chia hết cho N (1=mọi lần)",
-        KEY_REFRESH_RATE to "[ms] reload banner (0=không)",
-        KEY_BANNER_SLOT_AUTO_RELOAD to "true/false",
-        KEY_OPEN_OPEN_GAP_MILLIS to "[ms] gap App Open↔App Open",
-        KEY_INTER_OPEN_GAP_MILLIS to "[ms] gap Inter↔App Open",
-        KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT to "1-2 native sau inter",
-        KEY_INTRO_SWIPE to "true/false (vuốt Onboarding)",
-        KEY_LANGUAGE_DELAY_MILLIS to "[ms] chờ trước khi hiện nút Language",
-        KEY_LANGUAGE_SETUP to "next=1 icon/2 nút chữ,loading=true/false",
-        KEY_INTRO1_SETUP to "trang nội dung 1: next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
-        KEY_INTRO2_SETUP to "trang nội dung 2, cùng dạng intro1 (trống = dùng intro1)",
-        KEY_INTRO3_SETUP to "trang nội dung 3, cùng dạng intro1 (trống = dùng intro1)",
-        KEY_INTRO4_SETUP to "trang nội dung 4, cùng dạng intro1 (trống = dùng intro1)",
-        KEY_SPLASH_FALLBACK to "Splash không kịp hiện QC thì inter này bù, vd inter_language (trống = tắt)",
-        KEY_NATIVE_INTRO_FULL to "mỗi chữ số = trang có native full ngay sau, vd 123 = sau trang 1,2,3 (0 = không có)",
-        KEY_NATIVE_INTRO_USE_ICON_NEXT to "true = icon X / false = Next",
-        KEY_NATIVE_TEMPLATE to NativeAdTemplate.keys,
-        KEY_COLLAP_CONFIG to "lần bấm X mở QC, vd 357 = lần 3,5,7 (0=tắt)",
-        KEY_ID_BANNER to "highfloor=..|..,medium=..,all_price=.. (rỗng=test id)",
-        KEY_ID_BANNER_COLLAPSIBLE to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",
-        KEY_ID_INTERSTITIAL to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",
-        KEY_ID_NATIVE to "highfloor=..,medium=..,all_price=.. (áp mọi native; rỗng=test id)",
-        KEY_ID_APP_OPEN to "highfloor=..,medium=..,all_price=.. (rỗng=test id)",
+    private val SETTING_HINTS: List<Pair<String, String>> = listOf(
+        "ads_enable" to "0 tắt · 1 REMOTE · 2 marketing→REMOTE, còn lại BASIC · 3 test ad→BASIC, còn lại REMOTE",
+        "language_delay_millis" to "[ms] chờ trước khi hiện nút Language",
+        "splash_fallback" to "Splash không kịp hiện QC thì inter này bù, vd inter_language (trống = tắt)",
+        "language_setup" to "next=1 icon/2 nút chữ,loading=true/false",
+        "intro1_setup" to "trang nội dung 1: next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
+        "intro2_setup" to "trang nội dung 2, cùng dạng intro1 (trống = dùng intro1)",
+        "intro3_setup" to "trang nội dung 3, cùng dạng intro1 (trống = dùng intro1)",
+        "intro4_setup" to "trang nội dung 4, cùng dạng intro1 (trống = dùng intro1)",
+        "intro_swipe" to "true/false (vuốt Intro)",
+        "inter_delay_time" to "time=ms,ignore=ads_splash|inter_language|inter_intro",
+        "native_intro_use_icon_next" to "true = icon X / false = Next",
+        "on_resume" to "0 tắt · 1 App Open · 2 Welcome back",
+        "on_resume_id" to "ID App Open khi quay lại app (trống = test id)",
     )
+
+    private const val AD_CONFIG_HINT =
+        "Cả khối JSON {\"settings\":{…},\"ads_splash\":{…},…}. Các dòng bên dưới ghi đè từng phần."
+    private const val PLACEMENT_HINT =
+        "số = enable, hoặc JSON {\"enable\":3,\"wait_time\":5000,\"inter\":{\"name1\":\"INTER_SPLASH\",\"id1\":\"…\"}}"
+
+    private fun parseBoolean(value: String): Boolean = value.trim().lowercase() in TRUE_VALUES
 
     /** Tách chuỗi config dạng `k=v,k=v` (bỏ khoảng trắng thừa) thành map. */
     private fun parseKeyValues(raw: String): Map<String, String> =
@@ -408,39 +221,11 @@ object RemoteConfig {
             if (pair.size == 2) pair[0].trim() to pair[1].trim() else null
         }.toMap()
 
-    private const val KEY_ADS_ENABLE = "ads_enable"
-    private const val KEY_ENABLE = "enable"
-    private const val DEFAULT_ENABLE = "ads_splash=2,inter=1,banner=2,onresume=1,inter_inapp=0"
-    private const val KEY_BANNER_SLOT_AUTO_RELOAD = "banner_slot_auto_reload"
-    private const val KEY_REFRESH_RATE = "refresh_rate"
-    private const val KEY_INTER_DELAY_TIME = "inter_delay_time"
-    private const val DEFAULT_INTER_DELAY_TIME = "time=0,ignore="
-    private const val KEY_OPEN_OPEN_GAP_MILLIS = "open_open_gap_millis"
-    private const val KEY_INTER_OPEN_GAP_MILLIS = "inter_open_gap_millis"
-    private const val KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT = "post_interstitial_native_ad_count"
-    private const val KEY_WAIT_TIME = "wait_time"
-    private const val KEY_INTRO_SWIPE = "intro_swipe"
-    private const val KEY_LANGUAGE_DELAY_MILLIS = "language_delay_millis"
-    private const val KEY_STEP_COUNT = "step_count"
-    private const val KEY_LANGUAGE_SETUP = "language_setup"
+    private const val KEY_AD_CONFIG = "ad_config"
+
+    /** Tên cache trong [AppPreferences] - khác tên mọi key cũ để không đọc nhầm kiểu dữ liệu bản cũ đã lưu. */
+    private const val CACHE_AD_CONFIG = "cache_ad_config"
     private const val DEFAULT_LANGUAGE_SETUP = "next=2,loading=false"
-    private const val KEY_INTRO1_SETUP = "intro1_setup"
-    private const val KEY_INTRO2_SETUP = "intro2_setup"
-    private const val KEY_INTRO3_SETUP = "intro3_setup"
-    private const val KEY_INTRO4_SETUP = "intro4_setup"
-    private val INTRO_SETUP_KEYS = listOf(KEY_INTRO1_SETUP, KEY_INTRO2_SETUP, KEY_INTRO3_SETUP, KEY_INTRO4_SETUP)
-    private const val KEY_NATIVE_INTRO_FULL = "native_intro_full"
-    private const val KEY_SPLASH_FALLBACK = "splash_fallback"
     private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=1"
-    private const val KEY_NATIVE_INTRO_USE_ICON_NEXT = "native_intro_use_icon_next"
-    private const val DEFAULT_NATIVE_INTRO_USE_ICON_NEXT = "false"
     private val TRUE_VALUES = setOf("true", "1", "t", "yes", "y", "on")
-    private const val KEY_NATIVE_TEMPLATE = "native_template"
-    private const val DEFAULT_NATIVE_TEMPLATE = "native media"
-    private const val KEY_COLLAP_CONFIG = "collap_config"
-    private const val KEY_ID_BANNER = "id_banner"
-    private const val KEY_ID_BANNER_COLLAPSIBLE = "id_banner_collapsible"
-    private const val KEY_ID_INTERSTITIAL = "id_interstitial"
-    private const val KEY_ID_NATIVE = "id_native"
-    private const val KEY_ID_APP_OPEN = "id_app_open"
 }

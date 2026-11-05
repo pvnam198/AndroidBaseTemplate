@@ -13,6 +13,7 @@ import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import com.namstd.androidskillhub.feature.welcome.WelcomeBackActivity
@@ -44,7 +45,7 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
             currentActivity.get()?.let { activity ->
                 val preferences = AppPreferences.getInstance(this@AndroidSkillHubApp)
                 if (preferences.setupCompleted) {
-                    when (AdPolicy.enable.onresume) {
+                    when (AdPolicy.config(AdKey.ON_RESUME).enableCode) {
                         1 -> Ads.onReturnToForeground(activity)
                         2 -> WelcomeBackActivity.launch(activity)
                         // 0 = không hiện gì khi quay lại app
@@ -56,7 +57,7 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
 
     override fun onStop(owner: LifecycleOwner) {
         // Hâm nóng native cho welcome back khi app xuống nền, để sẵn lúc quay lại.
-        if (AdPolicy.enable.onresume == 2) NativeAds.preload(NativePlacement.WELCOME_BACK)
+        if (AdPolicy.config(AdKey.ON_RESUME).enableCode == 2) NativeAds.preload(NativePlacement.WELCOME_BACK)
     }
 
     override fun onActivityResumed(activity: Activity) {

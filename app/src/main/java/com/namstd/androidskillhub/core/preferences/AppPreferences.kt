@@ -25,12 +25,13 @@ class AppPreferences private constructor(context: Context) {
         set(value) = values.edit { putBoolean(KEY_PREMIUM, value) }
 
     /**
-     * Đếm số lần đã yêu cầu hiện interstitial, lưu qua các lần mở app. Dùng cho tần suất
-     * `step_count`: chỉ hiện ở lần chia hết cho [com.namstd.androidskillhub.core.config.RemoteConfig.stepCount].
+     * Đếm số lần đã yêu cầu hiện interstitial ở vị trí [placementKey], lưu qua các lần mở app. Dùng cho
+     * `step_count` của vị trí đó: chỉ hiện ở lần chia hết cho `step_count`.
      */
-    var interstitialStepCounter: Int
-        get() = values.getInt(KEY_INTER_STEP_COUNTER, 0)
-        set(value) = values.edit { putInt(KEY_INTER_STEP_COUNTER, value) }
+    fun interstitialStepCounter(placementKey: String): Int = values.getInt(KEY_INTER_STEP_COUNTER + "_" + placementKey, 0)
+
+    fun setInterstitialStepCounter(placementKey: String, count: Int) =
+        values.edit { putInt(KEY_INTER_STEP_COUNTER + "_" + placementKey, count) }
 
     /** Kết quả kiểm tra nguồn user cho `ads_enable = 2`: true = đến từ marketing, null = attribution chưa về. */
     var isMarketingUser: Boolean?

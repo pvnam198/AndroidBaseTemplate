@@ -16,7 +16,7 @@ object RewardedInterstitialAds {
     fun load(onStatus: (String) -> Unit = {}) {
         if (!Ads.isReady || loading || ad != null) return
         loading = true
-        WaterfallLoader<RewardedInterstitialAd>(Ads.ids.rewardedInterstitial).load(
+        WaterfallLoader<RewardedInterstitialAd>(listOf(TEST_REWARDED_INTERSTITIAL)).load(
             attempt = { id, loaded, failed ->
                 RewardedInterstitialAd.load(
                     AdRequest.Builder(id).build(),

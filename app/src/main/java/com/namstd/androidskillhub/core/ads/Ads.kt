@@ -33,8 +33,6 @@ object Ads {
             if (!value) clearAll()
         }
 
-    internal var ids: AdUnitIds = AdUnitIds()
-
     val isReady: Boolean get() = ready
     val isPrivacyOptionsRequired: Boolean
         get() = consentInformation?.privacyOptionsRequirementStatus ==
@@ -42,7 +40,6 @@ object Ads {
 
     fun initialize(
         activity: Activity,
-        adUnitIds: AdUnitIds = AdUnitIds(),
         onReady: (Boolean) -> Unit = {},
     ) {
         if (!adsEnabled) {
@@ -54,7 +51,6 @@ object Ads {
         readyCallbacks += onReady
         if (initializationStarted) return
         initializationStarted = true
-        ids = adUnitIds
         val consent = UserMessagingPlatform.getConsentInformation(activity)
         consentInformation = consent
         consent.requestConsentInfoUpdate(

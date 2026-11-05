@@ -7,6 +7,7 @@ import androidx.core.view.isVisible
 import com.namstd.androidskillhub.BuildConfig
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.Ads
+import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.language.AppLanguage
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivitySettingsBinding
@@ -21,7 +22,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
     override fun initViews() {
         binding.privacyButton.isVisible = Ads.isPrivacyOptionsRequired
         binding.debugConfigButton.isVisible = BuildConfig.DEBUG
-        loadBanner(binding.bannerContainer)
+        loadBanner(binding.bannerContainer, BannerPlacement.SETTING)
     }
 
     override fun initListeners() {

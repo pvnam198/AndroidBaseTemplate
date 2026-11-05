@@ -58,6 +58,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.config)
     testImplementation(libs.junit)
+    // org.json thật cho unit test JVM (android.jar chỉ có stub) - PlacementConfig parse JSON.
+    testImplementation(libs.org.json)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

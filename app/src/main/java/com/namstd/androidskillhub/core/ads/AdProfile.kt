@@ -1,6 +1,6 @@
 package com.namstd.androidskillhub.core.ads
 
-import com.namstd.androidskillhub.core.config.EnableConfig
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.InterDelayConfig
 
 /**
@@ -45,7 +45,11 @@ fun resolveAdProfile(
  * Splash/Language/Onboarding. Sửa bộ gọn thì sửa ở đây.
  */
 object BasicAdProfile {
-    val enable = EnableConfig(adsSplash = 1, inter = 0, banner = 1, onresume = 1, interInApp = 1)
+    /** `enable` cố định cho từng vị trí: chỉ AOA Splash, banner Home/Cài đặt, inter Home và AOA khi quay lại app. */
+    fun enable(key: AdKey): String = when (key) {
+        AdKey.ADS_SPLASH, AdKey.BANNER_HOME, AdKey.BANNER_SETTING, AdKey.INTER_HOME, AdKey.ON_RESUME -> "1"
+        else -> "0"
+    }
+
     val interDelay = InterDelayConfig(gapMs = 90_000L, ignore = emptySet())
-    const val STEP_COUNT = 1
 }

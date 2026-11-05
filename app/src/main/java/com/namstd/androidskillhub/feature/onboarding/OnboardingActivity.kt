@@ -8,7 +8,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.ads.AdPolicy
+import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.IntroSetup
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
@@ -30,7 +33,8 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         ActivityOnboardingBinding.inflate(inflater)
 
     override fun initViews() {
-        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, RemoteConfig.nativeIntroFullPages)
+        InterstitialAds.preload(InterstitialPlacement.INTRO)
+        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, AdPolicy.config(AdKey.NATIVE_INTRO_FULL).enableDigits)
         binding.onboardingPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = pages.size
             override fun createFragment(position: Int) =
@@ -45,8 +49,6 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         // ViewPager2 báo trang 0 từ bên trong lượt layout của chính nó, lúc đó thay đổi visibility không được layout lại -
         // nên setup của trang đầu được áp trước lần layout đầu tiên. Trang 0 luôn là trang nội dung.
         applySetup(RemoteConfig.introSetup(pages.first() + 1))
-
-        loadBanner(binding.bannerContainer, inApp = false)
     }
 
     override fun initListeners() {

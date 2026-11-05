@@ -7,13 +7,14 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.namstd.androidskillhub.core.ads.AdPolicy
+import com.namstd.androidskillhub.core.ads.AdUnit
 import com.namstd.androidskillhub.core.ads.AppOpenAds
-import com.namstd.androidskillhub.core.ads.FullScreenAdPlan
+import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
-import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityMainBinding
 import com.namstd.androidskillhub.feature.settings.SettingsActivity
@@ -31,14 +32,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initViews() {
-        // Chỉ hâm nóng App Open ad khi việc quay lại app có thể hiện nó (enable.onresume=1).
-        if (AdPolicy.enable.onresume == 1) AppOpenAds.load()
-        val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.IN_APP, AdPolicy.enable)
-        if (inAppPlan == FullScreenAdPlan.INTERSTITIAL || inAppPlan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
-            InterstitialAds.load()
-        }
+        // Chỉ hâm nóng App Open ad khi việc quay lại app có thể hiện nó (on_resume = 1).
+        if (AdPolicy.config(AdKey.ON_RESUME).enableCode == 1) AppOpenAds.load(AdUnit.ON_RESUME)
+        InterstitialAds.preload(InterstitialPlacement.HOME)
         // Main tự reload slot banner - khi resume và khi đổi tab - thay vì theo bộ hẹn giờ.
-        loadBanner(binding.bannerContainer, autoReload = false)
+        loadBanner(binding.bannerContainer, BannerPlacement.HOME, autoReload = false)
         binding.mainFeedPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = TAB_COUNT
             override fun createFragment(position: Int) = MainFeedPageFragment.newInstance(position)
@@ -60,7 +58,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
         })
         binding.ivSetting.setOnClickListener {
-            showInterstitial(InterstitialPlacement.IN_APP) {
+            showInterstitial(InterstitialPlacement.HOME) {
                 if (!isFinishing) startActivity(Intent(this, SettingsActivity::class.java))
             }
         }

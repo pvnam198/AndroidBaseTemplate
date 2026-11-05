@@ -14,15 +14,11 @@ class AdStateTest {
     }
 
     @Test
-    fun defaultsContainOfficialTestIdsForAllSixFormats() {
-        val ids = AdUnitIds()
-        assertEquals(AdUnitIds.TEST_BANNER, ids.banner.single())
-        assertEquals(AdUnitIds.TEST_INTERSTITIAL, ids.interstitial.single())
-        assertEquals(NativePlacement.entries.toSet(), ids.native.keys)
-        assertTrue(ids.native.values.all { it.single() == AdUnitIds.TEST_NATIVE })
-        assertEquals(AdUnitIds.TEST_REWARDED, ids.rewarded.single())
-        assertEquals(AdUnitIds.TEST_REWARDED_INTERSTITIAL, ids.rewardedInterstitial.single())
-        assertEquals(AdUnitIds.TEST_APP_OPEN, ids.appOpen.single())
+    fun everySheetAdUnitBelongsToAPlacementAndHasAGoogleTestId() {
+        assertTrue(AdFormat.entries.all { it.testId.startsWith("ca-app-pub-3940256099942544/") })
+        assertEquals(AdUnit.entries.size, AdUnit.entries.map { it.name }.toSet().size)
+        assertTrue(NativePlacement.entries.all { it.unit.format == AdFormat.NATIVE })
+        assertTrue(InterstitialPlacement.entries.all { it.interUnit.format == AdFormat.INTERSTITIAL && it.interUnit.key == it.adKey })
     }
 
     @Test

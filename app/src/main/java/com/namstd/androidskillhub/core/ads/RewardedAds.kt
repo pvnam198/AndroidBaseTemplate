@@ -16,7 +16,7 @@ object RewardedAds {
     fun load(onStatus: (String) -> Unit = {}) {
         if (!Ads.isReady || loading || ad != null) return
         loading = true
-        WaterfallLoader<RewardedAd>(Ads.ids.rewarded).load(
+        WaterfallLoader<RewardedAd>(listOf(AdFormat.REWARDED.testId)).load(
             attempt = { id, loaded, failed ->
                 RewardedAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<RewardedAd> {
                     override fun onAdLoaded(ad: RewardedAd) = loaded(ad)

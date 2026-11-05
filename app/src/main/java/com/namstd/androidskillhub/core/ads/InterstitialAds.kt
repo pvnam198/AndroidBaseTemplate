@@ -8,37 +8,53 @@ import com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEventCallback
-import com.namstd.androidskillhub.core.config.RemoteConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-
-enum class InterstitialState { IDLE, LOADING, READY, FAILED }
+import com.namstd.androidskillhub.core.config.AdKey
 
 /**
- * Các điểm bung interstitial có tên, để đối chiếu với danh sách `ignore` trong
- * [AdPolicy.interDelay] (inter nằm trong ignore được miễn gap giữa các inter). [key] khớp token trên config.
+ * Các điểm bung interstitial, mỗi điểm là một vị trí trong sheet: [adKey] là key cấu hình (`enable`, `step_count`,
+ * `wait_time`…), [interUnit] là ad unit interstitial, [nativePlacement] là native toàn màn hình hiện sau inter.
+ * [key] khớp token trong danh sách `ignore` của [AdPolicy.interDelay] và giá trị của `splash_fallback`.
  */
-enum class InterstitialPlacement(val key: String) {
-    SPLASH("ads_splash"),
-    LANGUAGE("inter_language"),
-    INTRO("inter_intro"),
+enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val nativePlacement: NativePlacement) {
+    SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH),
+    LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE),
+    INTRO(AdKey.INTER_INTRO, AdUnit.INTER_INTRO, NativePlacement.AFTER_INTER_INTRO),
 
-    /** Inter ở các màn in-app (sau onboarding) - `enable.inter_inapp`, và là inter của [AdProfile.BASIC]. */
-    IN_APP("inter_inapp"),
+    /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của [AdProfile.BASIC]. */
+    HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME);
+
+    val key: String get() = adKey.key
 }
 
+/** Interstitial, cache một ad cho mỗi ad unit (vì mỗi unit có ID riêng). */
 object InterstitialAds {
-    private val mutableState = MutableStateFlow(InterstitialState.IDLE)
-    val state: StateFlow<InterstitialState> = mutableState
+    private class Slot {
+        var ad: InterstitialAd? = null
+        var loading = false
+    }
 
-    private var ad: InterstitialAd? = null
-    private var loading = false
+    private val slots = mutableMapOf<AdUnit, Slot>()
 
-    fun load(onStatus: (String) -> Unit = {}) {
-        if (!Ads.isReady || !Ads.adsEnabled || loading || ad != null) return
-        loading = true
-        mutableState.value = InterstitialState.LOADING
-        WaterfallLoader<InterstitialAd>(Ads.ids.interstitial).load(
+    @Synchronized
+    private fun slotFor(unit: AdUnit) = slots.getOrPut(unit) { Slot() }
+
+    /** Đã có ad của [unit] nằm sẵn để hiện ngay chưa. */
+    fun isReady(unit: AdUnit): Boolean = slotFor(unit).ad != null
+
+    /**
+     * Tải sẵn interstitial cho [placement] nếu `enable` của vị trí đó cần inter (1 hoặc 3) - gọi khi màn có vị
+     * trí này mở ra, để lúc cần hiện thì ad đã nằm sẵn (mỗi unit có ô cache riêng, không dùng chung với vị trí khác).
+     */
+    fun preload(placement: InterstitialPlacement) {
+        val plan = fullScreenPlan(placement)
+        if (plan == FullScreenAdPlan.INTERSTITIAL || plan == FullScreenAdPlan.INTER_PLUS_NATIVE) load(placement.interUnit)
+    }
+
+    fun load(unit: AdUnit, onStatus: (String) -> Unit = {}) {
+        val slot = slotFor(unit)
+        if (!Ads.isReady || !Ads.adsEnabled || slot.loading || slot.ad != null) return
+        slot.loading = true
+        WaterfallLoader<InterstitialAd>(unit.ids()).load(
             attempt = { id, loaded, failed ->
                 InterstitialAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<InterstitialAd> {
                     override fun onAdLoaded(ad: InterstitialAd) = loaded(ad)
@@ -46,15 +62,13 @@ object InterstitialAds {
                 })
             },
             onLoaded = { loadedAd, _ ->
-                loading = false
-                ad = loadedAd
-                mutableState.value = InterstitialState.READY
-                onStatus("Interstitial: ready")
+                slot.loading = false
+                slot.ad = loadedAd
+                onStatus("Interstitial ${unit.name}: ready")
             },
             onFailed = {
-                loading = false
-                mutableState.value = InterstitialState.FAILED
-                onStatus("Interstitial: $it")
+                slot.loading = false
+                onStatus("Interstitial ${unit.name}: $it")
             },
         )
     }
@@ -70,41 +84,45 @@ object InterstitialAds {
         val delay = AdPolicy.interDelay
         if (!ignoreGap && !AdGapGate.canShowInterstitial(
                 delay.gapMs,
-                RemoteConfig.interOpenGapMs,
+                interOpenGapMs = 0L,
                 skipInterGap = placement.key in delay.ignore,
             )
         ) {
             onStatus("Interstitial: gap not elapsed")
             return false
         }
-        val current = ad ?: run { onStatus("Interstitial: not ready"); load(onStatus); return false }
+        val unit = placement.interUnit
+        val slot = slotFor(unit)
+        val current = slot.ad ?: run { onStatus("Interstitial: not ready"); load(unit, onStatus); return false }
         if (!FullScreenGate.acquire(current)) { onStatus("Another full-screen item is showing"); return false }
-        ad = null
-        mutableState.value = InterstitialState.IDLE
+        slot.ad = null
         current.adEventCallback = object : InterstitialAdEventCallback {
             override fun onAdDismissedFullScreenContent() =
-                runOnMainThread { finish(current, onStatus, onComplete = onComplete) }
+                runOnMainThread { finish(unit, current, onStatus, onComplete = onComplete) }
             override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) =
-                runOnMainThread { finish(current, onStatus, fullScreenContentError.message, onComplete) }
+                runOnMainThread { finish(unit, current, onStatus, fullScreenContentError.message, onComplete) }
             override fun onAdPaid(adValue: AdValue) = AdjustRevenueLogger.log(adValue)
         }
         current.show(activity)
         return true
     }
 
-    private fun finish(shown: InterstitialAd, status: (String) -> Unit, error: String? = null, onComplete: () -> Unit = {}) {
+    private fun finish(
+        unit: AdUnit,
+        shown: InterstitialAd,
+        status: (String) -> Unit,
+        error: String? = null,
+        onComplete: () -> Unit = {},
+    ) {
         FullScreenGate.release(shown)
         AdGapGate.recordInterstitialShown()
         shown.destroy()
         status(error?.let { "Interstitial: $it" } ?: "Interstitial: dismissed")
         onComplete()
-        load(status)
+        load(unit, status)
     }
 
     fun clear() {
-        ad?.destroy()
-        ad = null
-        loading = false
-        mutableState.value = InterstitialState.IDLE
+        slots.values.forEach { it.ad?.destroy(); it.ad = null; it.loading = false }
     }
 }

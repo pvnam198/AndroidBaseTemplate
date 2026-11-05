@@ -20,41 +20,63 @@ import com.google.android.libraries.ads.mobile.sdk.banner.BannerAdRequest
 import com.google.android.libraries.ads.mobile.sdk.common.AdLoadCallback
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
-import com.namstd.androidskillhub.core.config.RemoteConfig
+import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
+
+/**
+ * Các ô banner trong app, mỗi ô là một vị trí `banner_*` trong sheet: [key] là key cấu hình (`enable`, `refresh_rate`,
+ * `collap_config`, `native_template`), [bannerUnit] là ad unit banner. Kiểu native trong ô banner (`enable` 3/4) chỉ
+ * có ở màn chính, vì sheet chỉ cho `banner_home` các unit `NATIVE_HOME` / `NATIVE_COLLAP_HOME`.
+ */
+enum class BannerPlacement(val key: AdKey, val bannerUnit: AdUnit, val supportsNative: Boolean) {
+    HOME(AdKey.BANNER_HOME, AdUnit.BANNER_HOME, supportsNative = true),
+    SETTING(AdKey.BANNER_SETTING, AdUnit.BANNER_SETTING, supportsNative = false),
+}
 
 object BannerAds {
     /**
-     * Load một banner vào [container]. Loại do [AdPolicy.enable] (`banner`) quyết định:
-     * `0` = tắt (ẩn ô), `1` = AdMob banner thường, `2` = AdMob collapsible, `3` = native thường
-     * (làm thật ở Phase 2, tạm fallback banner thường), `4` = native collapsible ([NativeCollapseAd]:
-     * 1 native ad to rồi thu nhỏ thành dải). Chỉ điều hướng - load thật ở [loadAdMobBanner]/[NativeCollapseAd].
+     * Load một banner vào [container] cho [placement]. Loại do `enable` của vị trí đó quyết định:
+     * `0` = tắt (ẩn ô), `1` = AdMob banner thường, `2` = AdMob collapsible, `3` = native thường, `4` = native
+     * collapsible ([NativeCollapseAd]: 1 native ad to rồi thu nhỏ thành dải). Vị trí không có native
+     * ([BannerPlacement.supportsNative] = false) thì `3`/`4` dùng banner thường. Chỉ điều hướng - load thật ở
+     * [loadAdMobBanner]/[NativeCollapseAd].
      *
-     * [autoReload] / [reloadGapMs] đặt timer reload của slot (tắt, hoặc 0, nếu không cần) - do caller
-     * truyền vào, không bao giờ đọc từ config ở đây; [BannerSlotHandle.reload] của handle trả về
-     * cho phép reload khi cần, vd. khi chuyển tab - xem [BannerSlotReloader].
+     * [autoReload] null = theo `refresh_rate` của vị trí (> 0 là tự reload sau bấy nhiêu ms); màn nào tự reload
+     * bằng tay (vd. khi chuyển tab) thì truyền false. [BannerSlotHandle.reload] của handle trả về cho phép reload
+     * khi cần - xem [BannerSlotReloader].
      */
     fun load(
         activity: Activity,
         container: ViewGroup,
-        autoReload: Boolean,
-        reloadGapMs: Long,
+        placement: BannerPlacement,
+        autoReload: Boolean? = null,
         onStatus: (String) -> Unit = {},
-    ): BannerSlotHandle = when (AdPolicy.enable.banner) {
-        0 -> {
-            container.visibility = View.GONE
-            BannerSlotHandle.NONE
+    ): BannerSlotHandle {
+        val config = AdPolicy.config(placement.key)
+        val reloadGapMs = config.refreshRateMs
+        val reload = autoReload ?: (reloadGapMs > 0L)
+        val code = config.enableCode.let { if (!placement.supportsNative && it >= 3) 1 else it }
+        return when (code) {
+            0 -> {
+                container.visibility = View.GONE
+                BannerSlotHandle.NONE
+            }
+            4 -> NativeCollapseAd(
+                activity, container,
+                collapGate = CollapClickGate(config.collapConfig),
+                autoReload = reload, reloadGapMs = reloadGapMs, onStatus = onStatus,
+            ).start()
+            3 -> NativeBannerSlot(activity, container as FrameLayout).start()
+            2 -> loadAdMobBanner(activity, container, placement.bannerUnit, collapsible = true, reload, reloadGapMs, onStatus)
+            else -> loadAdMobBanner(activity, container, placement.bannerUnit, collapsible = false, reload, reloadGapMs, onStatus)
         }
-        4 -> NativeCollapseAd(activity, container, autoReload = autoReload, reloadGapMs = reloadGapMs, onStatus = onStatus).start()
-        3 -> NativeBannerSlot(activity, container as FrameLayout).start()
-        2 -> loadAdMobBanner(activity, container, collapsible = true, autoReload, reloadGapMs, onStatus)
-        else -> loadAdMobBanner(activity, container, collapsible = false, autoReload, reloadGapMs, onStatus)
     }
 
     /** Load một AdMob banner thật vào [container] - banner thường, hoặc bản collapsible của AdMob khi [collapsible]. */
     private fun loadAdMobBanner(
         activity: Activity,
         container: ViewGroup,
+        unit: AdUnit,
         collapsible: Boolean,
         autoReload: Boolean,
         reloadGapMs: Long,
@@ -65,7 +87,7 @@ object BannerAds {
             container.visibility = View.GONE
             return BannerSlotHandle.NONE
         }
-        return AdMobBannerAd(activity, container, collapsible, autoReload, reloadGapMs, onStatus).also { it.load(isReload = false) }
+        return AdMobBannerAd(activity, container, unit, collapsible, autoReload, reloadGapMs, onStatus).also { it.load(isReload = false) }
     }
 }
 
@@ -83,6 +105,7 @@ object BannerAds {
 private class AdMobBannerAd(
     private val activity: Activity,
     private val container: ViewGroup,
+    private val unit: AdUnit,
     private val collapsible: Boolean,
     autoReload: Boolean,
     reloadGapMs: Long,
@@ -125,7 +148,7 @@ private class AdMobBannerAd(
         val widthPixels = if (container.width > 0) container.width else activity.resources.displayMetrics.widthPixels
         val widthDp = (widthPixels / activity.resources.displayMetrics.density).toInt().coerceAtLeast(320)
         val size = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp)
-        val ids = if (collapsible) Ads.ids.bannerCollapsible else Ads.ids.banner
+        val ids = if (collapsible) unit.ids(TEST_BANNER_COLLAPSIBLE) else unit.ids()
         WaterfallLoader<AdView>(ids).load(
             attempt = { id, loaded, failed ->
                 if (!isStale()) onStatus("Banner: loading $id")
@@ -233,7 +256,7 @@ private class AdMobBannerAd(
 }
 
 /**
- * Native ad hiển thị trong slot banner (enable.banner=3). Dùng [NativeAds.subscribe] (shimmer +
+ * Native ad hiển thị trong slot banner (`banner_home` = 3). Dùng [NativeAds.subscribe] (shimmer +
  * fade-in + ẩn khi no-fill đều xử lý ở đó). [reload] subscribe lại một native mới khi cần (vd. chuyển
  * tab); biến thể này không có sẵn timer reload.
  */

@@ -15,11 +15,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
 import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.FullScreenGate
+import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
-import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseDialogFragment
 import com.namstd.androidskillhub.databinding.DialogNativeFullBinding
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdViewModel.UiState.AwaitingClose
@@ -41,8 +42,14 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
 
     private val viewModel: PostInterstitialNativeAdViewModel by viewModels()
 
-    private val totalStages: Int = RemoteConfig.postInterstitialNativeAdCount
-    private val durationMs: Long = RemoteConfig.waitTimeMs
+    /** Vị trí inter đã mở break này - quyết định ad unit native (`NATIVE_INTER_*`) và `wait_time`. */
+    private val placement: InterstitialPlacement by lazy {
+        InterstitialPlacement.valueOf(requireArguments().getString(ARG_PLACEMENT) ?: InterstitialPlacement.SPLASH.name)
+    }
+
+    /** Sheet có một native sau mỗi inter (`NATIVE_INTER_*`), nên break chỉ có một stage. */
+    private val totalStages: Int = 1
+    private val durationMs: Long by lazy { AdPolicy.config(placement.adKey).waitTimeMs }
 
     private var currentAd: NativeAd? = null
     private var countdownTimer: CountDownTimer? = null
@@ -52,6 +59,11 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
     companion object {
         const val TAG = "PostInterstitialNativeAdDialog"
         const val REQUEST_KEY = "post_interstitial_native_ad_done"
+        private const val ARG_PLACEMENT = "placement"
+
+        fun newInstance(placement: InterstitialPlacement) = PostInterstitialNativeAdDialogFragment().apply {
+            arguments = Bundle().apply { putString(ARG_PLACEMENT, placement.name) }
+        }
         private const val TICK_MS = 50L
     }
 
@@ -142,12 +154,12 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
      * Lấy ad đã preload cho stage này - không chờ load. Ad #1 được [BaseActivity.showInterstitial]
      * hâm nóng sẵn trước cả interstitial; mỗi stage sau chỉ bắt đầu preload khi stage trước
      * đã hiện (xem [onStageLoaded]), tận dụng thời gian user xem stage đó. Mọi stage dùng chung
-     * slot [NativePlacement.POST_INTERSTITIAL] vì chúng không bao giờ cần cùng lúc - một cái
+     * slot native sau inter của [placement] vì chúng không bao giờ cần cùng lúc - một cái
      * luôn được dùng hết trước khi cái kế tiếp bắt đầu load. Nếu không có ad nào sẵn kịp
      * thì chuyển sang stage kế tiếp (hoặc đóng, khi đã quá [totalStages]).
      */
     private fun loadStage(stageNumber: Int) {
-        val ad = NativeAds.poll(NativePlacement.POST_INTERSTITIAL)
+        val ad = NativeAds.poll(placement.nativePlacement)
         if (ad == null) {
             if (stageNumber < totalStages) loadStage(stageNumber + 1) else finishBreak()
         } else {

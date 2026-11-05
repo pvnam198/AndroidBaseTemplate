@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Home feed native card (bound by BaseAdRecyclerAdapter via AdNativeBinding): the Figma Big1 template
-     plus the ad_advertiser line the feed binds. -->
+<!-- Thẻ native trong feed trang chủ (BaseAdRecyclerAdapter bind qua AdNativeBinding): template Figma Big1
+     cộng thêm dòng ad_advertiser mà feed bind. -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <!-- Inline, not <include>: AdNativeBinding needs ad_headline as a direct binding field. -->
+                <!-- Viết trực tiếp, không dùng <include>: AdNativeBinding cần ad_headline là binding field trực tiếp. -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

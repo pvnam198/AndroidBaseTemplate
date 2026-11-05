@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Night uses the same theme; colours come from values-night/colors.xml. -->
+    <!-- Chế độ tối dùng cùng theme; màu lấy từ values-night/colors.xml. -->
     <style name="Theme.AndroidSkillHub" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorPrimaryVariant">@color/brand_primary_dark</item>

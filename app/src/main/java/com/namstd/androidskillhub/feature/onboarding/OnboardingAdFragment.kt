@@ -13,7 +13,7 @@ import com.namstd.androidskillhub.databinding.FragmentOnboardingAdBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** A dedicated onboarding page whose entire content is a native ad. */
+/** Trang onboarding riêng mà toàn bộ nội dung là một native ad. */
 class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup?) =
         FragmentOnboardingAdBinding.inflate(inflater, container, false)
@@ -26,8 +26,8 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
         if (waitMs > 0L) {
             binding.adLoading.isVisible = true
             viewLifecycleOwner.lifecycleScope.launch {
-                // ViewPager2 pre-creates this page while the previous one is on screen (it stays
-                // STARTED until selected), so only start the countdown once the page is RESUMED.
+                // ViewPager2 tạo sẵn trang này trong lúc trang trước còn trên màn hình (nó ở trạng thái
+                // STARTED cho tới khi được chọn), nên chỉ bắt đầu đếm ngược khi trang đã RESUMED.
                 viewLifecycleOwner.lifecycle.withResumed {}
                 delay(waitMs)
                 binding.adLoading.isVisible = false

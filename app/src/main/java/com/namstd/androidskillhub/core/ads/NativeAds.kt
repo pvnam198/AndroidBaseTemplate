@@ -26,22 +26,22 @@ import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 enum class NativePlacement {
     LANGUAGE, ONBOARDING_1, ONBOARDING_2, ONBOARDING_3, ONBOARDING_4, ONBOARDING_AD, HOME_FEED, POST_INTERSTITIAL,
 
-    /** Shared app-wide slot for [NativeCollapseAd] - one placement for every collapsible call site. */
+    /** Slot dùng chung toàn app cho [NativeCollapseAd] - một placement cho mọi chỗ gọi collapsible. */
     NATIVE_COLLAPSIBLE,
 
-    /** Native ad rendered as a plain banner slot (enable.banner=3) - see [BannerAds]. */
+    /** Native ad hiển thị như một slot banner thường (enable.banner=3) - xem [BannerAds]. */
     BANNER_NATIVE,
 
-    /** Native ad on the welcome-back screen (enable.onresume=2) - see WelcomeBackActivity. */
+    /** Native ad trên màn welcome-back (enable.onresume=2) - xem WelcomeBackActivity. */
     WELCOME_BACK,
 }
 
 /**
- * Per-placement pool of one [NativeAd]: a subscriber [take]s the ad to show it in its own view.
- * If the ad finishes loading only after the subscriber's gone, it's [cache]d for the next taker
- * instead of wasted - but once an ad has actually been shown, it's done for good; nobody caches
- * it back. An ad is never handed to two subscribers at the same time, since a [NativeAd] can only
- * be registered to one [NativeAdView] at once.
+ * Pool một [NativeAd] cho mỗi placement: subscriber [take] ad để hiển thị trong view của mình.
+ * Nếu ad load xong khi subscriber đã đi mất, ad được [cache] lại cho người lấy tiếp theo thay vì
+ * bỏ phí - nhưng một ad đã thực sự hiển thị thì coi như xong hẳn; không ai cache lại nó nữa.
+ * Một ad không bao giờ được giao cho hai subscriber cùng lúc, vì mỗi [NativeAd] chỉ có thể
+ * register vào một [NativeAdView] tại một thời điểm.
  */
 private class NativeAdSlot {
     private class Entry(val ad: NativeAd, val loadedAt: Long)
@@ -52,7 +52,7 @@ private class NativeAdSlot {
     private var pendingFailure: ((String) -> Unit)? = null
     private var lastLoadFailed = false
 
-    /** Removes and returns the free cached ad if one exists and isn't older than [ttlMs]. */
+    /** Lấy ra và trả về ad đang cache rảnh nếu có và chưa cũ hơn [ttlMs]. */
     @Synchronized
     fun take(ttlMs: Long): NativeAd? {
         val entry = freeAd ?: return null
@@ -64,16 +64,16 @@ private class NativeAdSlot {
         return entry.ad
     }
 
-    /** Caches [ad] as the slot's free entry so the next subscriber can reuse it instead of reloading. */
+    /** Cache [ad] làm entry rảnh của slot để subscriber tiếp theo dùng lại thay vì reload. */
     @Synchronized
     fun cache(ad: NativeAd) {
         freeAd = Entry(ad, System.currentTimeMillis())
     }
 
     /**
-     * Registers [callback] for the next ad to finish loading, or, if null, just ensures a load is
-     * running so the result can be preloaded into [freeAd] for whoever asks next. [onFailed] is
-     * told if that load fails. Returns whether to actually start a network load.
+     * Đăng ký [callback] cho ad tiếp theo load xong, hoặc nếu null thì chỉ đảm bảo đang có một lượt
+     * load để kết quả được preload vào [freeAd] cho người hỏi tiếp theo. [onFailed] được báo nếu
+     * lượt load đó thất bại. Trả về việc có thực sự bắt đầu một lượt load mạng hay không.
      */
     @Synchronized
     fun requestLoad(callback: ((NativeAd) -> Unit)?, onFailed: ((String) -> Unit)?): Boolean {
@@ -87,18 +87,18 @@ private class NativeAdSlot {
         return true
     }
 
-    /** True when the last load came up empty and no new one is running - nothing is coming for now. */
+    /** True khi lượt load gần nhất không có ad và không có lượt mới nào đang chạy - tạm thời sẽ không có ad. */
     @Synchronized
     fun failedAndIdle(): Boolean = lastLoadFailed && !loading
 
-    /** Whether a cached ad is sitting free and not yet expired, without consuming it. */
+    /** Có ad cache đang rảnh và chưa hết hạn hay không, mà không lấy nó ra. */
     @Synchronized
     fun hasFresh(ttlMs: Long): Boolean {
         val entry = freeAd ?: return false
         return System.currentTimeMillis() - entry.loadedAt < ttlMs
     }
 
-    /** Un-registers [callback] if it's still the one waiting, so a late result isn't delivered to a gone view. */
+    /** Hủy đăng ký [callback] nếu nó vẫn là callback đang chờ, để kết quả đến muộn không giao cho view đã mất. */
     @Synchronized
     fun cancelLoad(callback: (NativeAd) -> Unit) {
         if (pendingCallback === callback) {
@@ -107,7 +107,7 @@ private class NativeAdSlot {
         }
     }
 
-    /** Returns the callback to notify, or null if nobody is waiting (in which case [ad] is cached as free). */
+    /** Trả về callback cần báo, hoặc null nếu không ai chờ (khi đó [ad] được cache làm ad rảnh). */
     @Synchronized
     fun onAdLoaded(ad: NativeAd): ((NativeAd) -> Unit)? {
         loading = false
@@ -118,7 +118,7 @@ private class NativeAdSlot {
         return callback
     }
 
-    /** Returns the failure callback to notify, if the subscriber waiting on this load gave one. */
+    /** Trả về callback lỗi cần báo, nếu subscriber đang chờ lượt load này có truyền vào. */
     @Synchronized
     fun onLoadFailed(): ((String) -> Unit)? {
         loading = false
@@ -139,14 +139,14 @@ private class NativeAdSlot {
     }
 }
 
-/** Native ads, cached per placement so a screen doesn't reload one every time it's shown. */
+/** Native ad, cache theo placement để một màn hình không phải reload ad mỗi lần được hiển thị. */
 object NativeAds {
     private val slots = mutableMapOf<NativePlacement, NativeAdSlot>()
 
     @Synchronized
     private fun slotFor(placement: NativePlacement) = slots.getOrPut(placement) { NativeAdSlot() }
 
-    /** Starts [placement]'s waterfall now, ahead of any screen needing it, if not already loading or cached. */
+    /** Chạy waterfall của [placement] ngay, trước khi màn nào cần tới, nếu chưa đang load hoặc chưa có cache. */
     fun preload(placement: NativePlacement) {
         if (!AdPolicy.nativeAllowed || !Ads.isReady) return
         val slot = slotFor(placement)
@@ -155,19 +155,18 @@ object NativeAds {
     }
 
     /**
-     * Whether no ad for [placement] is on its way: ads are off, the SDK isn't ready (consent denied),
-     * or the last load failed and nothing new is loading. For views that [poll], so they can hide
-     * instead of shimmering forever.
+     * Có phải sẽ không có ad nào cho [placement] hay không: ads đang tắt, SDK chưa sẵn sàng (consent bị
+     * từ chối), hoặc lượt load gần nhất thất bại và không có lượt mới nào đang chạy. Dành cho các view
+     * dùng [poll], để chúng ẩn đi thay vì shimmer mãi.
      */
     fun isUnavailable(placement: NativePlacement): Boolean =
         !AdPolicy.nativeAllowed || !Ads.isReady || slotFor(placement).failedAndIdle()
 
     /**
-     * Takes the preloaded ad for [placement], if one is ready, for the caller to display and
-     * destroy on its own (no container/shimmer management, unlike [subscribe]) - for one-shot
-     * full-screen placements that need the ad to already be sitting there with no load wait.
-     * Immediately kicks off a reload so the slot is refilled for next time. Returns null if
-     * nothing was preloaded in time; treat that the same as a no-fill.
+     * Lấy ad đã preload cho [placement], nếu đã sẵn sàng, để caller tự hiển thị và tự destroy
+     * (không quản lý container/shimmer, khác với [subscribe]) - dành cho các placement full-screen
+     * chỉ hiện một lần, cần ad nằm sẵn đó mà không phải chờ load. Ngay sau đó chạy reload để slot
+     * được nạp lại cho lần sau. Trả về null nếu không preload kịp; xử lý như trường hợp no-fill.
      */
     fun poll(placement: NativePlacement): NativeAd? {
         if (!AdPolicy.nativeAllowed || !Ads.isReady) return null
@@ -177,10 +176,10 @@ object NativeAds {
     }
 
     /**
-     * Calls [onDone] once [placement] has a fresh ad sitting ready for [poll] - right away if one is
-     * already cached, otherwise after loading one - or after [timeoutMs] / a failed load, whichever
-     * comes first. For one-shot full-screen placements with nothing in front of them to hide the
-     * load (e.g. a native-only break), so [poll] doesn't come up empty. Always calls [onDone] exactly once.
+     * Gọi [onDone] khi [placement] đã có một ad mới nằm sẵn cho [poll] - gọi ngay nếu đã có cache,
+     * nếu không thì sau khi load xong một ad - hoặc sau [timeoutMs] / khi load thất bại, tùy cái nào
+     * đến trước. Dành cho các placement full-screen chỉ hiện một lần mà không có gì phía trước che
+     * lúc load (vd. một break chỉ có native), để [poll] không về tay trắng. Luôn gọi [onDone] đúng một lần.
      */
     fun awaitReady(activity: Activity, placement: NativePlacement, timeoutMs: Long, onDone: () -> Unit) {
         val slot = slotFor(placement)
@@ -192,10 +191,10 @@ object NativeAds {
     }
 
     /**
-     * @param preloadOnShow Whether to kick off a real reload for [placement] the moment an ad is
-     * bound to [container] - use this for slots that get shown again and again (e.g. a screen the
-     * user revisits) so a fresh ad is ready by the time this one is dismissed. Leave false for one-shot placements (e.g. onboarding
-     * pages shown exactly once) where preloading a replacement would never get used.
+     * @param preloadOnShow Có chạy reload thật cho [placement] ngay lúc một ad được gắn vào [container]
+     * hay không - dùng cho các slot được hiện đi hiện lại (vd. một màn người dùng quay lại nhiều lần)
+     * để có sẵn ad mới khi ad này bị đóng. Để false cho các placement chỉ hiện một lần (vd. các trang
+     * onboarding chỉ hiện đúng một lần) vì preload ad thay thế sẽ không bao giờ được dùng.
      */
     fun subscribe(
         activity: Activity,
@@ -215,7 +214,7 @@ object NativeAds {
         val request = request(
             activity, placement,
             onFailed = {
-                // No ad to show - hide the slot instead of leaving a shimmer spinning forever.
+                // Không có ad để hiện - ẩn slot đi thay vì để shimmer chạy mãi.
                 shimmer?.let { it.root.stopShimmer(); container.removeView(it.root) }
                 shimmer = null
                 container.visibility = View.GONE
@@ -230,8 +229,8 @@ object NativeAds {
             view.animate().alpha(1f).setDuration(FADE_IN_MS).start()
             currentView = view
             attachedAd = ad
-            // This ad is now in use - kick off a real load for the next one right away so a
-            // replacement is warm by the time this one is dismissed.
+            // Ad này giờ đã được dùng - chạy load thật cho ad kế tiếp ngay để có sẵn ad
+            // thay thế khi ad này bị đóng.
             if (preloadOnShow) preload(placement)
         }
 
@@ -244,19 +243,19 @@ object NativeAds {
                 shimmer = null
                 container.removeAllViews()
             }
-            // This ad has already been shown - it's done, not worth caching for reuse. A
-            // future subscriber just loads its own (fresh, if preloadOnShow already got one going).
+            // Ad này đã hiển thị rồi - coi như xong, không đáng cache để dùng lại. Subscriber
+            // sau sẽ tự load ad của mình (ad mới, nếu preloadOnShow đã chạy load từ trước).
             attachedAd?.destroy()
             attachedAd = null
         }
     }
 
     /**
-     * Delivers one ad for [placement] to [onReady] on the UI thread - the cached one if still
-     * fresh, otherwise a newly loaded one - or tells [onFailed] if the waterfall comes up empty.
-     * The delivered ad belongs to the caller, who must destroy it. Destroying the returned handle
-     * stops delivery; an ad that still arrives afterwards is cached for the next taker instead.
-     * The building block under [subscribe], for callers that manage their own views.
+     * Giao một ad cho [placement] tới [onReady] trên UI thread - ad đang cache nếu còn mới, nếu không
+     * thì một ad vừa load - hoặc báo [onFailed] nếu waterfall không ra ad nào. Ad được giao thuộc
+     * về caller, caller phải tự destroy nó. Destroy handle trả về sẽ dừng việc giao; ad nào vẫn đến
+     * sau đó sẽ được cache cho người lấy tiếp theo. Là khối nền bên dưới [subscribe], dành cho các
+     * caller tự quản lý view của mình.
      */
     internal fun request(
         activity: Activity,
@@ -279,7 +278,7 @@ object NativeAds {
         }
     }
 
-    /** Shows a shimmering skeleton in [container] so the ad slot never pops in from empty. */
+    /** Hiện skeleton shimmer trong [container] để slot ad không bao giờ đột ngột hiện ra từ chỗ trống. */
     private fun showShimmer(activity: Activity, container: FrameLayout): AdNativeShimmerBinding {
         val binding = AdNativeShimmerBinding.inflate(LayoutInflater.from(activity))
         container.removeAllViews()
@@ -317,7 +316,7 @@ object NativeAds {
     private fun renderDefaultCard(activity: Activity, ad: NativeAd): NativeAdView =
         renderTemplate(activity, ad, RemoteConfig.nativeTemplate)
 
-    /** Inflates [template] and binds [ad] into it - for any screen that wants a specific template. */
+    /** Inflate [template] và gắn [ad] vào đó - cho bất kỳ màn nào muốn dùng một template cụ thể. */
     fun renderTemplate(activity: Activity, ad: NativeAd, template: NativeAdTemplate): NativeAdView {
         val view = LayoutInflater.from(activity).inflate(template.layout, null) as NativeAdView
         populateView(view, ad)

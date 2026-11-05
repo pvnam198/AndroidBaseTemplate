@@ -9,10 +9,10 @@ import android.widget.FrameLayout
 import com.namstd.androidskillhub.R
 
 /**
- * Holds a native ad's `MediaView` at a fixed width:height ratio (`app:adRatio`, e.g. "16:9") with
- * rounded corners (`app:adCornerRadius`), as the Figma "Ad/Media" atom. Height follows the width it
- * is given; with no ratio set it just wraps its child like a plain [FrameLayout]. A `match_parent` height
- * given an exact size fills it instead (full-screen templates), keeping the ratio as the wrap_content fallback.
+ * Chứa `MediaView` của native ad theo tỉ lệ rộng:cao cố định (`app:adRatio`, vd. "16:9") với góc bo
+ * tròn (`app:adCornerRadius`), giống atom "Ad/Media" trong Figma. Chiều cao theo chiều rộng được cấp;
+ * không đặt ratio thì chỉ wrap view con như một [FrameLayout] thường. Chiều cao `match_parent` được cấp
+ * kích thước chính xác thì sẽ lấp đầy luôn (template full-screen), tỉ lệ chỉ là fallback khi wrap_content.
  */
 class AdMediaFrame @JvmOverloads constructor(
     context: Context,
@@ -39,8 +39,8 @@ class AdMediaFrame @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        // match_parent with a fixed height to fill (full-screen layouts) wins; the ratio is the fallback
-        // for when the same layout sits in a wrap_content container.
+        // match_parent với chiều cao cố định cần lấp đầy (layout full-screen) được ưu tiên; ratio là fallback
+        // cho trường hợp cùng layout đó nằm trong container wrap_content.
         val fillsExactHeight = layoutParams?.height == LayoutParams.MATCH_PARENT &&
             MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY
         if (ratio <= 0f || fillsExactHeight || MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {

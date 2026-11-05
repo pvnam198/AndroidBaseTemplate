@@ -1,6 +1,6 @@
 package com.namstd.androidskillhub.core.ads
 
-/** Runs one load attempt at a time and advances only after a failure. */
+/** Chạy từng lượt load một và chỉ chuyển sang id kế tiếp khi lượt trước thất bại. */
 internal class WaterfallLoader<T>(ids: List<String>) {
     private val ids = ids.map(String::trim).filter(String::isNotEmpty)
 

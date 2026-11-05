@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Big5 / Big6: full CTA on top / media 16:9 / info B (title, Ad + stars + price, body).
-     Also "Native Language, Get start enable = 2" (bottom card). -->
+<!-- Figma Big5 / Big6: CTA rộng hết ở trên / media 16:9 / info B (tiêu đề, Ad + sao + giá, nội dung).
+     Cũng là "Native Language, Get start enable = 2" (thẻ dưới). -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

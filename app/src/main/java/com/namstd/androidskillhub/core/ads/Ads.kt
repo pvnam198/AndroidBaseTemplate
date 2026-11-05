@@ -14,9 +14,9 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Shared consent/init lifecycle and config for all ad formats. Format-specific loading/showing
- * logic lives in its own file (BannerAds, NativeAds, InterstitialAds, RewardedAds,
- * RewardedInterstitialAds, AppOpenAds) - this object only coordinates startup/teardown.
+ * Lifecycle consent/init và config dùng chung cho mọi định dạng ad. Logic load/show riêng của từng
+ * định dạng nằm trong file riêng (BannerAds, NativeAds, InterstitialAds, RewardedAds,
+ * RewardedInterstitialAds, AppOpenAds) - object này chỉ điều phối khởi động/dọn dẹp.
  */
 object Ads {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

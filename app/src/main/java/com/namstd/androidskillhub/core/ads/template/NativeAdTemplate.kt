@@ -4,16 +4,16 @@ import androidx.annotation.LayoutRes
 import com.namstd.androidskillhub.R
 
 /**
- * Native ad card layouts, selected by Remote Config key `native_template` ([key] is the value to set).
+ * Các layout card native ad, chọn bằng key Remote Config `native_template` ([key] là giá trị cần đặt).
  *
- * All layouts are the Figma "Wavez - ADs" / "Mẫu v2" templates (layout/ad_tpl_*.xml); the first four
- * are the original key values, now drawn with their closest Figma template. Every layout uses the same view ids, so [com.namstd.androidskillhub.core.ads.NativeAds]
- * can bind any of them:
- * `ad_headline` (required), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`, `ad_price`,
- * `ad_advertiser` (all optional), plus hidden controls `ad_close` / `ad_collapse` / `ad_next` that only a
- * screen with its own flow (collapsible, full-screen break...) shows and wires.
+ * Mọi layout đều là template Figma "Wavez - ADs" / "Mẫu v2" (layout/ad_tpl_*.xml); bốn cái đầu là các
+ * giá trị key ban đầu, nay được vẽ bằng template Figma gần nhất. Mọi layout dùng chung view id, nên
+ * [com.namstd.androidskillhub.core.ads.NativeAds] có thể bind bất kỳ cái nào:
+ * `ad_headline` (bắt buộc), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`, `ad_price`,
+ * `ad_advertiser` (đều tùy chọn), cộng thêm các control ẩn `ad_close` / `ad_collapse` / `ad_next` mà chỉ
+ * màn có luồng riêng (collapsible, full-screen break...) mới hiện và gắn xử lý.
  *
- * The Collap templates are the expanded cards; their collapsed strips are [TINY1] (Collap1, Collap3) and
+ * Các template Collap là card ở dạng expand; dải thu nhỏ tương ứng là [TINY1] (Collap1, Collap3) và
  * [TINY2] (Collap2).
  */
 enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
@@ -28,7 +28,7 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     BIG4("big4", R.layout.ad_tpl_big4),
     BIG5("big5", R.layout.ad_tpl_big5),
 
-    /** Identical to Big5 in Figma. */
+    /** Giống hệt Big5 trong Figma. */
     BIG6("big6", R.layout.ad_tpl_big5),
     BIG7("big7", R.layout.ad_tpl_big7),
     BIG8("big8", R.layout.ad_tpl_big8),
@@ -52,23 +52,23 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     FULL4("full4", R.layout.ad_tpl_full4),
     FULL5("full5", R.layout.ad_tpl_full5),
 
-    /** "Native Language, Get start enable = 1": top card (= Big1) and bottom card (= Big2). */
+    /** "Native Language, Get start enable = 1": card trên (= Big1) và card dưới (= Big2). */
     LANG1_A("lang1_a", R.layout.ad_tpl_big1),
     LANG1_B("lang1_b", R.layout.ad_tpl_big2),
 
-    /** "Native Language, Get start enable = 2": top card (purple CTA) and bottom card (= Big5). */
+    /** "Native Language, Get start enable = 2": card trên (CTA màu tím) và card dưới (= Big5). */
     LANG2_A("lang2_a", R.layout.ad_tpl_lang2),
     LANG2_B("lang2_b", R.layout.ad_tpl_big5),
     ;
 
     companion object {
-        /** Template for a `native_template` value (case-insensitive); unknown or blank falls back to [MEDIA]. */
+        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [MEDIA]. */
         fun fromKey(value: String?): NativeAdTemplate {
             val key = value?.trim()?.lowercase().orEmpty()
             return entries.firstOrNull { it.key == key } ?: MEDIA
         }
 
-        /** All keys, for the Debug Config hint. */
+        /** Toàn bộ key, dùng cho gợi ý ở Debug Config. */
         val keys: String get() = entries.joinToString(" | ") { it.key }
     }
 }

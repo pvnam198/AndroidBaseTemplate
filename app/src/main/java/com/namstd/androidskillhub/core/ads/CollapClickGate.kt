@@ -8,7 +8,7 @@ package com.namstd.androidskillhub.core.ads
 class CollapClickGate(raw: String) {
     private val adTaps: Set<Int> = raw.filter { it.isDigit() }.map { it.digitToInt() }.filter { it >= 1 }.toSet()
 
-    /** True khi có ít nhất một lần bấm X mở quảng cáo - cần bật custom click gesture cho ad. */
+    /** Là true khi có ít nhất một lần bấm X mở quảng cáo - cần bật custom click gesture cho quảng cáo. */
     val isEnabled: Boolean = adTaps.isNotEmpty()
 
     /** [closeTapNumber] đếm từ 1: true = lần bấm X này mở quảng cáo, false = thu gọn. */

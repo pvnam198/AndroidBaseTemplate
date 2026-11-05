@@ -10,7 +10,7 @@ import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.ui.base.AdFeedItem
 import com.namstd.androidskillhub.core.ui.base.BaseAdRecyclerAdapter
 
-/** Places an [AdFeedItem.AdSlot] at position 3 (0-based index 2), then every 8 items after that. */
+/** Đặt một [AdFeedItem.AdSlot] ở vị trí thứ 3 (index 2, tính từ 0), sau đó cứ mỗi 8 item lại đặt một cái. */
 private fun buildMainFeedItems(contentTitles: List<String>): List<AdFeedItem<String>> {
     val result = mutableListOf<AdFeedItem<String>>()
     var nextAdIndex = 2

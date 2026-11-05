@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Full3 (full screen, light): Ad label + close on top / media 16:9 centred / info / full CTA.
-     ad_close is hidden; the screen showing the ad decides when it appears and what it does. -->
+<!-- Figma Full3 (toàn màn hình, nền sáng): nhãn Ad + nút đóng ở trên / media 16:9 căn giữa / thông tin / CTA rộng hết.
+     ad_close bị ẩn; màn hình hiển thị quảng cáo quyết định khi nào nút hiện ra và nút làm gì. -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

@@ -9,7 +9,7 @@ import com.namstd.androidskillhub.core.ui.base.BaseFragment
 import com.namstd.androidskillhub.databinding.FragmentOnboardingPageBinding
 
 class OnboardingPageFragment : BaseFragment<FragmentOnboardingPageBinding>() {
-    /** Content page index, 0-3 - the full-screen native page is not counted. */
+    /** Index trang nội dung, 0-3 - không tính trang native full-screen. */
     private val page get() = requireArguments().getInt(ARG_PAGE)
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup?) =
@@ -33,7 +33,7 @@ class OnboardingPageFragment : BaseFragment<FragmentOnboardingPageBinding>() {
             NativePlacement.ONBOARDING_1, NativePlacement.ONBOARDING_2, NativePlacement.ONBOARDING_3, NativePlacement.ONBOARDING_4,
         )
 
-        /** Number of content pages - each one reads its own `intro{n}_setup`. */
+        /** Số trang nội dung - mỗi trang đọc `intro{n}_setup` riêng của nó. */
         val CONTENT_PAGE_COUNT get() = TITLES.size
         fun newInstance(page: Int) = OnboardingPageFragment().apply { arguments = Bundle().apply { putInt(ARG_PAGE, page) } }
     }

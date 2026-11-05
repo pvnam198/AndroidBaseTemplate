@@ -1,5 +1,5 @@
 <resources>
-    <!-- Google sample IDs. Replace the app ID and all ad unit IDs before release. -->
+    <!-- ID mẫu của Google. Thay app ID và mọi ad unit ID trước khi phát hành. -->
     <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
     <string name="ads_demo_title">AdMob Next-Gen demo</string>
     <string name="ads_initializing">Ads: checking privacy settings…</string>

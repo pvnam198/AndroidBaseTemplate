@@ -48,13 +48,13 @@ object AppOpenAds {
         current.show(activity)
     }
 
-    /** Whether a valid App Open ad is loaded and ready to show now. */
+    /** Đã có App Open ad hợp lệ được load và sẵn sàng hiển thị ngay hay chưa. */
     fun isLoaded(): Boolean = isValid()
 
     /**
-     * Shows the loaded App Open ad (for the splash first-launch, via `enable.ads_splash=1`), then runs
-     * [onComplete]. Bypasses [AdGapGate] on purpose - splash is the first launch, no prior full-screen ad.
-     * Returns false (ad not shown) if ads are off, none is ready, or another full-screen item is up.
+     * Hiển thị App Open ad đã load (cho splash lần mở đầu, qua `enable.ads_splash=1`), rồi chạy
+     * [onComplete]. Cố ý bỏ qua [AdGapGate] - splash là lần mở đầu, chưa có full-screen ad nào trước đó.
+     * Trả về false (không hiện ad) nếu ads tắt, chưa có ad sẵn sàng, hoặc đang có một mục full-screen khác.
      */
     fun show(activity: Activity, onComplete: () -> Unit): Boolean {
         if (!Ads.adsEnabled || !isValid()) return false

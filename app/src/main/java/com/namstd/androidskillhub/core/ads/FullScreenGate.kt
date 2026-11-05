@@ -1,6 +1,6 @@
 package com.namstd.androidskillhub.core.ads
 
-/** App-wide guard that prevents ads and dialogs from covering each other. */
+/** Chốt chặn toàn app để ads và dialog không che lên nhau. */
 object FullScreenGate {
     private var owner: Any? = null
 

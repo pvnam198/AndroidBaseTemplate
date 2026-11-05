@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Native ad templates (Figma "Wavez - ADs" / Mẫu v2). Fixed colours: ad cards look the same in light and dark app themes. -->
+<!-- Template quảng cáo native (Figma "Wavez - ADs" / Mẫu v2). Màu cố định: thẻ quảng cáo trông giống nhau ở theme sáng và tối của app. -->
 <resources>
     <color name="ad_card_bg">#FFFFFF</color>
     <color name="ad_card_bg_dark">#1E1E1E</color>

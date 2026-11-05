@@ -6,6 +6,7 @@ import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.namstd.androidskillhub.BuildConfig
 import com.namstd.androidskillhub.core.ads.CollapClickGate
+import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +38,7 @@ data class EnableConfig(val adsSplash: Int, val inter: Int, val banner: Int, val
     }
 }
 
-/** Một dòng trên màn Debug Config: tên key, giá trị raw hiện tại, và gợi ý format. */
+/** Một dòng trên màn Debug Config: tên key, giá trị thô hiện tại, và gợi ý định dạng. */
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
 
 /**
@@ -62,7 +63,7 @@ object RemoteConfig {
 
     private val _isReady = MutableStateFlow(false)
 
-    /** True sau khi [fetchAndActivate] hoàn tất (thành công hay thất bại) và các flag bên dưới đã settle. */
+    /** Là true sau khi [fetchAndActivate] hoàn tất (thành công hay thất bại) và các flag bên dưới đã ổn định. */
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     /**
@@ -100,6 +101,7 @@ object RemoteConfig {
                 KEY_INTRO3_SETUP to prefs.getCachedString(KEY_INTRO3_SETUP, ""),
                 KEY_INTRO4_SETUP to prefs.getCachedString(KEY_INTRO4_SETUP, ""),
                 KEY_NATIVE_INTRO_FULL to prefs.getCachedString(KEY_NATIVE_INTRO_FULL, ""),
+                KEY_SPLASH_FALLBACK to prefs.getCachedString(KEY_SPLASH_FALLBACK, ""),
                 KEY_NATIVE_INTRO_USE_ICON_NEXT to
                     prefs.getCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, DEFAULT_NATIVE_INTRO_USE_ICON_NEXT),
                 KEY_NATIVE_TEMPLATE to prefs.getCachedString(KEY_NATIVE_TEMPLATE, DEFAULT_NATIVE_TEMPLATE),
@@ -118,8 +120,8 @@ object RemoteConfig {
     }
 
     /**
-     * Caches the raw Firebase/default values - never the getters, which include [DebugOverrides]:
-     * an override cached here would become the seeded default and outlive "Xoá hết override".
+     * Cache các giá trị thô từ Firebase/default - không bao giờ cache qua getter, vì getter đã tính cả [DebugOverrides]:
+     * override nào bị cache ở đây sẽ thành default được seed và vẫn còn sau khi bấm "Xoá hết override".
      */
     private fun persistToCache() {
         prefs.putCachedLong(KEY_ADS_ENABLE, remoteConfig.getLong(KEY_ADS_ENABLE))
@@ -140,6 +142,7 @@ object RemoteConfig {
         prefs.putCachedString(KEY_INTRO3_SETUP, remoteConfig.getString(KEY_INTRO3_SETUP))
         prefs.putCachedString(KEY_INTRO4_SETUP, remoteConfig.getString(KEY_INTRO4_SETUP))
         prefs.putCachedString(KEY_NATIVE_INTRO_FULL, remoteConfig.getString(KEY_NATIVE_INTRO_FULL))
+        prefs.putCachedString(KEY_SPLASH_FALLBACK, remoteConfig.getString(KEY_SPLASH_FALLBACK))
         prefs.putCachedString(KEY_NATIVE_INTRO_USE_ICON_NEXT, remoteConfig.getString(KEY_NATIVE_INTRO_USE_ICON_NEXT))
         prefs.putCachedString(KEY_NATIVE_TEMPLATE, remoteConfig.getString(KEY_NATIVE_TEMPLATE))
         prefs.putCachedLong(KEY_COLLAP_CONFIG, remoteConfig.getLong(KEY_COLLAP_CONFIG))
@@ -228,7 +231,7 @@ object RemoteConfig {
     val interOpenGapMs: Long
         get() = rcLong(KEY_INTER_OPEN_GAP_MILLIS).coerceAtLeast(0L)
 
-    /** Số native ad hiển thị liên tiếp trong break sau interstitial. Clamp 1-2 - [com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment] chỉ hỗ trợ flow 2 stage. */
+    /** Số native ad hiển thị liên tiếp trong quãng nghỉ sau interstitial. Giới hạn 1-2 - [com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment] chỉ hỗ trợ luồng 2 stage. */
     val postInterstitialNativeAdCount: Int
         get() = rcLong(KEY_POST_INTERSTITIAL_NATIVE_AD_COUNT).toInt().coerceIn(1, 2)
 
@@ -252,7 +255,7 @@ object RemoteConfig {
     /**
      * Tần suất hiển thị interstitial theo số lần yêu cầu: chỉ hiện ở lần yêu cầu chia hết cho giá trị này
      * (`1` = mọi lần; `2` = cứ 2 lần hiện 1 lần...). Bộ đếm lưu qua các lần mở app
-     * ([com.namstd.androidskillhub.core.preferences.AppPreferences.interstitialStepCounter]). Clamp tối thiểu 1.
+     * ([com.namstd.androidskillhub.core.preferences.AppPreferences.interstitialStepCounter]). Tối thiểu là 1.
      * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.stepCount].
      */
     val stepCount: Int
@@ -299,6 +302,16 @@ object RemoteConfig {
     }
 
     /**
+     * Vị trí inter bù khi Splash không kịp hiện quảng cáo (key `splash_fallback`, vd `inter_language`): khớp
+     * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key]. Trống hoặc không khớp = tắt.
+     * Code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.splashFallback].
+     */
+    val splashFallback: InterstitialPlacement?
+        get() = rcString(KEY_SPLASH_FALLBACK).trim().let { key ->
+            InterstitialPlacement.entries.firstOrNull { it.key == key && it != InterstitialPlacement.SPLASH }
+        }
+
+    /**
      * Trang native toàn màn hình trong Onboarding (key `native_intro_full`): mỗi chữ số là một trang nội dung có
      * trang native full chèn ngay sau nó. `123` = sau trang 1, 2 và 3; `2` = chỉ sau trang 2; `0`/trống = không có.
      * Chữ số không có trang nội dung tương ứng phía sau (vd `4` khi Intro có 4 trang) bị bỏ qua.
@@ -307,19 +320,19 @@ object RemoteConfig {
         get() = rcString(KEY_NATIVE_INTRO_FULL).filter { it.isDigit() }.map { it.digitToInt() }.filter { it >= 1 }.toSet()
 
     /**
-     * Control trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`): `true` = icon X,
-     * `false` = mũi tên Next. Nhận cả `1`/`0`. Spinner chờ [waitTimeMs] trước khi hiện control (0 = hiện ngay).
+     * Nút điều khiển trên trang native fullscreen trong Onboarding (key `native_intro_use_icon_next`): `true` = icon X,
+     * `false` = mũi tên Next. Nhận cả `1`/`0`. Vòng loading chờ [waitTimeMs] trước khi hiện nút (0 = hiện ngay).
      * Đọc dạng chuỗi (cache cũng là chuỗi) để bản cũ lưu `next=1,loading=false` không làm crash prefs.
      */
     val nativeIntroUseIconNext: Boolean
         get() = rcString(KEY_NATIVE_INTRO_USE_ICON_NEXT).trim().lowercase() in TRUE_VALUES
 
     /**
-     * Layout cho native card render qua [com.namstd.androidskillhub.core.ads.NativeAds] renderDefaultCard
+     * Layout cho native card được render qua [com.namstd.androidskillhub.core.ads.NativeAds] renderDefaultCard
      * (key `native_template`): `native media` (có ảnh), `native no media` (chỉ chữ), `native banner` (dải nhỏ),
      * `native fullscreen` (card lớn), hoặc một mẫu Figma (`big1`…`big9`, `small1`…`small4`, `tiny1`, `tiny2`,
      * `collap1`…`collap3`, `full1`…`full5`, `lang1_a`, `lang1_b`, `lang2_a`, `lang2_b`) - xem [NativeAdTemplate].
-     * Áp cho các placement render mặc định (Language, Onboarding, Welcome back, banner-native);
+     * Áp dụng cho các placement dùng cách render mặc định (Language, Onboarding, Welcome back, banner-native);
      * feed/post-interstitial/collapsible giữ layout riêng.
      */
     val nativeTemplate: NativeAdTemplate
@@ -352,7 +365,7 @@ object RemoteConfig {
     }
 
     /**
-     * [DEBUG] Mọi key + giá trị raw hiện tại (override nếu có, không thì Firebase/default) + gợi ý format,
+     * [DEBUG] Mọi key + giá trị thô hiện tại (override nếu có, không thì Firebase/default) + gợi ý định dạng,
      * cho màn Debug Config. Firebase lưu mọi kiểu dạng string nên [rcString] đọc được cả Long/Boolean.
      */
     fun debugEntries(): List<DebugConfigEntry> =
@@ -376,6 +389,7 @@ object RemoteConfig {
         KEY_INTRO2_SETUP to "trang nội dung 2, cùng dạng intro1 (trống = dùng intro1)",
         KEY_INTRO3_SETUP to "trang nội dung 3, cùng dạng intro1 (trống = dùng intro1)",
         KEY_INTRO4_SETUP to "trang nội dung 4, cùng dạng intro1 (trống = dùng intro1)",
+        KEY_SPLASH_FALLBACK to "Splash không kịp hiện QC thì inter này bù, vd inter_language (trống = tắt)",
         KEY_NATIVE_INTRO_FULL to "mỗi chữ số = trang có native full ngay sau, vd 123 = sau trang 1,2,3 (0 = không có)",
         KEY_NATIVE_INTRO_USE_ICON_NEXT to "true = icon X / false = Next",
         KEY_NATIVE_TEMPLATE to NativeAdTemplate.keys,
@@ -416,6 +430,7 @@ object RemoteConfig {
     private const val KEY_INTRO4_SETUP = "intro4_setup"
     private val INTRO_SETUP_KEYS = listOf(KEY_INTRO1_SETUP, KEY_INTRO2_SETUP, KEY_INTRO3_SETUP, KEY_INTRO4_SETUP)
     private const val KEY_NATIVE_INTRO_FULL = "native_intro_full"
+    private const val KEY_SPLASH_FALLBACK = "splash_fallback"
     private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=1"
     private const val KEY_NATIVE_INTRO_USE_ICON_NEXT = "native_intro_use_icon_next"
     private const val DEFAULT_NATIVE_INTRO_USE_ICON_NEXT = "false"

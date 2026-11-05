@@ -4,7 +4,7 @@ import com.adjust.sdk.Adjust
 import com.adjust.sdk.AdjustAdRevenue
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 
-/** Reports an AdMob paid ad event to Adjust as ad revenue, shared by every ad format's `onAdPaid`. */
+/** Gửi sự kiện paid ad của AdMob lên Adjust dưới dạng ad revenue, dùng chung cho `onAdPaid` của mọi định dạng ad. */
 object AdjustRevenueLogger {
     private const val SOURCE_ADMOB = "admob_sdk"
 

@@ -5,9 +5,9 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 /**
- * Local DEBUG-only overrides for Remote Config values, keyed by the RC key name and stored as raw
- * strings in their own prefs file (separate from [AppPreferences] so they never collide with the
- * fetch cache). An override, when set, wins over Firebase/default in [RemoteConfig]. No-op until [init].
+ * Override cục bộ (chỉ dùng ở DEBUG) cho các giá trị Remote Config, đánh khoá theo tên key RC và lưu dạng
+ * chuỗi thô trong file prefs riêng (tách khỏi [AppPreferences] để không bao giờ đụng với cache của lần
+ * fetch). Override, khi đã đặt, thắng Firebase/default trong [RemoteConfig]. Không làm gì cho tới khi gọi [init].
  */
 object DebugOverrides {
     private const val FILE_NAME = "debug_overrides"

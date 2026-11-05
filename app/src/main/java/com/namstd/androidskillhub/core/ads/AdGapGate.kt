@@ -1,6 +1,6 @@
 package com.namstd.androidskillhub.core.ads
 
-/** App-wide cooldown between full-screen ad shows (Interstitial / App Open). */
+/** Thời gian chờ toàn app giữa các lần hiện full-screen ad (Interstitial / App Open). */
 object AdGapGate {
     private var lastInterstitialShownAt = 0L
     private var lastAppOpenShownAt = 0L

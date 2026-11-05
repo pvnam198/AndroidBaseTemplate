@@ -62,12 +62,13 @@ object InterstitialAds {
     fun show(
         activity: Activity,
         placement: InterstitialPlacement,
+        ignoreGap: Boolean = false,
         onStatus: (String) -> Unit = {},
         onComplete: () -> Unit = {},
     ): Boolean {
         if (!Ads.adsEnabled) return false
         val delay = AdPolicy.interDelay
-        if (!AdGapGate.canShowInterstitial(
+        if (!ignoreGap && !AdGapGate.canShowInterstitial(
                 delay.gapMs,
                 RemoteConfig.interOpenGapMs,
                 skipInterGap = placement.key in delay.ignore,

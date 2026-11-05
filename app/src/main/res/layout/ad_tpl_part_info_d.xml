@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Info row D: icon | [Ad] Title / body. -->
+<!-- Hàng info D: icon | [Ad] Tiêu đề / nội dung. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

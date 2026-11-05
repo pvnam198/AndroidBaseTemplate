@@ -5,7 +5,7 @@ import android.os.Looper
 
 private val mainThreadHandler = Handler(Looper.getMainLooper())
 
-/** Runs [block] on the main thread — ads-mobile-sdk fires full-screen-content callbacks off a background dispatcher. */
+/** Chạy [block] trên main thread — ads-mobile-sdk gọi các callback full-screen-content từ một background dispatcher. */
 internal fun runOnMainThread(block: () -> Unit) {
     if (Looper.myLooper() == Looper.getMainLooper()) block() else mainThreadHandler.post(block)
 }

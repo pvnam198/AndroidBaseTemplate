@@ -9,7 +9,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="shimmer_placeholder">#E0E0E0</color>
 
-    <!-- Brand palette (day). Overridden in values-night. -->
+    <!-- Bảng màu thương hiệu (chế độ sáng). Bị ghi đè trong values-night. -->
     <color name="brand_primary">#4F46E5</color>
     <color name="brand_primary_dark">#3730A3</color>
     <color name="brand_on_primary">#FFFFFF</color>

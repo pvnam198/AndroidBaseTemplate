@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Small2: full CTA on top / info C (title, Ad label, body). -->
+<!-- Figma Small2: CTA rộng hết ở trên / info C (tiêu đề, nhãn Ad, nội dung). -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

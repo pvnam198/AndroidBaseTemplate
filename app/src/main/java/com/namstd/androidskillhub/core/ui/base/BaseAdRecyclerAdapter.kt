@@ -21,21 +21,21 @@ sealed interface AdFeedItem<out T> {
 private const val POLL_INTERVAL_MS = 400L
 
 /**
- * RecyclerView adapter that interleaves native ads into a content list. [items] is built by the
- * screen itself - where [AdFeedItem.AdSlot] is placed and how far apart is entirely up to the
- * caller, this base only takes care of the native ad part of each slot.
+ * RecyclerView adapter chèn xen native ad vào một danh sách nội dung. [items] do chính màn hình
+ * dựng - đặt [AdFeedItem.AdSlot] ở đâu và cách nhau bao xa hoàn toàn do bên gọi quyết định,
+ * base này chỉ lo phần native ad của từng slot.
  *
- * A slot never runs its own ad request: it repeatedly [NativeAds.poll]s the shared [placement]
- * slot while it's on screen, so whichever slot happens to be visible when the next ad finishes
- * loading is the one that wins it - a slot scrolled past before that stops polling
- * ([onViewRecycled]) and simply never claims an ad, instead of wasting a dedicated request of its
- * own. Once a position wins an ad it keeps it forever and never polls again for that position.
+ * Một slot không bao giờ tự gửi request quảng cáo riêng: nó liên tục [NativeAds.poll] slot [placement]
+ * dùng chung trong lúc đang hiện trên màn hình, nên slot nào tình cờ đang hiện khi ad kế tiếp load
+ * xong thì slot đó giành được ad - slot bị cuộn qua trước lúc đó sẽ dừng poll
+ * ([onViewRecycled]) và đơn giản là không nhận ad nào, thay vì lãng phí một request riêng
+ * cho nó. Khi một vị trí đã giành được ad thì giữ luôn ad đó và không bao giờ poll lại cho vị trí ấy.
  *
- * A slot with no ad coming ([NativeAds.isUnavailable]: ads off, SDK not ready, or the load failed)
- * collapses to nothing instead of shimmering forever; each newly bound slot retries the load once.
- * [hideAds] (e.g. the user just went premium) drops every ad and collapses every slot for good.
+ * Slot không có ad nào sắp tới ([NativeAds.isUnavailable]: tắt quảng cáo, SDK chưa sẵn sàng, hoặc load lỗi)
+ * sẽ thu gọn về không thay vì shimmer mãi; mỗi slot mới được bind sẽ thử load lại một lần.
+ * [hideAds] (vd. user vừa lên premium) bỏ mọi ad và thu gọn mọi slot vĩnh viễn.
  *
- * Subclasses only provide how to create/bind the content item's own ViewHolder.
+ * Lớp con chỉ cần cung cấp cách tạo/bind ViewHolder riêng của item nội dung.
  */
 abstract class BaseAdRecyclerAdapter<T>(
     private val activity: Activity,
@@ -80,7 +80,7 @@ abstract class BaseAdRecyclerAdapter<T>(
             holder.show(cached)
             return
         }
-        // Retry once per newly bound slot if an earlier load failed; a no-op while one is loading or cached.
+        // Thử lại một lần cho mỗi slot mới bind nếu lần load trước lỗi; không làm gì khi đang load hoặc đã có cache.
         NativeAds.preload(placement)
         holder.showShimmer()
         holder.startPolling(placement) { ad -> loadedAds[position] = ad }
@@ -90,13 +90,13 @@ abstract class BaseAdRecyclerAdapter<T>(
         (holder as? NativeAdViewHolder)?.cancelPolling()
     }
 
-    /** Destroys every ad this list ever won and clears the cache - call when the screen is torn down. */
+    /** Huỷ mọi ad mà list này từng giành được và xoá cache - gọi khi màn hình bị huỷ. */
     fun release() {
         loadedAds.values.forEach(NativeAd::destroy)
         loadedAds.clear()
     }
 
-    /** Drops every ad and collapses every ad slot for the rest of this list's life - e.g. the user went premium. */
+    /** Bỏ mọi ad và thu gọn mọi slot quảng cáo trong suốt phần đời còn lại của list - vd. user đã lên premium. */
     fun hideAds() {
         if (adsHidden) return
         adsHidden = true
@@ -109,7 +109,7 @@ abstract class BaseAdRecyclerAdapter<T>(
         private val container: FrameLayout,
     ) : RecyclerView.ViewHolder(container) {
 
-        // The slot's size as inflated from item_native_ad_slot, restored whenever it shows again.
+        // Kích thước của slot khi inflate từ item_native_ad_slot, được khôi phục mỗi khi slot hiện lại.
         private val slotMinHeight = container.minimumHeight
         private val slotParams = container.layoutParams as RecyclerView.LayoutParams
         private val slotHeight = slotParams.height
@@ -128,7 +128,7 @@ abstract class BaseAdRecyclerAdapter<T>(
 
         private fun poll() {
             val placement = placement ?: return
-            // Checked before polling: poll() itself would kick off a fresh load and mask the failure.
+            // Kiểm tra trước khi poll: bản thân poll() sẽ kích hoạt một lần load mới và che mất lỗi.
             if (NativeAds.isUnavailable(placement)) {
                 hide()
                 return
@@ -156,7 +156,7 @@ abstract class BaseAdRecyclerAdapter<T>(
             setCollapsed(false)
         }
 
-        /** No ad for this slot - collapse it to nothing. */
+        /** Không có ad cho slot này - thu gọn nó về không. */
         fun hide() {
             cancelPolling()
             container.removeAllViews()
@@ -164,9 +164,9 @@ abstract class BaseAdRecyclerAdapter<T>(
         }
 
         /**
-         * RecyclerView lays out an item by its measured size whatever its visibility, so GONE alone
-         * still leaves the slot's minHeight and margins as a blank gap. Collapsing zeroes all three;
-         * un-collapsing puts back the values from the layout (holders are recycled across slots).
+         * RecyclerView layout item theo kích thước đã measure bất kể visibility, nên chỉ GONE thôi
+         * vẫn để lại minHeight và margin của slot thành một khoảng trống. Thu gọn sẽ đưa cả ba về 0;
+         * bỏ thu gọn thì trả lại các giá trị từ layout (holder được tái sử dụng giữa các slot).
          */
         private fun setCollapsed(collapsed: Boolean) {
             container.visibility = if (collapsed) View.GONE else View.VISIBLE

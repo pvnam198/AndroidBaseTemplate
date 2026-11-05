@@ -28,14 +28,14 @@ import androidx.fragment.app.FragmentManager
 import java.lang.ref.WeakReference
 
 /**
- * [DEBUG] Drives the app from adb on devices that block `adb shell input` (e.g. MIUI without
- * "USB debugging (Security settings)"). Touches are dispatched in-process to the app's own windows,
- * so no INJECT_EVENTS permission is needed. Coordinates are screen pixels (as in `uiautomator dump`).
+ * [DEBUG] Điều khiển app từ adb trên các máy chặn `adb shell input` (vd. MIUI chưa bật
+ * "USB debugging (Security settings)"). Thao tác chạm được dispatch ngay trong process tới các window của app,
+ * nên không cần quyền INJECT_EVENTS. Toạ độ tính bằng pixel màn hình (như trong `uiautomator dump`).
  *
  * ```
  * adb shell am broadcast -a com.namstd.androidskillhub.debug.TAP --ei x 540 --ei y 1200
  * adb shell am broadcast -a com.namstd.androidskillhub.debug.SWIPE --ei x1 900 --ei y1 1000 --ei x2 100 --ei y2 1000
- * adb shell am broadcast -a com.namstd.androidskillhub.debug.TYPE --es text "3000"   (replaces focused field)
+ * adb shell am broadcast -a com.namstd.androidskillhub.debug.TYPE --es text "3000"   (thay nội dung ô đang focus)
  * adb shell am broadcast -a com.namstd.androidskillhub.debug.BACK
  * ```
  */
@@ -63,7 +63,7 @@ private object AdbDriver {
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) { resumed = WeakReference(activity) }
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                // Keep the phone awake while the app is driven over adb.
+                // Giữ máy luôn sáng trong lúc app được điều khiển qua adb.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) activity.setTurnScreenOn(true)
                 activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
@@ -104,7 +104,7 @@ private object AdbDriver {
         Log.d(TAG, "${intent.action} on ${activity.javaClass.simpleName}")
     }
 
-    /** Topmost window first: visible DialogFragment dialogs, then the activity's own window. */
+    /** Window trên cùng trước: các dialog DialogFragment đang hiện, sau đó tới window của chính activity. */
     private fun targetRoot(activity: Activity, x: Float, y: Float): View? {
         val roots = mutableListOf<View>()
         if (activity is FragmentActivity) collectDialogs(activity.supportFragmentManager, roots)
@@ -123,7 +123,7 @@ private object AdbDriver {
         }
     }
 
-    /** Sends DOWN at the first point, MOVE through the middle ones and UP at the last. */
+    /** Gửi DOWN ở điểm đầu tiên, MOVE qua các điểm ở giữa và UP ở điểm cuối. */
     private fun gesture(activity: Activity, points: List<Pair<Float, Float>>, stepMs: Long) {
         val (sx, sy) = points.first()
         val root = targetRoot(activity, sx, sy) ?: return

@@ -51,7 +51,7 @@ class AppPreferences private constructor(context: Context) {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
     }
 
-    /** Generic cache slot for other singletons (e.g. [com.namstd.androidskillhub.core.config.RemoteConfig]) to persist values by key into this same shared prefs file. */
+    /** Slot cache dùng chung để các singleton khác (vd [com.namstd.androidskillhub.core.config.RemoteConfig]) lưu giá trị theo key vào chính file shared prefs này. */
     fun getCachedBoolean(key: String, default: Boolean): Boolean = values.getBoolean(key, default)
 
     fun putCachedBoolean(key: String, value: Boolean) {

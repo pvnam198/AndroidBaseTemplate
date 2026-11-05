@@ -33,11 +33,11 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     protected val prefs: AppPreferences get() = AppPreferences.getInstance(requireContext())
 
     /**
-     * Loads a banner into [container] and destroys it automatically when the view is torn down.
-     * [autoReload] / [reloadGapMs] set its reload timer and default to Remote Config's
-     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); a screen can
-     * pass its own. Any other reload trigger (resume, tab switch...) is the screen's own code
-     * calling [reloadBanner]. For a premium user nothing loads and [container] is hidden.
+     * Load banner vào [container] và tự huỷ nó khi view bị huỷ.
+     * [autoReload] / [reloadGapMs] đặt bộ hẹn giờ reload, mặc định lấy theo Remote Config
+     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); màn hình có thể
+     * truyền giá trị riêng. Mọi kiểu reload khác (resume, đổi tab...) là code riêng của màn hình
+     * gọi [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
     protected fun loadBanner(
         container: ViewGroup,
@@ -56,15 +56,15 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         }
     }
 
-    /** Reloads the banner slot now (e.g. on a tab switch) - ignored while it's already loading. */
+    /** Reload slot banner ngay (vd. khi đổi tab) - bỏ qua nếu nó đang load. */
     protected fun reloadBanner() {
         bannerHandle?.reload()
     }
 
     /**
-     * Loads a native ad for [placement] into [container] and destroys it automatically when the
-     * view is torn down. See [NativeAds.subscribe] for [preloadOnShow]. For a premium user nothing
-     * loads and [container] is hidden.
+     * Load native ad cho [placement] vào [container] và tự huỷ nó khi
+     * view bị huỷ. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium thì không
+     * load gì và [container] bị ẩn.
      */
     protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
         nativeContainer = container
@@ -80,11 +80,10 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     }
 
     /**
-     * Runs on every onResume with whether the user is premium - like the reference app's base - so
-     * a screen that was open or in the back stack when the user upgraded drops its ads as soon as
-     * they come back to it. The default tears down this screen's [loadBanner] / [loadNative] ads and
-     * hides their containers; a screen with ads of its own (a feed, a dialog...) overrides this to
-     * hide those too, calling super.
+     * Chạy ở mỗi lần onResume, kèm cờ user có premium hay không - giống base của app tham chiếu - để
+     * màn hình đang mở hoặc nằm trong back stack lúc user nâng cấp bỏ quảng cáo ngay khi user quay
+     * lại. Mặc định huỷ các ad [loadBanner] / [loadNative] của màn này và ẩn container của chúng;
+     * màn hình có quảng cáo riêng (feed, dialog...) override hàm này để ẩn cả chúng, có gọi super.
      */
     protected open fun onPremiumUser(premium: Boolean) {
         if (premium) hideAds()
@@ -101,7 +100,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         nativeContainer?.isVisible = false
     }
 
-    /** Delegates to the hosting [BaseActivity] - single implementation for the whole app, see there. */
+    /** Uỷ quyền cho [BaseActivity] đang chứa fragment - chỉ một implementation cho toàn app, xem ở đó. */
     protected fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
         (requireActivity() as BaseActivity<*>).showInterstitial(placement, onComplete)
     }

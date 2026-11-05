@@ -38,7 +38,7 @@ class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
         }
     }
 
-    /** (Re)builds one editable row per Remote Config key, prefilled with its current effective value. */
+    /** Dựng (lại) mỗi Remote Config key một dòng sửa được, điền sẵn giá trị đang có hiệu lực của nó. */
     private fun fillRows() {
         binding.debugRows.removeAllViews()
         fields.clear()

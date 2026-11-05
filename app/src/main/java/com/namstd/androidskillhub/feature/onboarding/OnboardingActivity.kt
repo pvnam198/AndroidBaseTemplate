@@ -20,8 +20,8 @@ import kotlinx.coroutines.launch
 
 class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     /**
-     * What each pager position shows: a content page index (0-based, reads `intro{index + 1}_setup`), or
-     * [AD_PAGE] for a full-screen native page that `native_intro_full` inserts after a content page.
+     * Nội dung của từng vị trí trong pager: index trang nội dung (tính từ 0, đọc `intro{index + 1}_setup`), hoặc
+     * [AD_PAGE] cho trang native full-screen mà `native_intro_full` chèn sau một trang nội dung.
      */
     private lateinit var pages: List<Int>
     private var revealJob: Job? = null
@@ -38,12 +38,12 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         }
         binding.onboardingPager.isUserInputEnabled = RemoteConfig.introSwipe
         binding.pageIndicator.isVisible = false
-        // One dot per content page - the full-screen native pages get no dot. Dots only show progress, so not tappable.
+        // Mỗi trang nội dung một chấm - trang native full-screen không có chấm. Chấm chỉ báo tiến độ nên không bấm được.
         repeat(OnboardingPageFragment.CONTENT_PAGE_COUNT) {
             binding.pageDots.addTab(binding.pageDots.newTab().also { tab -> tab.view.isClickable = false })
         }
-        // ViewPager2 reports page 0 from inside its own layout pass, where visibility changes don't get laid out -
-        // so the first page's setup goes on before the first layout. Page 0 is always a content page.
+        // ViewPager2 báo trang 0 từ bên trong lượt layout của chính nó, lúc đó thay đổi visibility không được layout lại -
+        // nên setup của trang đầu được áp trước lần layout đầu tiên. Trang 0 luôn là trang nội dung.
         applySetup(RemoteConfig.introSetup(pages.first() + 1))
 
         loadBanner(binding.bannerContainer, inApp = false)
@@ -127,8 +127,8 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         private const val AD_PAGE = -1
 
         /**
-         * Content pages 0 until [contentCount], with an [AD_PAGE] after each content page listed in [adAfterPages]
-         * (1-based). Never after the last content page - Onboarding always ends on content.
+         * Các trang nội dung từ 0 đến trước [contentCount], có một [AD_PAGE] sau mỗi trang nội dung liệt kê trong
+         * [adAfterPages] (tính từ 1). Không bao giờ đặt sau trang nội dung cuối - Onboarding luôn kết thúc ở trang nội dung.
          */
         internal fun buildPages(contentCount: Int, adAfterPages: Set<Int>): List<Int> =
             (0 until contentCount).flatMap { index ->

@@ -15,6 +15,7 @@ import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.InterstitialState
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.SplashFallback
 import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
@@ -54,8 +55,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                 if (consentGranted) {
                     loadBanner(binding.bannerContainer, inApp = false)
                     NativeAds.preload(NativePlacement.LANGUAGE)
-                    // The Language/Onboarding interstitial needs an ad loaded up front too, even when
-                    // the splash itself shows none (ads_splash=0/1) - else the first one is skipped.
+                    // Interstitial ở Language/Onboarding cũng cần load sẵn ad từ trước, kể cả khi
+                    // bản thân splash không hiện ad nào (ads_splash=0/1) - nếu không cái đầu tiên sẽ bị bỏ qua.
                     val inAppPlan = resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, AdPolicy.enable)
                     if (inAppPlan == FullScreenAdPlan.INTERSTITIAL || inAppPlan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
                         InterstitialAds.load()
@@ -76,8 +77,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                         }
                     }
                 } else {
-                    // Ads off (Ads.adsEnabled = false) or consent denied: no ads to wait for, but the
-                    // splash must still move on - otherwise the user is stuck here for good.
+                    // Tắt quảng cáo (Ads.adsEnabled = false) hoặc consent bị từ chối: không có ad nào để chờ, nhưng
+                    // splash vẫn phải đi tiếp - nếu không user sẽ kẹt ở đây mãi.
                     binding.bannerContainer.isVisible = false
                     lifecycleScope.launch {
                         delay(MIN_DELAY_MS)
@@ -97,10 +98,11 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
             waitedMs += CHECK_INTERVAL_MS
         }
         waitForRemoteConfig(waitedMs)
+        if (InterstitialAds.state.value != InterstitialState.READY) SplashFallback.arm()
         showInterstitial(InterstitialPlacement.SPLASH, ::navigateToMain)
     }
 
-    /** Splash App Open flow (enable.ads_splash=1): wait for the AOA within the budget, show it, then navigate. */
+    /** Luồng App Open ở Splash (enable.ads_splash=1): chờ AOA trong giới hạn thời gian, hiện nó, rồi chuyển màn. */
     private suspend fun waitForAppOpenThenNavigate() {
         delay(MIN_DELAY_MS)
         var waitedMs = MIN_DELAY_MS
@@ -109,10 +111,13 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
             waitedMs += CHECK_INTERVAL_MS
         }
         waitForRemoteConfig(waitedMs)
-        if (!AppOpenAds.show(this) { navigateToMain() }) navigateToMain()
+        if (!AppOpenAds.show(this) { navigateToMain() }) {
+            SplashFallback.arm()
+            navigateToMain()
+        }
     }
 
-    /** Waits (within the shared delay budget) for Remote Config to settle before Home loads its banner. */
+    /** Chờ (trong giới hạn delay dùng chung) cho Remote Config ổn định trước khi Home load banner của nó. */
     private suspend fun waitForRemoteConfig(waitedMs: Duration = MIN_DELAY_MS) {
         var elapsed = waitedMs
         while (!RemoteConfig.isReady.value && elapsed < MAX_DELAY_MS) {
@@ -124,6 +129,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
     private fun navigateToMain() {
         if (isFinishing) return
         val next = if (prefs.setupCompleted) MainActivity::class.java else LanguageActivity::class.java
+        // splash_fallback chỉ bù ad Splash trên luồng Language/Intro - Home không có placement như vậy.
+        if (prefs.setupCompleted) SplashFallback.clear()
         startActivity(Intent(this, next))
         finish()
     }

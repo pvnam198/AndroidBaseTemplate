@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dark round backdrop so white ad controls (next / close) stay visible on any ad creative. -->
+<!-- Nền tròn tối để các nút điều khiển trắng (next / close) vẫn nhìn rõ trên mọi creative quảng cáo. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
     <solid android:color="#80000000" />
 </shape>

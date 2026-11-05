@@ -6,7 +6,7 @@
             android:exported="false"
             android:theme="@style/Theme.AndroidSkillHub" />
 
-        <!-- [DEBUG] adb-driven taps for devices that block `adb shell input`. See AdbDriver.kt. -->
+        <!-- [DEBUG] Chạm điều khiển qua adb cho thiết bị chặn `adb shell input`. Xem AdbDriver.kt. -->
         <provider
             android:name=".debug.AdbDriverInitProvider"
             android:authorities="${applicationId}.adbdriver"

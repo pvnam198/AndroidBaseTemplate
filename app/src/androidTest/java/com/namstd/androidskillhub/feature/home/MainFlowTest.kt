@@ -25,8 +25,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * End-to-end first-run flow and the Settings/Premium path. Ads are switched off so the flow never waits on
- * the network, and the Language delay is overridden to 0 so its confirm button is there at once.
+ * Luồng chạy lần đầu end-to-end và luồng Settings/Premium. Tắt quảng cáo để luồng không bao giờ phải chờ
+ * mạng, và delay của Language được override thành 0 để nút xác nhận có ngay.
  */
 @RunWith(AndroidJUnit4::class)
 class MainFlowTest {
@@ -59,7 +59,7 @@ class MainFlowTest {
             onView(withId(R.id.next_button)).perform(click())
             waitUntilDisplayed(withText(R.string.onboarding_title_3))
             onView(withId(R.id.next_button)).perform(click())
-            // No full-screen native page by default (native_intro_full = 0): four content pages in a row.
+            // Mặc định không có trang native full-screen (native_intro_full = 0): bốn trang nội dung liên tiếp.
             waitUntilDisplayed(withText(R.string.onboarding_title_4))
             onView(withId(R.id.next_button)).perform(click())
 
@@ -87,7 +87,7 @@ class MainFlowTest {
         assertTrue(!prefs.setupCompleted)
     }
 
-    /** Polls until [matcher] is on screen - covers screen transitions and ViewPager2 page scrolls. */
+    /** Poll cho tới khi [matcher] hiện trên màn hình - xử lý cả chuyển màn và cuộn trang ViewPager2. */
     private fun waitUntilDisplayed(matcher: Matcher<View>, timeoutMs: Long = 5_000) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (true) {

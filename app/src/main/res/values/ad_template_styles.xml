@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shared atoms for the native ad templates (layout/ad_tpl_*.xml), from Figma "Wavez - ADs" / Atoms v2. -->
+<!-- Thành phần dùng chung cho các template quảng cáo native (layout/ad_tpl_*.xml), lấy từ Figma "Wavez - ADs" / Atoms v2. -->
 <resources>
     <dimen name="ad_card_padding">12dp</dimen>
     <dimen name="ad_card_radius">16dp</dimen>
@@ -48,7 +48,7 @@
         <item name="android:textAppearance">@style/TextAppearance.Ad.Body</item>
     </style>
 
-    <!-- "Ad" attribution label (required on native ads). -->
+    <!-- Nhãn ghi nguồn "Ad" (bắt buộc với quảng cáo native). -->
     <style name="Widget.Ad.Badge" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -92,7 +92,7 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Full-width pill CTA. -->
+    <!-- CTA bo tròn hai đầu, rộng hết chiều ngang. -->
     <style name="Widget.Ad.Cta" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/ad_cta_height</item>
@@ -109,14 +109,14 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Compact pill CTA, sized to its text. -->
+    <!-- CTA bo tròn hai đầu thu gọn, vừa theo chữ. -->
     <style name="Widget.Ad.Cta.Small">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/ad_cta_small_height</item>
         <item name="android:minWidth">88dp</item>
     </style>
 
-    <!-- Round arrow CTA (Tiny2 / Collap2 small). -->
+    <!-- CTA tròn hình mũi tên (Tiny2 / Collap2 dạng nhỏ). -->
     <style name="Widget.Ad.Cta.Circle" parent="">
         <item name="android:layout_width">@dimen/ad_cta_small_height</item>
         <item name="android:layout_height">@dimen/ad_cta_small_height</item>
@@ -126,7 +126,7 @@
         <item name="android:src">@drawable/ic_ad_arrow</item>
     </style>
 
-    <!-- Small dark round control drawn over the ad (close / collapse). Hidden until a screen shows and wires it. -->
+    <!-- Nút tròn tối nhỏ vẽ đè lên quảng cáo (đóng / thu gọn). Ẩn cho tới khi một màn hình hiện và gắn xử lý cho nó. -->
     <style name="Widget.Ad.Action" parent="">
         <item name="android:layout_width">32dp</item>
         <item name="android:layout_height">32dp</item>

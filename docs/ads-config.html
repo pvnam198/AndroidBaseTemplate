@@ -48,6 +48,7 @@
   .pill.ok { background: var(--ok-soft); color: var(--ok); }
   .pill.part { background: var(--warn-soft); color: var(--warn); }
   .pill.no { background: var(--no-soft); color: var(--no); }
+  .pill.drop { background: var(--outline); color: var(--muted); }
   .ask { color: var(--warn); font-weight: 600; }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   input[type=search] { flex: 1 1 240px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--outline); background: var(--surface); color: var(--text); font-size: 14px; }
@@ -223,6 +224,7 @@
           </ul>
         </li>
         <li><span class="pill ok">Có</span> <b>Mỗi trang Intro một cấu hình</b> (05/11): Intro có 4 trang nội dung, trang thứ N dùng <code>introN_setup</code> (trống thì dùng <code>intro1_setup</code>). Trang native toàn màn hình giờ chèn theo <code>native_intro_full</code>: mỗi chữ số là một màn Intro có trang native full ngay sau (<code>123</code> = sau màn 1, 2, 3), mặc định không có.</li>
+        <li><span class="pill ok">Có</span> <b><code>splash_fallback</code></b> (05/11): Splash không kịp hiện quảng cáo thì bấm Apply ở màn Language sẽ hiện inter bù. Không có màn Language thì thôi.</li>
         <li><span class="pill ok">Có</span> Splash (AOA / Inter / Inter + Native), Inter ở Language và Intro, native ở Language / Intro / trang native toàn màn hình, banner các kiểu, quay lại app (AOA / Welcome back), native Welcome back.</li>
       </ul>
     </div>
@@ -242,7 +244,7 @@
         <li><span class="ask">cần xác nhận</span> <code>intro1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
         <li><span class="ask">cần xác nhận</span> <code>language_setup.loading</code>: sheet ghi "loading khi load native"; app hiện loading trong lúc chờ <code>language_delay_millis</code>.</li>
         <li><span class="ask">cần xác nhận</span> <code>collap_config</code>: bộ đếm nút X tính chung cả app hay riêng từng vị trí; cách mở quảng cáo (xem lỗi ở trên).</li>
-        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>splash_fallback</code>; <code>native_intro = 24</code>; template <code>Small5</code>.</li>
+        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>native_intro = 24</code>; template <code>Small5</code>.</li>
       </ul>
     </div>
 
@@ -251,10 +253,17 @@
       <ul>
         <li><span class="pill no">Chưa có</span> <b>Cấu hình riêng cho từng vị trí:</b> bảng gốc cho mỗi vị trí (<code>native_language</code>, <code>inter_intro</code>…) có <code>enable</code>, <code>step_count</code>, <code>wait_time</code>, <code>collap_config</code>, <code>native_template</code> và ID riêng. App hiện dùng một key gộp <code>enable</code> và một giá trị chung cho cả app. Native sau inter ở Splash / Language / Intro đang dùng chung một vị trí.</li>
         <li><span class="pill no">Chưa có</span> <b>Màn hình chưa có:</b> Get start, Theme setup, Icon setup / dialog icon, Widget, Collection, Result, Wallpaper, Inter khi Back, Inter ở Home, native Splash, quảng cáo có thưởng, inter Welcome back.</li>
-        <li><span class="pill no">Chưa có</span> <b>Cấu hình chung:</b> <code>release_log</code>, <code>splash_fallback</code>, <code>taller_banner_enabled</code>.</li>
+        <li><span class="pill no">Chưa có</span> <b>Cấu hình chung:</b> <code>release_log</code>.</li>
         <li><span class="pill no">Chưa có</span> <b><code>refresh_rate</code> cho native:</b> app mới tự tải lại banner.</li>
         <li><span class="pill no">Chưa có</span> <b>Key mới trong sheet "Bản sao":</b> <code>time_out_init</code>, <code>mt_native_cta_only</code>, các vị trí <code>_first</code> cho lần mở app đầu tiên.</li>
         <li><span class="pill no">Chưa có</span> <b>Kiểm tra lại máy thử nghiệm:</b> máy đã bị đánh dấu nhận quảng cáo mẫu sẽ ở kịch bản B mãi, chưa có kiểm tra lại định kỳ.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>Không làm</h4>
+      <ul>
+        <li><span class="pill drop">Bỏ</span> <code>taller_banner_enabled</code> (05/11): app luôn dùng banner co giãn theo chiều rộng màn hình, trên tablet banner tự cao hơn. Không thêm công tắc bật/tắt.</li>
       </ul>
     </div>
 
@@ -270,7 +279,7 @@
 </main>
 
 <script>
-const OK = '<span class="pill ok">Có</span>', PART = '<span class="pill part">Một phần</span>', NO = '<span class="pill no">Chưa có</span>';
+const OK = '<span class="pill ok">Có</span>', PART = '<span class="pill part">Một phần</span>', NO = '<span class="pill no">Chưa có</span>', DROP = '<span class="pill drop">Bỏ</span>';
 const ASK = '<span class="ask">cần xác nhận</span>';
 
 // [key, giá trị mẫu, kiểu, ý nghĩa (HTML), trạng thái]
@@ -278,11 +287,11 @@ const SETTINGS = [
   ["ads_enable", "2", "Int", "Bật/tắt quảng cáo toàn app và chọn kịch bản A hay B cho từng người dùng: <code>0</code> tắt, <code>1</code> A, <code>2</code> theo nguồn người dùng, <code>3</code> theo máy thử nghiệm. Xem <a href=\"#ads-enable\">chi tiết</a>.", OK],
   ["language_delay_millis", "800", "Long (ms)", "Thời gian chờ trước khi hiện nút xác nhận ở màn Language. <code>0</code> = hiện ngay.", OK],
   ["release_log", "FALSE", "Boolean", "Bật ghi log debug (quảng cáo, config) ở bản release để kiểm tra trên máy thật.", NO],
-  ["splash_fallback", "inter_language", "String (key)", "Khi quảng cáo Splash không tải kịp: dùng placement này để hiện thay. " + ASK + " cách fallback cụ thể.", NO],
+  ["splash_fallback", "inter_language", "String (key)", "Nếu màn Splash không kịp hiện quảng cáo thì bù bằng quảng cáo toàn màn hình ở vị trí này. Ví dụ <code>inter_language</code>: ở màn Language, khi bấm Apply sẽ hiện inter (kể cả khi inter Language đang tắt). Không có màn Language (người dùng cũ mở app vào thẳng màn chính) thì không hiện. Trống = tắt.", OK],
   ["language_setup", "next=1, loading=true", "String", "Nút xác nhận màn Language. <code>next</code>: 1 icon, 2 nút chữ. <code>loading</code>: hiện vòng loading trong lúc chờ <code>language_delay_millis</code>.", OK],
   ["intro1_setup … intro4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang nội dung của Onboarding: <code>intro1_setup</code> cho trang 1, <code>intro2_setup</code> cho trang 2… (trang native toàn màn hình không tính). <code>next</code>: 1 nút dạng button, 2 chữ \"Next\" không có nền (bấm vào chữ để đi tiếp). <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: mili-giây chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 ẩn.", OK + ' <span class="muted">key nào trống thì trang đó dùng lại <code>intro1_setup</code></span>'],
   ["intro_swipe", "TRUE", "Boolean", "Cho phép vuốt để chuyển trang Onboarding. FALSE = chỉ chuyển bằng nút Next.", OK],
-  ["taller_banner_enabled", "TRUE", "Boolean", "Dùng banner cao hơn (adaptive banner lớn) thay cho banner 50dp. " + ASK + ".", NO],
+  ["taller_banner_enabled", "TRUE", "Boolean", "Cho phép banner cao hơn trên màn hình lớn. <b>Không dùng (05/11):</b> app luôn dùng banner co giãn theo chiều rộng màn hình (trên tablet tự cao hơn), không có công tắc này.", DROP],
   ["inter_delay_time", "time=10,ignore=ads_splash|inter_language|inter_intro", "String", "Khoảng cách tối thiểu giữa 2 interstitial, tính bằng mili-giây (10 giây = <code>time=10000</code>), và danh sách vị trí được bỏ qua khoảng cách này (ngăn bằng <code>|</code>).", OK],
   ["native_intro_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding: <code>true</code> = nút X, <code>false</code> = nút Next. Nếu có <code>wait_time</code> thì chờ hết thời gian đó mới hiện nút.", OK],
 ];

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Full4: the dark version of Full3. ad_close is hidden; the screen showing the ad decides when it appears. -->
+<!-- Figma Full4: bản nền tối của Full3. ad_close bị ẩn; màn hình hiển thị quảng cáo quyết định khi nào nút hiện ra. -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

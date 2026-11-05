@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Big7: [Ad] title / media 16:9 / full CTA (no icon, no body). -->
+<!-- Figma Big7: [Ad] tiêu đề / media 16:9 / CTA rộng hết (không icon, không nội dung). -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

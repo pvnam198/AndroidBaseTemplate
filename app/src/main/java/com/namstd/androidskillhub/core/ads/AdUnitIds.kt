@@ -3,8 +3,8 @@ package com.namstd.androidskillhub.core.ads
 import com.namstd.androidskillhub.core.config.RemoteConfig
 
 /**
- * Ordered fallback lists. These defaults are Google's Android test ad units.
- * Replace every list, along with the manifest app ID, before publishing.
+ * Các danh sách fallback theo thứ tự. Giá trị mặc định là các test ad unit Android của Google.
+ * Thay mọi danh sách, cùng với app ID trong manifest, trước khi phát hành.
  */
 data class AdUnitIds(
     val banner: List<String> = listOf(TEST_BANNER),
@@ -19,7 +19,7 @@ data class AdUnitIds(
         /**
          * Dựng [AdUnitIds] từ các key tiering của [RemoteConfig] (highfloor → medium → all_price).
          * Format nào chưa set (list rỗng) thì giữ test id mặc định. `id_native` áp chung cho mọi placement.
-         * Rewarded / RewardedInterstitial (dormant) luôn dùng test id.
+         * Rewarded / RewardedInterstitial (hiện chưa dùng) luôn dùng test id.
          */
         fun fromConfig(): AdUnitIds {
             val defaults = AdUnitIds()

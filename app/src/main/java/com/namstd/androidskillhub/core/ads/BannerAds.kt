@@ -25,14 +25,14 @@ import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 
 object BannerAds {
     /**
-     * Loads a banner into [container]. Loại do [AdPolicy.enable] (`banner`) quyết định:
+     * Load một banner vào [container]. Loại do [AdPolicy.enable] (`banner`) quyết định:
      * `0` = tắt (ẩn ô), `1` = AdMob banner thường, `2` = AdMob collapsible, `3` = native thường
      * (làm thật ở Phase 2, tạm fallback banner thường), `4` = native collapsible ([NativeCollapseAd]:
-     * 1 native ad to rồi thu nhỏ thành dải). Pure routing - load thật ở [loadAdMobBanner]/[NativeCollapseAd].
+     * 1 native ad to rồi thu nhỏ thành dải). Chỉ điều hướng - load thật ở [loadAdMobBanner]/[NativeCollapseAd].
      *
-     * [autoReload] / [reloadGapMs] set the slot's reload timer (off, or 0, for none) - supplied by the
-     * caller, never read from config here; the returned
-     * handle's [BannerSlotHandle.reload] reloads it on demand, e.g. on a tab switch - see [BannerSlotReloader].
+     * [autoReload] / [reloadGapMs] đặt timer reload của slot (tắt, hoặc 0, nếu không cần) - do caller
+     * truyền vào, không bao giờ đọc từ config ở đây; [BannerSlotHandle.reload] của handle trả về
+     * cho phép reload khi cần, vd. khi chuyển tab - xem [BannerSlotReloader].
      */
     fun load(
         activity: Activity,
@@ -51,7 +51,7 @@ object BannerAds {
         else -> loadAdMobBanner(activity, container, collapsible = false, autoReload, reloadGapMs, onStatus)
     }
 
-    /** Loads a real AdMob banner into [container] - plain, or AdMob's own collapsible variant when [collapsible]. */
+    /** Load một AdMob banner thật vào [container] - banner thường, hoặc bản collapsible của AdMob khi [collapsible]. */
     private fun loadAdMobBanner(
         activity: Activity,
         container: ViewGroup,
@@ -70,15 +70,15 @@ object BannerAds {
 }
 
 /**
- * One AdMob banner slot in [container]. Each load - the first one and every auto reload (see
- * [BannerSlotReloader]) - drops the previous banner and puts the slot back to its small shimmer
- * straight away, then swaps in the new banner once it's loaded; for [collapsible] that new banner
- * is requested collapsible again, so it opens expanded. On a reload the shimmer stays up at least
- * [BannerSlotReloader.MIN_RELOAD_SHIMMER_MS], so the swap never looks like a flicker. A banner loaded
- * while the activity isn't resumed waits for onResume, so the reload gap - which starts when the
- * banner is shown - only ever counts time it was actually on screen. A failed load hides [container]
- * until the next load puts its shimmer back. Main thread only, except the
- * SDK callbacks, which hop back via [Activity.runOnUiThread].
+ * Một slot AdMob banner trong [container]. Mỗi lượt load - lần đầu và mọi lần auto reload (xem
+ * [BannerSlotReloader]) - bỏ banner trước và đưa slot về shimmer nhỏ ngay, rồi thay banner mới vào
+ * khi load xong; với [collapsible] thì banner mới cũng được request dạng collapsible, nên nó mở ở
+ * trạng thái expand. Khi reload, shimmer được giữ ít nhất [BannerSlotReloader.MIN_RELOAD_SHIMMER_MS],
+ * để việc thay banner không bao giờ trông như bị nháy. Banner load xong trong lúc activity chưa resume
+ * sẽ chờ onResume, để khoảng cách reload - bắt đầu tính khi banner được hiển thị - chỉ đếm thời gian
+ * banner thực sự nằm trên màn hình. Load thất bại thì ẩn [container] cho tới khi lượt load sau hiện
+ * lại shimmer. Chỉ chạy trên main thread, trừ các
+ * callback của SDK, vốn quay lại qua [Activity.runOnUiThread].
  */
 private class AdMobBannerAd(
     private val activity: Activity,
@@ -91,7 +91,7 @@ private class AdMobBannerAd(
     private val handler = Handler(Looper.getMainLooper())
     private val reloader = BannerSlotReloader(activity, autoReload, reloadGapMs) { load(isReload = true) }
     private var current: AdView? = null
-    /** A loaded banner waiting to be shown - for the reload's minimum shimmer, or for onResume. */
+    /** Banner đã load đang chờ hiển thị - chờ hết shimmer tối thiểu của reload, hoặc chờ onResume. */
     private var pendingView: AdView? = null
     private var minShimmerUntil = 0L
     private val revealRunnable = Runnable { revealPending() }
@@ -102,7 +102,7 @@ private class AdMobBannerAd(
         }
     }
     private var shimmer: AdBannerShimmerBinding? = null
-    /** Bumped on every load; a callback from an older load finds it changed and bows out. */
+    /** Tăng lên sau mỗi lượt load; callback của lượt load cũ thấy giá trị đã đổi thì tự bỏ qua. */
     @Volatile private var generation = 0
     @Volatile private var destroyed = false
 
@@ -163,7 +163,7 @@ private class AdMobBannerAd(
                 activity.runOnUiThread {
                     if (isStale()) return@runOnUiThread
                     onStatus("Banner: $error")
-                    // No banner to show - free the slot instead of leaving an empty strip.
+                    // Không có banner để hiện - giải phóng slot thay vì để lại một dải trống.
                     clearShimmer()
                     container.visibility = View.GONE
                     reloader.onFailed()
@@ -172,7 +172,7 @@ private class AdMobBannerAd(
         )
     }
 
-    /** Shows [pendingView] once the minimum shimmer is over and the activity is resumed. */
+    /** Hiển thị [pendingView] khi đã hết shimmer tối thiểu và activity đang resume. */
     private fun revealPending() {
         val adView = pendingView ?: return
         handler.removeCallbacks(revealRunnable)
@@ -181,12 +181,12 @@ private class AdMobBannerAd(
             handler.postDelayed(revealRunnable, wait)
             return
         }
-        if (lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == false) return // onResume calls back in.
+        if (lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == false) return // onResume sẽ gọi lại vào đây.
         pendingView = null
         show(adView)
     }
 
-    /** The banner is on screen from here - so this, not the load, is where the reload gap starts. */
+    /** Từ đây banner đã lên màn hình - nên khoảng cách reload bắt đầu tính từ đây, không phải từ lúc load. */
     private fun show(adView: AdView) {
         clearShimmer()
         current = adView
@@ -204,7 +204,7 @@ private class AdMobBannerAd(
         pendingView = null
     }
 
-    /** Shows a shimmering skeleton in [container] so the banner slot never pops in from empty. */
+    /** Hiện skeleton shimmer trong [container] để slot banner không bao giờ đột ngột hiện ra từ chỗ trống. */
     private fun showShimmer() {
         val binding = AdBannerShimmerBinding.inflate(LayoutInflater.from(activity))
         container.removeAllViews()
@@ -233,9 +233,9 @@ private class AdMobBannerAd(
 }
 
 /**
- * A native ad rendered into the banner slot (enable.banner=3). Uses [NativeAds.subscribe] (shimmer +
- * fade-in + no-fill hide handled there). [reload] re-subscribes a fresh native on demand (e.g. tab
- * switch); there is no built-in reload timer for this variant.
+ * Native ad hiển thị trong slot banner (enable.banner=3). Dùng [NativeAds.subscribe] (shimmer +
+ * fade-in + ẩn khi no-fill đều xử lý ở đó). [reload] subscribe lại một native mới khi cần (vd. chuyển
+ * tab); biến thể này không có sẵn timer reload.
  */
 private class NativeBannerSlot(
     private val activity: Activity,

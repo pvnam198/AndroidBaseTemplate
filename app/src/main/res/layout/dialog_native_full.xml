@@ -14,7 +14,7 @@
         android:background="@android:color/white">
 
         <!-- ====================================================== -->
-        <!-- Sponsored -->
+        <!-- Được tài trợ -->
         <!-- ====================================================== -->
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -35,7 +35,7 @@
 
 
         <!-- ====================================================== -->
-        <!-- Google AdChoices -->
+        <!-- AdChoices của Google -->
         <!-- ====================================================== -->
 
         <com.google.android.libraries.ads.mobile.sdk.common.AdChoicesView
@@ -49,7 +49,7 @@
 
 
         <!-- ====================================================== -->
-        <!-- Native 1 progress -->
+        <!-- Thanh tiến trình native 1 -->
         <!-- ====================================================== -->
 
         <androidx.cardview.widget.CardView
@@ -120,11 +120,11 @@
 
 
         <!-- ====================================================== -->
-        <!-- Skip / Countdown / Close -->
+        <!-- Bỏ qua / Đếm ngược / Đóng -->
         <!-- ====================================================== -->
 
         <!-- ====================================================== -->
-        <!-- Main Google creative -->
+        <!-- Creative chính của Google -->
         <!-- ====================================================== -->
 
         <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
@@ -140,7 +140,7 @@
 
 
         <!-- ====================================================== -->
-        <!-- Bottom native information -->
+        <!-- Thông tin native phía dưới -->
         <!-- ====================================================== -->
 
         <LinearLayout
@@ -158,7 +158,7 @@
             app:layout_constraintStart_toStartOf="parent">
 
 
-            <!-- Icon + headline + description -->
+            <!-- Icon + tiêu đề + mô tả -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -30,12 +30,12 @@ import kotlin.math.ceil
 import kotlinx.coroutines.launch
 
 /**
- * Second half of the "custom interstitial": [totalStages] native ad(s) shown one after another,
- * each requiring an explicit tap to advance once its [durationMs] countdown ends. Shown as a
- * full-screen dialog (instead of a separate Activity) over the current screen so it appears
- * instantly, right after the interstitial closes, with no window-transition delay. Holds
- * [FullScreenGate] for its entire lifetime so nothing else (e.g. an app-open ad on foreground
- * resume) can show over it, and reports completion back via the Fragment Result API.
+ * Nửa sau của "custom interstitial": [totalStages] native ad hiện lần lượt từng cái,
+ * mỗi cái cần user bấm rõ ràng để đi tiếp sau khi đếm ngược [durationMs] kết thúc. Hiện dưới dạng
+ * full-screen dialog (thay vì một Activity riêng) đè lên màn hình hiện tại để nó xuất hiện
+ * ngay lập tức, ngay sau khi interstitial đóng, không có độ trễ chuyển window. Giữ
+ * [FullScreenGate] suốt vòng đời của nó để không gì khác (vd. app-open ad khi resume lại
+ * foreground) hiện đè lên được, và báo hoàn tất về qua Fragment Result API.
  */
 class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFullBinding>() {
 
@@ -122,7 +122,7 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
 
     private fun toVisibility(visible: Boolean) = if (visible) View.VISIBLE else View.GONE
 
-    /** Same edge-to-edge inset handling [com.namstd.androidskillhub.core.ui.base.BaseActivity] applies automatically; a full-screen dialog needs it too. */
+    /** Xử lý insets edge-to-edge giống [com.namstd.androidskillhub.core.ui.base.BaseActivity] tự áp dụng; full-screen dialog cũng cần. */
     private fun applySystemBarPadding(root: View) {
         val initialPadding =
             Rect(root.paddingLeft, root.paddingTop, root.paddingRight, root.paddingBottom)
@@ -139,13 +139,12 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
     }
 
     /**
-     * Takes the preloaded ad for this stage - no load wait. Ad #1 is kept warm by
-     * [BaseActivity.showInterstitial] ahead of the interstitial itself; each later stage only
-     * starts preloading once the previous one is shown (see [onStageLoaded]), using the time the
-     * user spends on it. All stages share the same [NativePlacement.POST_INTERSTITIAL] slot since
-     * they're never needed at the same time - one is always fully consumed before the next starts
-     * loading. Falls through to the next stage (or closes, past [totalStages]) if no ad was ready
-     * in time.
+     * Lấy ad đã preload cho stage này - không chờ load. Ad #1 được [BaseActivity.showInterstitial]
+     * hâm nóng sẵn trước cả interstitial; mỗi stage sau chỉ bắt đầu preload khi stage trước
+     * đã hiện (xem [onStageLoaded]), tận dụng thời gian user xem stage đó. Mọi stage dùng chung
+     * slot [NativePlacement.POST_INTERSTITIAL] vì chúng không bao giờ cần cùng lúc - một cái
+     * luôn được dùng hết trước khi cái kế tiếp bắt đầu load. Nếu không có ad nào sẵn kịp
+     * thì chuyển sang stage kế tiếp (hoặc đóng, khi đã quá [totalStages]).
      */
     private fun loadStage(stageNumber: Int) {
         val ad = NativeAds.poll(NativePlacement.POST_INTERSTITIAL)
@@ -161,7 +160,7 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
         currentAd = ad
         bindNativeAd(ad, binding)
         if (stageNumber < totalStages) {
-            // NativeAds.poll() above already kicked off the reload for the next stage - it'll be ready by the time the user taps through.
+            // NativeAds.poll() ở trên đã kích hoạt reload cho stage kế tiếp - nó sẽ sẵn sàng khi user bấm đi tiếp.
             startProgressTimer()
         } else {
             viewModel.onCountdownStarted((durationMs / 1_000L).toInt())

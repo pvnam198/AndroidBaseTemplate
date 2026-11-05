@@ -23,6 +23,7 @@ import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.SplashFallback
 import com.namstd.androidskillhub.core.ads.resolveFullScreenPlan
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
@@ -41,12 +42,12 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     private var nativeContainer: FrameLayout? = null
 
     /**
-     * Loads a banner into [container] and destroys it automatically in [onDestroy].
-     * [autoReload] / [reloadGapMs] set its reload timer and default to Remote Config's
-     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); a screen can
-     * pass its own. Any other reload trigger (resume, tab switch...) is the screen's own code
-     * calling [reloadBanner]. For a premium user nothing loads and [container] is hidden.
-     * [inApp] = false for Splash/Language/Onboarding - see [AdPolicy.bannerAllowed].
+     * Load banner vào [container] và tự huỷ nó trong [onDestroy].
+     * [autoReload] / [reloadGapMs] đặt bộ hẹn giờ reload, mặc định lấy theo Remote Config
+     * ([RemoteConfig.bannerSlotAutoReload] / [RemoteConfig.refreshRateMs]); màn hình có thể
+     * truyền giá trị riêng. Mọi kiểu reload khác (resume, đổi tab...) là code riêng của màn hình
+     * gọi [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
+     * [inApp] = false cho Splash/Language/Onboarding - xem [AdPolicy.bannerAllowed].
      */
     protected fun loadBanner(
         container: ViewGroup,
@@ -64,15 +65,15 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         }
     }
 
-    /** Reloads the banner slot now (e.g. on a tab switch) - ignored while it's already loading. */
+    /** Reload slot banner ngay (vd. khi đổi tab) - bỏ qua nếu nó đang load. */
     protected fun reloadBanner() {
         bannerHandle?.reload()
     }
 
     /**
-     * Loads a native ad for [placement] into [container] and destroys it automatically in
-     * [onDestroy]. See [NativeAds.subscribe] for [preloadOnShow]. For a premium user nothing loads
-     * and [container] is hidden.
+     * Load native ad cho [placement] vào [container] và tự huỷ nó trong
+     * [onDestroy]. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium thì không load gì
+     * và [container] bị ẩn.
      */
     protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
         nativeContainer = container
@@ -86,11 +87,10 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Runs on every onResume with whether the user is premium - like the reference app's base - so
-     * a screen that was open or in the back stack when the user upgraded drops its ads as soon as
-     * they come back to it. The default tears down this screen's [loadBanner] / [loadNative] ads and
-     * hides their containers; a screen with ads of its own (a feed, a dialog...) overrides this to
-     * hide those too, calling super.
+     * Chạy ở mỗi lần onResume, kèm cờ user có premium hay không - giống base của app tham chiếu - để
+     * màn hình đang mở hoặc nằm trong back stack lúc user nâng cấp bỏ quảng cáo ngay khi user quay
+     * lại. Mặc định huỷ các ad [loadBanner] / [loadNative] của màn này và ẩn container của chúng;
+     * màn hình có quảng cáo riêng (feed, dialog...) override hàm này để ẩn cả chúng, có gọi super.
      */
     protected open fun onPremiumUser(premium: Boolean) {
         if (premium) hideAds()
@@ -111,9 +111,15 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
      * Chạy quảng cáo full-screen cho [placement] theo [AdPolicy.enable] (xem [resolveFullScreenPlan]),
      * rồi gọi [onComplete]. Loại: plain interstitial / interstitial + native break / native-only / tắt.
      * (APP_OPEN chỉ ở SPLASH và do SplashActivity lo; ở đây coi như tắt.)
-     * Single implementation cho toàn app - [BaseFragment.showInterstitial] uỷ quyền về đây.
+     * Chỉ một implementation cho toàn app - [BaseFragment.showInterstitial] uỷ quyền về đây.
      */
     internal fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
+        if (SplashFallback.take(placement)) {
+            // Splash bị lỡ quảng cáo: placement này bù lại bằng một plain interstitial,
+            // bất kể plan, step_count hay gap của chính nó nói gì.
+            if (!InterstitialAds.show(this, placement, ignoreGap = true, onComplete = onComplete)) onComplete()
+            return
+        }
         val plan = resolveFullScreenPlan(placement, AdPolicy.enable)
         if (plan == FullScreenAdPlan.OFF || plan == FullScreenAdPlan.APP_OPEN) { onComplete(); return }
         if (!passesInterstitialStepGate()) { onComplete(); return }
@@ -122,8 +128,8 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
                 if (!InterstitialAds.show(this, placement, onComplete = onComplete)) onComplete()
             FullScreenAdPlan.NATIVE_ONLY -> {
                 if (!Ads.adsEnabled || FullScreenGate.isBusy()) { onComplete(); return }
-                // No interstitial in front to cover the load, so wait (bounded) for ad #1 first -
-                // otherwise the break polls an empty slot and closes before anything is shown.
+                // Không có interstitial phía trước để che thời gian load, nên đợi (có giới hạn) ad #1 trước -
+                // nếu không, break sẽ poll một slot rỗng và đóng trước khi kịp hiện gì.
                 NativeAds.awaitReady(this, NativePlacement.POST_INTERSTITIAL, NATIVE_ONLY_WAIT_MS) {
                     runNativeAdBreak(onComplete)
                 }
@@ -179,7 +185,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         observeData()
     }
 
-    /** Pads the root view so content isn't drawn under the status/navigation bars (edge-to-edge is enforced from SDK 35). */
+    /** Thêm padding cho root view để nội dung không bị vẽ dưới status/navigation bar (edge-to-edge bị ép từ SDK 35). */
     private fun applySystemBarPadding(root: View) {
         val initialPadding = Rect(root.paddingLeft, root.paddingTop, root.paddingRight, root.paddingBottom)
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
@@ -214,5 +220,5 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 }
 
-/** How long a native-only break (enable.inter=2) waits for its first ad before giving up and moving on. */
+/** Thời gian một native-only break (enable.inter=2) đợi ad đầu tiên trước khi bỏ cuộc và đi tiếp. */
 private const val NATIVE_ONLY_WAIT_MS = 5_000L

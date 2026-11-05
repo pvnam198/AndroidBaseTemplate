@@ -12,7 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidSkillHub">
-        <!-- Sample ID. Replace this and every ad unit list before publishing. -->
+        <!-- ID mẫu. Thay ID này và mọi danh sách ad unit trước khi phát hành. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />

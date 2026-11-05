@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Info row without the Ad label (the full-screen layouts show it in the corner): icon | Title / body. -->
+<!-- Hàng thông tin không có nhãn Ad (các layout toàn màn hình hiện nhãn ở góc): icon | Tiêu đề / nội dung. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Collap1, expanded: media 16:9 with a collapse button / info B / full CTA. Collapsed strip: ad_tpl_tiny1.
-     ad_collapse is hidden; a screen that collapses the card shows it and handles the click. -->
+<!-- Figma Collap1, dạng mở rộng: media 16:9 có nút thu gọn / info B / CTA rộng hết. Dải khi thu gọn: ad_tpl_tiny1.
+     ad_collapse bị ẩn; màn hình nào thu gọn thẻ thì hiện nút này và xử lý click. -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

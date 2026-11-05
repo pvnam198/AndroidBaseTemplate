@@ -43,6 +43,10 @@ object AdPolicy {
     val stepCount: Int
         get() = if (profile == AdProfile.BASIC) BasicAdProfile.STEP_COUNT else RemoteConfig.stepCount
 
+    /** Vị trí inter bù khi Splash không kịp hiện quảng cáo - chỉ ở [AdProfile.REMOTE]. Xem [SplashFallback]. */
+    val splashFallback: InterstitialPlacement?
+        get() = if (profile == AdProfile.REMOTE) RemoteConfig.splashFallback else null
+
     /** Native chỉ có ở [AdProfile.REMOTE]. */
     val nativeAllowed: Boolean
         get() = Ads.adsEnabled && profile == AdProfile.REMOTE

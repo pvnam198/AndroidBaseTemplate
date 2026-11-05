@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma Full2 (full screen, dark): media fills the screen top to bottom panel / Ad label + close on top /
-     dark info panel / full CTA. ad_close is hidden; the screen showing the ad decides when it appears. -->
+<!-- Figma Full2 (toàn màn hình, nền tối): media lấp đầy từ đỉnh màn hình tới panel dưới / nhãn Ad + nút đóng ở trên /
+     panel thông tin tối / CTA rộng hết. ad_close bị ẩn; màn hình hiển thị quảng cáo quyết định khi nào nút hiện ra. -->
 <com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

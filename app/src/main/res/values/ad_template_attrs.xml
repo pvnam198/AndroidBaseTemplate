@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="AdMediaFrame">
-        <!-- Width:height ratio, e.g. "16:9", "1:1", "4:3", "3:4", "9:16". -->
+        <!-- Tỉ lệ rộng:cao, ví dụ "16:9", "1:1", "4:3", "3:4", "9:16". -->
         <attr name="adRatio" format="string" />
         <attr name="adCornerRadius" format="dimension" />
     </declare-styleable>

@@ -1,5 +1,6 @@
 package com.namstd.androidskillhub.core.config
 
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -48,8 +49,9 @@ class PlacementConfigTest {
     fun digitEnablesAndNumericCollapConfig() {
         assertEquals(setOf(2, 4), sample.placement(AdKey.NATIVE_INTRO).enableDigits)
         assertEquals(setOf(2), sample.placement(AdKey.NATIVE_INTRO_FULL).enableDigits)
-        assertEquals("24", sample.placement(AdKey.NATIVE_RESULT).collapConfig)
-        assertEquals(20L, sample.placement(AdKey.NATIVE_RESULT).refreshRateMs)
+        val numeric = PlacementConfig.fromJson(JSONObject("""{"enable":1,"refresh_rate":20,"collap_config":24}"""), AdKey.BANNER_HOME)
+        assertEquals("24", numeric.collapConfig)
+        assertEquals(20L, numeric.refreshRateMs)
     }
 
     @Test

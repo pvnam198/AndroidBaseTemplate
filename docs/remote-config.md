@@ -118,7 +118,9 @@ Native xen trong feed màn chính không có dòng riêng trong sheet: luôn b�
 
 ### Các vị trí đã khai báo, chưa có màn hình
 
-`inter_welcome_back`, `native_get_start`, `inter_start`, `native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
+`inter_welcome_back`, `native_get_start`, `inter_start`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
+
+**Không thuộc base app:** các vị trí theo tính năng riêng của từng app (`native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`) đã bỏ khỏi code. Khối của chúng trong `ad_config` (nếu có) bị bỏ qua; app nào có màn đó thì tự thêm key vào `AdKey` / `AdUnit`.
 
 ---
 

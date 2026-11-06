@@ -11,6 +11,7 @@ import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.template.NativeStyleApplier
 import com.namstd.androidskillhub.databinding.AdNativeBinding
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
@@ -153,6 +154,7 @@ abstract class BaseAdRecyclerAdapter<T>(
         fun show(ad: NativeAd) {
             val binding = AdNativeBinding.inflate(LayoutInflater.from(activity))
             populate(ad, binding)
+            placement?.let { NativeStyleApplier.apply(binding.root, NativeAds.templateFor(it).style) }
             container.removeAllViews()
             container.addView(binding.root)
             setCollapsed(false)

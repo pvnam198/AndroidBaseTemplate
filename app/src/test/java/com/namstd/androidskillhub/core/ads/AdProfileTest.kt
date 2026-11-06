@@ -42,6 +42,12 @@ class AdProfileTest {
             AdsProfileRule.entries.map { it.key },
         )
         assertEquals(AdsProfileRule.FULL_FOR_PAID_USERS, AdsProfileRule.fromKey(" Full_For_Paid_Users "))
-        assertNull(AdsProfileRule.fromKey("2"))
+        // Sheet / Firebase ghi số 0-3.
+        assertEquals(listOf(0, 1, 2, 3), AdsProfileRule.entries.map { it.code })
+        assertEquals(AdsProfileRule.OFF, AdsProfileRule.fromKey("0"))
+        assertEquals(AdsProfileRule.FULL_FOR_PAID_USERS, AdsProfileRule.fromKey("2"))
+        assertEquals(AdsProfileRule.FULL_EXCEPT_TEST_DEVICES, AdsProfileRule.fromKey("3.0"))
+        assertNull(AdsProfileRule.fromKey("4"))
+        assertNull(AdsProfileRule.fromKey("2.5"))
     }
 }

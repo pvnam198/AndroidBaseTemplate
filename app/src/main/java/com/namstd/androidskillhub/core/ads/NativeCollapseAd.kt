@@ -19,9 +19,10 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdEventCallback
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 import androidx.core.view.isVisible
+import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
+import com.namstd.androidskillhub.core.ads.template.NativeTemplateSpec
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
-import com.namstd.androidskillhub.databinding.AdNativeCollapseBinding
-import com.namstd.androidskillhub.databinding.AdNativeCollapseSmallBinding
 
 /**
  * "Native collapsible": một [NativeAd] hiển thị ở hai kích thước. Khi load xong nó mở dạng lớn, gắn
@@ -182,7 +183,7 @@ internal class NativeCollapseAd(
         clearShimmer()
         val view = renderSmall(ad)
         container.removeAllViews()
-        container.addView(view)
+        container.addView(view, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         currentView = view
         state = State.SMALL
         onStatus("Native collapsible: small")
@@ -270,26 +271,21 @@ internal class NativeCollapseAd(
         (overlay.parent as? ViewGroup)?.removeView(overlay)
     }
 
-    /** Card đầy đủ (icon + headline + media + body + CTA) với nút đóng ở góc để thu nó về [renderSmall]. */
+    /**
+     * Bộ mẫu của placement: `template` là Collap1 / Collap2 / Collap3 (kèm style `ad_templates`); trống hoặc mẫu khác
+     * (vd. mẫu dành cho format native thường của cùng placement) thì dùng Collap1.
+     */
+    private fun collapSet(): Pair<NativeTemplateSpec, NativeTemplateSpec> {
+        val spec = NativeAds.templateFor(placement)
+        val large = spec.template.takeIf { it.collapsed != null } ?: NativeAdTemplate.COLLAP1
+        return NativeTemplateSpec(large, spec.style) to NativeTemplateSpec(large.collapsed!!, spec.style)
+    }
+
+    /** Dạng lớn của bộ (Collap*), hiện nút thu gọn (Collap1 / Collap3) hoặc nút đóng (Collap2) để chuyển về [renderSmall]. */
     private fun renderLarge(ad: NativeAd): NativeAdView {
-        val binding = AdNativeCollapseBinding.inflate(LayoutInflater.from(activity))
-        val view = binding.root
-        view.headlineView = binding.adHeadline
-        view.bodyView = binding.adBody
-        view.advertiserView = binding.adAdvertiser
-        view.iconView = binding.adIcon
-        view.callToActionView = binding.adCallToAction
-        binding.adHeadline.text = ad.headline
-        binding.adBody.text = ad.body
-        binding.adAdvertiser.text = ad.advertiser
-        binding.adCallToAction.text = ad.callToAction
-        binding.adIcon.setImageDrawable(ad.icon?.drawable)
-        binding.adIcon.visibility = visibility(ad.icon)
-        binding.adBody.visibility = visibility(ad.body)
-        binding.adAdvertiser.visibility = visibility(ad.advertiser)
-        binding.adCallToAction.visibility = visibility(ad.callToAction)
+        val view = NativeAds.renderTemplate(activity, ad, collapSet().first)
+        view.elevation = 8 * activity.resources.displayMetrics.density
         val gate = collapGate
-        view.registerNativeAd(ad, binding.adMedia)
         if (gate.isEnabled) {
             // open_ad_on_clicks đếm mọi click trên quảng cáo: click trên thẻ do SDK tự mở quảng cáo, ta chỉ đếm qua
             // onAdClicked (vẫn ghi doanh thu như callback gốc). Lần click do chính ta bấm hộ (dưới) không đếm lại.
@@ -300,12 +296,15 @@ internal class NativeCollapseAd(
                 }
             }
         }
-        binding.adClose.setOnClickListener {
+        val button = view.findViewById<View>(R.id.ad_collapse) ?: view.findViewById(R.id.ad_close)
+        button?.visibility = View.VISIBLE
+        button?.setOnClickListener {
             // Lần click nằm trong open_ad_on_clicks thì mở quảng cáo thay vì thu nhỏ - xem [CollapClickGate].
             if (gate.opensAd(++clickCount)) {
                 onStatus("Native collapsible: click $clickCount opens the ad")
                 selfClickPending = true
-                (binding.adCallToAction.takeIf { it.isVisible } ?: binding.adHeadline).performClick()
+                val cta = view.findViewById<View>(R.id.ad_call_to_action)
+                (cta?.takeIf { it.isVisible } ?: view.findViewById(R.id.ad_headline)).performClick()
             } else {
                 selfClickPending = false
                 showSmall()
@@ -314,24 +313,9 @@ internal class NativeCollapseAd(
         return view
     }
 
-    /** Dải cỡ banner (icon + headline + body + CTA), không có media. */
-    private fun renderSmall(ad: NativeAd): NativeAdView {
-        val binding = AdNativeCollapseSmallBinding.inflate(LayoutInflater.from(activity), container, false)
-        val view = binding.root
-        view.headlineView = binding.adHeadline
-        view.bodyView = binding.adBody
-        view.iconView = binding.adIcon
-        view.callToActionView = binding.adCallToAction
-        binding.adHeadline.text = ad.headline
-        binding.adBody.text = ad.body
-        binding.adCallToAction.text = ad.callToAction
-        binding.adIcon.setImageDrawable(ad.icon?.drawable)
-        binding.adIcon.visibility = visibility(ad.icon)
-        binding.adBody.visibility = visibility(ad.body)
-        binding.adCallToAction.visibility = visibility(ad.callToAction)
-        view.registerNativeAd(ad, null)
-        return view
-    }
+    /** Dải của bộ (Tiny1 / Tiny2), cùng ad đó, không có media. */
+    private fun renderSmall(ad: NativeAd): NativeAdView =
+        NativeAds.renderTemplate(activity, ad, collapSet().second)
 
     private fun visibility(value: Any?) = if (value == null) View.GONE else View.VISIBLE
 

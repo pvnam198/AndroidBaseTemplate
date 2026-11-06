@@ -1,5 +1,5 @@
 {
-  "ads_profile": "full_for_paid_users",
+  "ads_profile": 2,
   "splash_fallback": "inter_language",
   "language_next_style": "icon",
   "language_next_delay_ms": 800,

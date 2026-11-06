@@ -20,6 +20,9 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
+import com.namstd.androidskillhub.core.config.RemoteConfig
+import com.namstd.androidskillhub.core.ads.template.NativeTemplateSpec
+import com.namstd.androidskillhub.core.ads.template.NativeStyleApplier
 import com.namstd.androidskillhub.core.config.PlacementConfig
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
@@ -256,7 +259,7 @@ object NativeAds {
         }
         var currentView: NativeAdView? = null
         var attachedAd: NativeAd? = null
-        var shimmer: ShimmerFrameLayout? = showShimmer(activity, container, templateFor(placement).isStrip)
+        var shimmer: ShimmerFrameLayout? = showShimmer(activity, container, templateFor(placement).template.isStrip)
 
         val request = request(
             activity, placement,
@@ -363,16 +366,17 @@ object NativeAds {
     }
 
     /**
-     * Template của [placement]: theo `template` của placement chứa unit đó (trống → mẫu mặc định) - xem
-     * [NativeAdTemplate.forPlacement].
+     * Mẫu của [placement]: theo `template` của placement chứa unit đó - mẫu có sẵn hoặc mẫu tự đặt trong
+     * `ad_templates` (trống → mẫu mặc định), kèm style - xem [NativeAdTemplate.specFor].
      */
-    fun templateFor(placement: NativePlacement): NativeAdTemplate =
-        NativeAdTemplate.forPlacement(placement.unit.key, AdPolicy.config(placement.unit.key))
+    fun templateFor(placement: NativePlacement): NativeTemplateSpec =
+        NativeAdTemplate.specFor(placement.unit.key, AdPolicy.config(placement.unit.key), RemoteConfig.templates())
 
-    /** Inflate [template] và gắn [ad] vào đó - cho bất kỳ màn nào muốn dùng một template cụ thể. */
-    fun renderTemplate(activity: Activity, ad: NativeAd, template: NativeAdTemplate): NativeAdView {
-        val view = LayoutInflater.from(activity).inflate(template.layout, null) as NativeAdView
+    /** Inflate mẫu [spec], gắn [ad] vào đó rồi áp style - cho bất kỳ màn nào muốn dùng một mẫu cụ thể. */
+    fun renderTemplate(activity: Activity, ad: NativeAd, spec: NativeTemplateSpec): NativeAdView {
+        val view = LayoutInflater.from(activity).inflate(spec.template.layout, null) as NativeAdView
         populateView(view, ad)
+        NativeStyleApplier.apply(view, spec.style)
         return view
     }
 
@@ -388,7 +392,6 @@ object NativeAds {
         val cta: View? = view.findViewById(R.id.ad_call_to_action)
         val advertiser: TextView? = view.findViewById(R.id.ad_advertiser)
         val stars: RatingBar? = view.findViewById(R.id.ad_stars)
-        val price: TextView? = view.findViewById(R.id.ad_price)
         val media: MediaView? = view.findViewById(R.id.ad_media)
 
         view.headlineView = headline
@@ -397,7 +400,6 @@ object NativeAds {
         cta?.let { view.callToActionView = it }
         advertiser?.let { view.advertiserView = it }
         stars?.let { view.starRatingView = it }
-        price?.let { view.priceView = it }
 
         headline.text = ad.headline
         body?.text = ad.body
@@ -405,13 +407,11 @@ object NativeAds {
         icon?.setImageDrawable(ad.icon?.drawable)
         advertiser?.text = ad.advertiser
         stars?.rating = ad.starRating?.toFloat() ?: 0f
-        price?.text = ad.price
         body?.visibility = visibility(ad.body)
         cta?.visibility = visibility(ad.callToAction)
         icon?.visibility = visibility(ad.icon)
         advertiser?.visibility = visibility(ad.advertiser)
         stars?.visibility = visibility(ad.starRating)
-        price?.visibility = visibility(ad.price)
         view.registerNativeAd(ad, media)
     }
 

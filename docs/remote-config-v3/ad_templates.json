@@ -1,0 +1,20 @@
+{
+  "cta_top_purple": {
+    "base": "Big5",
+    "cta_bg": "#7B2FA6",
+    "cta_corner_dp": 12,
+    "card_bg": "#F6EEFB",
+    "card_stroke": "#7B2FA6",
+    "title_color": "#4A148C",
+    "cta_height_dp": 52,
+    "media_height_dp": 160
+  },
+  "dark_card": {
+    "base": "Big1",
+    "cta_bg": "#FFC107",
+    "cta_text": "#000000",
+    "card_bg": "#1E1E1E",
+    "title_color": "#FFFFFF",
+    "body_color": "#BBBBBB"
+  }
+}

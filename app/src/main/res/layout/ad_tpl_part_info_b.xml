@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Hàng info B: icon | Tiêu đề / [Ad] sao giá / nội dung. -->
+<!-- Hàng info B: icon | Tiêu đề / [Ad] sao / nội dung (không hiện giá). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -35,10 +35,6 @@
             <RatingBar
                 android:id="@+id/ad_stars"
                 style="@style/Widget.Ad.Stars" />
-
-            <TextView
-                android:id="@+id/ad_price"
-                style="@style/Widget.Ad.Price" />
         </LinearLayout>
 
         <TextView

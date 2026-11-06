@@ -53,7 +53,7 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     val unitName: String get() = name.lowercase()
 
     /**
-     * ID cho waterfall (id_high → id_low) của unit này, từ `ad_ids`; chưa đặt thì là [testId] (mặc định test ID của
+     * ID cho waterfall (id_1 → id_3) của unit này, từ `ad_ids`; chưa đặt thì là [testId] (mặc định test ID của
      * [format]). Bộ full và bộ basic dùng chung ID.
      */
     fun ids(testId: String = format.testId): List<String> =

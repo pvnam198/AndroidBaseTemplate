@@ -22,6 +22,13 @@ class AdMediaFrame @JvmOverloads constructor(
     private var ratio = 0f
     private var cornerRadius = 0f
 
+    /** Chiều cao cố định (px) thay cho [ratio] - `media_height_dp` của `ad_templates`; 0 = theo ratio. */
+    var fixedHeight = 0
+        set(value) {
+            field = value
+            requestLayout()
+        }
+
     init {
         context.obtainStyledAttributes(attrs, R.styleable.AdMediaFrame).apply {
             ratio = parseRatio(getString(R.styleable.AdMediaFrame_adRatio))
@@ -43,6 +50,13 @@ class AdMediaFrame @JvmOverloads constructor(
         // cho trường hợp cùng layout đó nằm trong container wrap_content.
         val fillsExactHeight = layoutParams?.height == LayoutParams.MATCH_PARENT &&
             MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY
+        if (fixedHeight > 0 && !fillsExactHeight && MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
+            super.onMeasure(
+                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(fixedHeight, MeasureSpec.EXACTLY),
+            )
+            return
+        }
         if (ratio <= 0f || fillsExactHeight || MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return

@@ -12,8 +12,8 @@ import com.namstd.androidskillhub.core.config.PlacementConfig
  *
  * Mọi layout (layout/ad_tpl_*.xml) dùng chung view id, nên
  * [com.namstd.androidskillhub.core.ads.NativeAds] có thể bind bất kỳ cái nào:
- * `ad_headline` (bắt buộc), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`, `ad_price`,
- * `ad_advertiser` (đều tùy chọn), cộng thêm các control ẩn `ad_close` / `ad_collapse` / `ad_next` mà chỉ
+ * `ad_headline` (bắt buộc), `ad_icon`, `ad_body`, `ad_call_to_action`, `ad_media`, `ad_stars`,
+ * `ad_advertiser` (đều tùy chọn; không hiện giá - "FREE" - dù Figma có vẽ), cộng thêm các control ẩn `ad_close` / `ad_collapse` / `ad_next` mà chỉ
  * màn có luồng riêng (collapsible, full-screen break...) mới hiện và gắn xử lý.
  *
  * Các template Collap là card ở dạng expand; dải thu nhỏ tương ứng là [TINY1] (Collap1, Collap3) và
@@ -26,8 +26,7 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     BIG4("big4", R.layout.ad_tpl_big4),
     BIG5("big5", R.layout.ad_tpl_big5),
 
-    /** Giống hệt Big5 trong Figma. */
-    BIG6("big6", R.layout.ad_tpl_big5),
+    BIG6("big6", R.layout.ad_tpl_big6),
     BIG7("big7", R.layout.ad_tpl_big7),
     BIG8("big8", R.layout.ad_tpl_big8),
     BIG9("big9", R.layout.ad_tpl_big9),
@@ -54,6 +53,17 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     /** Dải thấp (Tiny1, Tiny2): lúc load dùng shimmer thấp như banner thay vì shimmer card. */
     val isStrip: Boolean get() = this == TINY1 || this == TINY2
 
+    /**
+     * Bộ native collapsible: mẫu Collap* là dạng lớn, bấm nút thu gọn / đóng thì thành dải này (đúng từng bộ trong
+     * Figma: Collap1 → Tiny1, Collap2 → Tiny2, Collap3 → Tiny1). Mẫu không phải Collap* → null.
+     */
+    val collapsed: NativeAdTemplate?
+        get() = when (this) {
+            COLLAP1, COLLAP3 -> TINY1
+            COLLAP2 -> TINY2
+            else -> null
+        }
+
     companion object {
         /**
          * Template mặc định khi `template` của placement bỏ trống / ghi sai, cho placement mà [BIG1] không vừa chỗ:
@@ -66,6 +76,13 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
         /** Template cho placement [key] theo `template` của nó; trống / sai thì mặc định của placement (thường [BIG1]). */
         fun forPlacement(key: AdKey, config: PlacementConfig): NativeAdTemplate =
             fromKey(config.template, DEFAULT_BY_KEY[key] ?: BIG1)
+
+        /**
+         * Mẫu + style cho placement [key]: `template` có thể là mẫu có sẵn hoặc tên mẫu tự đặt trong `ad_templates`
+         * ([templates]); trống / không khớp thì mặc định của placement.
+         */
+        fun specFor(key: AdKey, config: PlacementConfig, templates: AdTemplatesDocument): NativeTemplateSpec =
+            templates.resolve(config.template, DEFAULT_BY_KEY[key] ?: BIG1)
 
         /** Template ứng với một tên mẫu (không phân biệt hoa thường); không khớp hoặc rỗng thì về [fallback]. */
         fun fromKey(value: String?, fallback: NativeAdTemplate = BIG1): NativeAdTemplate {

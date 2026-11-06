@@ -24,4 +24,12 @@ class NativeAdTemplateTest {
         assertEquals(NativeAdTemplate.TINY1, template(AdKey.NATIVE_LANGUAGE_SMALL, "xyz"))
         assertEquals(NativeAdTemplate.TINY2, template(AdKey.NATIVE_LANGUAGE_SMALL, "Tiny2"))
     }
+
+    @Test
+    fun eachCollapSetCollapsesToItsStrip() {
+        assertEquals(NativeAdTemplate.TINY1, NativeAdTemplate.COLLAP1.collapsed)
+        assertEquals(NativeAdTemplate.TINY2, NativeAdTemplate.COLLAP2.collapsed)
+        assertEquals(NativeAdTemplate.TINY1, NativeAdTemplate.COLLAP3.collapsed)
+        assertEquals(null, NativeAdTemplate.BIG1.collapsed)
+    }
 }

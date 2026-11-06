@@ -10,6 +10,7 @@ import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.namstd.androidskillhub.core.ads.template.AdTemplatesDocument
 import org.json.JSONObject
 
 /** Khoảng cách tối thiểu giữa 2 lần hiện interstitial (ms) + các placement được miễn. */
@@ -24,17 +25,24 @@ data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
  */
 data class OnboardingSetup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
 
-/** `ads_profile`: user nào dùng bộ full, còn lại dùng bộ basic. */
-enum class AdsProfileRule(val key: String) {
-    OFF("off"),
-    FULL_FOR_ALL("full_for_all"),
-    FULL_FOR_PAID_USERS("full_for_paid_users"),
-    FULL_EXCEPT_TEST_DEVICES("full_except_test_devices"),
+/**
+ * `ads_profile`: user nào dùng bộ full, còn lại dùng bộ basic. Trên sheet / Firebase ghi số [code]:
+ * 0 tắt · 1 mọi user full · 2 user từ marketing full, còn lại basic · 3 máy test ad basic, còn lại full.
+ * Cũng nhận tên [key] (vd `full_for_paid_users`).
+ */
+enum class AdsProfileRule(val code: Int, val key: String) {
+    OFF(0, "off"),
+    FULL_FOR_ALL(1, "full_for_all"),
+    FULL_FOR_PAID_USERS(2, "full_for_paid_users"),
+    FULL_EXCEPT_TEST_DEVICES(3, "full_except_test_devices"),
     ;
 
     companion object {
-        fun fromKey(value: String?): AdsProfileRule? =
-            value?.trim()?.lowercase()?.let { v -> entries.firstOrNull { it.key == v } }
+        fun fromKey(value: String?): AdsProfileRule? {
+            val v = value?.trim()?.lowercase() ?: return null
+            val code = v.toDoubleOrNull()?.takeIf { it % 1.0 == 0.0 }?.toInt()
+            return entries.firstOrNull { if (code != null) it.code == code else it.key == v }
+        }
     }
 }
 
@@ -45,7 +53,8 @@ data class DebugConfigEntry(val key: String, val value: String, val hint: String
  * Cấu hình quảng cáo và luồng mở app từ Firebase Remote Config - 3 parameter JSON:
  * - `ad_settings`: cấu hình chung (`ads_profile`, khoảng cách inter, nút Language / Onboarding...);
  * - `ad_placements`: `{ "full": {...}, "basic": {...} }` - xem [AdPlacementsDocument];
- * - `ad_ids`: `{ ad_unit: [id_high, id_medium, id_low] }` - xem [AdIdsDocument].
+ * - `ad_ids`: `{ ad_unit: [id_1, id_2, id_3] }` - xem [AdIdsDocument].
+ * - `ad_templates` (tuỳ chọn): mẫu native tuỳ biến - màu / hình dạng đè lên mẫu có sẵn, xem [AdTemplatesDocument].
  * Cũng nhận một parameter `ad_config` chứa cả 3 phần (`{ "ad_settings": {...}, "ad_placements": {...}, "ad_ids": {...} }`,
  * đúng file "Tải tất cả" của sheet); parameter riêng nào có giá trị thì thắng phần tương ứng trong `ad_config`.
  * Chỉ ghi chỗ khác mặc định; mặc định nằm ở [AdKey.fullDefault] và các getter dưới đây. Thời gian tính bằng ms.
@@ -74,6 +83,15 @@ object RemoteConfig {
     private var settingsCache: Pair<String, JSONObject> = "" to JSONObject()
     private var placementsCache: Pair<String, AdPlacementsDocument> = "" to AdPlacementsDocument("")
     private var idsCache: Pair<String, AdIdsDocument> = "" to AdIdsDocument("")
+    private var templatesCache: Pair<String, AdTemplatesDocument> = "" to AdTemplatesDocument("")
+
+    /** Parameter `ad_templates`: mẫu native tuỳ biến / style đè lên mẫu có sẵn - xem [AdTemplatesDocument]. */
+    @Synchronized
+    fun templates(): AdTemplatesDocument {
+        val raw = rawSection(PARAM_TEMPLATES)
+        if (raw != templatesCache.first) templatesCache = raw to AdTemplatesDocument(raw)
+        return templatesCache.second
+    }
 
     @Synchronized
     private fun settings(): JSONObject {
@@ -214,6 +232,7 @@ object RemoteConfig {
             DebugConfigEntry(PARAM_SETTINGS, rawSection(PARAM_SETTINGS), "JSON cả parameter ad_settings"),
             DebugConfigEntry(PARAM_PLACEMENTS, rawSection(PARAM_PLACEMENTS), "JSON cả parameter ad_placements {\"full\":{…},\"basic\":{…}}"),
             DebugConfigEntry(PARAM_IDS, rawSection(PARAM_IDS), "JSON cả parameter ad_ids {\"aoa_splash\":[\"id\",…]}"),
+            DebugConfigEntry(PARAM_TEMPLATES, rawSection(PARAM_TEMPLATES), "JSON ad_templates {\"cta_top_purple\":{\"base\":\"Big5\",\"cta_bg\":\"#7B2FA6\"}}"),
         ) + SETTING_HINTS.map { (name, hint) -> DebugConfigEntry(name, setting(name).orEmpty(), hint) } +
             AdKey.entries.map {
                 DebugConfigEntry(it.key, debugOverride(it.key) ?: doc.placementJson(AdSet.FULL, it), "full · $PLACEMENT_HINT")
@@ -225,7 +244,7 @@ object RemoteConfig {
     }
 
     private val SETTING_HINTS: List<Pair<String, String>> = listOf(
-        "ads_profile" to "off · full_for_all · full_for_paid_users · full_except_test_devices",
+        "ads_profile" to "0 tắt · 1 mọi user full · 2 user marketing full, còn lại basic · 3 máy test ad basic, còn lại full",
         "splash_fallback" to "Splash không kịp hiện QC thì inter này bù, vd inter_language (trống = tắt)",
         "language_next_style" to "icon / text",
         "language_next_delay_ms" to "[ms] chờ trước khi hiện nút Language",
@@ -270,8 +289,9 @@ object RemoteConfig {
     private const val PARAM_SETTINGS = "ad_settings"
     private const val PARAM_PLACEMENTS = "ad_placements"
     private const val PARAM_IDS = "ad_ids"
+    private const val PARAM_TEMPLATES = "ad_templates"
     private const val PARAM_BUNDLE = "ad_config"
-    private val ALL_PARAMS = listOf(PARAM_SETTINGS, PARAM_PLACEMENTS, PARAM_IDS, PARAM_BUNDLE)
+    private val ALL_PARAMS = listOf(PARAM_SETTINGS, PARAM_PLACEMENTS, PARAM_IDS, PARAM_TEMPLATES, PARAM_BUNDLE)
 
     /** Tiền tố cache trong [AppPreferences] - khác `cache_ad_config` cũ để không đọc nhầm format cũ đã lưu. */
     private const val CACHE_PREFIX = "cache_v3_"

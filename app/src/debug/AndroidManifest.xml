@@ -6,6 +6,12 @@
             android:exported="false"
             android:theme="@style/Theme.AndroidSkillHub" />
 
+        <!-- [DEBUG] Xem trước các mẫu native + style ad_templates. Xem NativePreviewActivity.kt. -->
+        <activity
+            android:name=".debug.NativePreviewActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AndroidSkillHub" />
+
         <!-- [DEBUG] Chạm điều khiển qua adb cho thiết bị chặn `adb shell input`. Xem AdbDriver.kt. -->
         <provider
             android:name=".debug.AdbDriverInitProvider"

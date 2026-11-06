@@ -129,7 +129,7 @@ class AdPlacementsDocument(raw: String) {
         (if (set == AdSet.FULL) full else basic).optJSONObject(key.key)?.toString().orEmpty()
 }
 
-/** Parameter `ad_ids`: `{ ad_unit: [id_high, id_medium, id_low] }`. Tên ad unit không phân biệt hoa thường. */
+/** Parameter `ad_ids`: `{ ad_unit: [id_1, id_2, id_3] }`. Tên ad unit không phân biệt hoa thường. */
 class AdIdsDocument(raw: String) {
     private val ids: Map<String, List<String>> = parseObject(raw).let { json ->
         json.keys().asSequence().associate { name ->

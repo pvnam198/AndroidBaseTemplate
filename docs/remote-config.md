@@ -116,11 +116,9 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 
 Native xen trong feed màn chính không có dòng riêng trong sheet: luôn bật (kịch bản A), dùng ID của `NATIVE_HOME`.
 
-### Các vị trí đã khai báo, chưa có màn hình
+### Các vị trí không thuộc base app
 
-`inter_welcome_back`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
-
-**Không thuộc base app:** các vị trí theo tính năng riêng của từng app (`native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`) và `native_get_start`, `inter_start` (base không có màn Get start) đã bỏ khỏi code. Khối của chúng trong `ad_config` (nếu có) bị bỏ qua; app nào có màn đó thì tự thêm key vào `AdKey` / `AdUnit`.
+Mọi vị trí còn trong `AdKey` đều đã có chỗ dùng trong base. Các vị trí theo tính năng riêng của từng app (`native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`) và `native_get_start`, `inter_start` (base không có màn Get start), `inter_back` (sheet không ghi bấm Back ở đâu), `inter_welcome_back` (chưa rõ hiện lúc nào ở màn Welcome back) đã bỏ khỏi code. Khối của chúng trong `ad_config` (nếu có) bị bỏ qua; app nào có màn đó thì tự thêm key vào `AdKey` / `AdUnit`.
 
 ---
 
@@ -175,3 +173,4 @@ Code quảng cáo **luôn** đọc qua `AdPolicy.config(key)`, không đọc th�
 - **26/10/2026** — bộ key theo spec PDF cũ (key gộp `enable`, ID theo loại quảng cáo).
 - **04–05/11/2026** — theo sheet "Template Info": `ads_enable` + kịch bản A/B, mọi thời gian sang ms, sửa 5 key theo ghi chú sheet, Intro 4 trang với `intro1…4_setup`, `native_intro_full`, `splash_fallback`, bỏ `release_log` / `taller_banner_enabled`.
 - **05/11/2026** — chuyển hẳn sang cấu hình **theo từng vị trí** như sheet, gói trong **một key `ad_config`** đúng mẫu JSON của team (ID theo ad unit qua `name1`/`id1`–`id3`), xoá bộ key cũ; thêm `native_splash`, `native_intro` theo trang, `step_count` / `wait_time` / `native_template` / `refresh_rate` / `collap_config` riêng từng vị trí.
+- **06/11/2026** — tên template đúng như tài liệu (Big1…, Tiny1…; bỏ Small5–7); `native_language` chọn layout theo `enable`, `NATIVE_LANGUAGE_2` cho màn Language mở từ Cài đặt; thêm `native_language_small` (dải Tiny1 dưới tiêu đề màn Language); bỏ khỏi base các vị trí không có màn: theme / icon / widget / collection / result / wallpaper, `native_get_start`, `inter_start`, `inter_back`, `inter_welcome_back`.

@@ -18,12 +18,10 @@ enum class AdKey(val key: String, val defaultEnable: String) {
 
     /** Nằm trong `settings` của `ad_config` (`on_resume`, `on_resume_id`), không phải một object riêng. */
     ON_RESUME("on_resume", "1"),
-    INTER_WELCOME_BACK("inter_welcome_back", "0"),
     NATIVE_WELCOME_BACK("native_welcome_back", "1"),
     BANNER_HOME("banner_home", "2"),
     INTER_HOME("inter_home", "0"),
     BANNER_SETTING("banner_setting", "2"),
-    INTER_BACK("inter_back", "0"),
 }
 
 /**

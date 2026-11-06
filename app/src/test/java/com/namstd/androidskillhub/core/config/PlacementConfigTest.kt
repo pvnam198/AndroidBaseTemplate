@@ -72,7 +72,7 @@ class PlacementConfigTest {
     @Test
     fun missingPlacementUsesDefaultEnable() {
         assertEquals("1", sample.placement(AdKey.INTER_INTRO).enable)
-        assertEquals("0", sample.placement(AdKey.INTER_BACK).enable)
+        assertEquals("1", sample.placement(AdKey.NATIVE_WELCOME_BACK).enable)
         assertEquals("2", AdConfigDocument("").placement(AdKey.ADS_SPLASH).enable)
         assertTrue(AdConfigDocument("{broken").placement(AdKey.NATIVE_LANGUAGE).enableCode == 1)
     }

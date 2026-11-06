@@ -205,7 +205,7 @@
 
   <section id="status">
     <h2>Trạng thái trong app</h2>
-    <p class="muted">Cập nhật 05/11/2026, đối chiếu với sheet "Template Info" bản mới nhất.</p>
+    <p class="muted">Cập nhật 06/11/2026, đối chiếu với sheet "Template Info" bản mới nhất.</p>
 
     <div class="card">
       <h4>Đã làm xong</h4>
@@ -253,8 +253,7 @@
       <h4>Chưa làm</h4>
       <ul>
         
-        <li><span class="pill no">Chưa có</span> <b>Màn hình chưa có:</b> Inter khi Back, inter Welcome back.</li>
-        <li><span class="pill drop">Bỏ</span> <b>Màn theo tính năng riêng của từng app</b> (06/11): Theme, Icon, Widget, Collection, Result, Wallpaper không thuộc base app; <code>native_get_start</code>, <code>inter_start</code> cũng bỏ vì base không có màn Get start nên đã bỏ khỏi code và bảng này; app nào có màn đó thì tự thêm.</li>
+        <li><span class="pill drop">Bỏ</span> <b>Màn theo tính năng riêng của từng app</b> (06/11): Theme, Icon, Widget, Collection, Result, Wallpaper không thuộc base app; <code>native_get_start</code>, <code>inter_start</code> cũng bỏ vì base không có màn Get start; <code>inter_back</code> bỏ vì sheet không ghi bấm Back ở đâu; <code>inter_welcome_back</code> bỏ vì chưa rõ hiện lúc nào ở màn Welcome back nên đã bỏ khỏi code và bảng này; app nào có màn đó thì tự thêm.</li>
         <li><span class="pill no">Chưa có</span> <b><code>refresh_rate</code> cho native:</b> app mới tự tải lại banner.</li>
         <li><span class="pill no">Chưa có</span> <b>Key mới trong sheet "Bản sao":</b> <code>time_out_init</code>, <code>mt_native_cta_only</code>, các vị trí <code>_first</code> cho lần mở app đầu tiên.</li>
         <li><span class="pill no">Chưa có</span> <b>Kiểm tra lại máy thử nghiệm:</b> máy đã bị đánh dấu nhận quảng cáo mẫu sẽ ở kịch bản B mãi, chưa có kiểm tra lại định kỳ.</li>
@@ -309,7 +308,7 @@ const PLACEMENTS = [
   ["Language", ["INTER_LANGUAGE", "NATIVE_INTER_LANGUAGE"], "inter_language", "3", "", "", "", "3",
     "", "Quảng cáo khi bấm xác nhận ngôn ngữ. <code>3</code> = Inter rồi Native toàn màn hình, đếm ngược 3s.", OK],
   ["Intro", ["NATIVE_INTRO_1", "NATIVE_INTRO_2", "NATIVE_INTRO_3", "NATIVE_INTRO_4"], "native_intro", "24", "", "", "", "", "Big4",
-    "Native trong các trang Onboarding (mỗi trang một ad unit). <code>24</code>: " + ASK + " – nhiều khả năng là bật ở trang 2 và 4.", OK],
+    "Native trong các trang Onboarding (mỗi trang một ad unit). <code>24</code> = native ở trang 2 và 4 (mỗi chữ số là một trang).", OK],
   ["Intro", ["NATIVE_INTRO_FULL"], "native_intro_full", "2", "", "", "", "", "Full1",
     "Trang native toàn màn hình chen giữa các màn Intro. Mỗi chữ số là một màn Intro có trang native full ngay sau: <code>2</code> = sau màn 2; với 4 màn Intro, giá trị đầy đủ là <code>123</code> = sau màn 1, 2 và 3. Trống hoặc <code>0</code> = không có. Trang native full không có chấm tròn, chấm chỉ đếm các màn Intro.", OK],
   ["Intro", ["INTER_INTRO", "NATIVE_INTER_INTRO"], "inter_intro", "1", "", "", "", "5", "",
@@ -319,9 +318,7 @@ const PLACEMENTS = [
   ["Home", ["INTER_HOME", "NATIVE_INTER_HOME"], "inter_home", "3", "2", "", "", "", "",
     "Quảng cáo khi thao tác ở Home. <code>3</code> = Inter rồi Native; <code>step_count 2</code> = cứ 2 lần mới hiện 1 lần.", OK],
   ["Setting", ["BANNER_SETTING"], "banner_setting", "1", "", "", "", "", "", "Banner thường ở màn Setting.", OK],
-  ["Back", ["INTER_BACK", "NATIVE_INTER_BACK"], "inter_back", "3", "", "", "", "", "", "Quảng cáo khi bấm Back. <code>3</code> = Inter rồi Native.", NO],
   ["Quay lại app", ["ON_RESUME"], "on_resume", "2", "", "", "", "", "", "Khi app quay lại từ nền. <code>2</code> = màn Welcome back.", OK],
-  ["Quay lại app", ["INTER_WELCOME_BACK", "NATIVE_INTER_WELCOME_BACK"], "inter_welcome_back", "3", "", "", "", "", "", "Quảng cáo ở màn Welcome back. <code>3</code> = Inter rồi Native.", NO],
   ["Quay lại app", ["NATIVE_WELCOME_BACK"], "native_welcome_back", "1", "", "", "", "", "Big5", "Native trên màn Welcome back.", OK],
 ];
 

@@ -45,7 +45,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
     /**
      * Load banner của [placement] vào [container] và tự huỷ nó trong [onDestroy]. Loại banner và timer
-     * reload theo `enable` / `refresh_rate` của vị trí đó; [autoReload] = false cho màn tự reload bằng tay
+     * reload theo `format` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay
      * (resume, đổi tab...) qua [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
     protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {
@@ -109,7 +109,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     internal fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
         if (SplashFallback.take(placement)) {
             // Splash bị lỡ quảng cáo: placement này bù lại bằng một plain interstitial,
-            // bất kể plan, step_count hay gap của chính nó nói gì.
+            // bất kể plan, step hay gap của chính nó nói gì.
             if (!InterstitialAds.show(this, placement, ignoreGap = true, onComplete = onComplete)) onComplete()
             return
         }
@@ -138,14 +138,14 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     /**
-     * Tần suất interstitial theo lần yêu cầu (`step_count` của vị trí): tăng bộ đếm riêng của vị trí (lưu qua các
-     * lần mở app) và chỉ cho hiện ở lần chia hết cho step_count; các lần khác bỏ qua (gọi onComplete luôn).
-     * step_count = 1 = mọi lần.
+     * Tần suất interstitial theo lần yêu cầu (`step` của vị trí): tăng bộ đếm riêng của vị trí (lưu qua các
+     * lần mở app) và chỉ cho hiện ở lần chia hết cho step; các lần khác bỏ qua (gọi onComplete luôn).
+     * step = 1 = mọi lần.
      */
     private fun passesInterstitialStepGate(placement: InterstitialPlacement): Boolean {
         val count = prefs.interstitialStepCounter(placement.key) + 1
         prefs.setInterstitialStepCounter(placement.key, count)
-        return count % AdPolicy.config(placement.adKey).stepCount == 0
+        return count % AdPolicy.config(placement.adKey).step == 0
     }
 
     private fun runNativeAdBreak(placement: InterstitialPlacement, onComplete: () -> Unit) {

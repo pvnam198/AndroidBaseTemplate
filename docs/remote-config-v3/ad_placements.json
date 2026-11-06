@@ -1,0 +1,65 @@
+{
+  "full": {
+    "ads_splash": {
+      "format": "inter_then_native_full",
+      "wait_ms": 5000
+    },
+    "native_splash": {
+      "enable": true,
+      "template": "Big5"
+    },
+    "native_language_small": {
+      "enable": true
+    },
+    "inter_language": {
+      "format": "inter_then_native_full",
+      "wait_ms": 3000
+    },
+    "native_onboarding": {
+      "template": "Big4",
+      "pages": [
+        2,
+        4
+      ]
+    },
+    "native_full_onboarding": {
+      "enable": true,
+      "pages": [
+        2
+      ]
+    },
+    "inter_onboarding": {
+      "wait_ms": 5000
+    },
+    "on_resume": {
+      "format": "welcome_back"
+    },
+    "native_welcome_back": {
+      "template": "Big5"
+    },
+    "banner_home": {
+      "format": "native_collapsible",
+      "open_ad_on_clicks": [
+        2,
+        4
+      ]
+    }
+  },
+  "basic": {
+    "ads_splash": {
+      "format": "aoa"
+    },
+    "on_resume": {
+      "format": "aoa"
+    },
+    "banner_home": {
+      "format": "banner"
+    },
+    "inter_home": {
+      "format": "inter"
+    },
+    "banner_setting": {
+      "format": "banner"
+    }
+  }
+}

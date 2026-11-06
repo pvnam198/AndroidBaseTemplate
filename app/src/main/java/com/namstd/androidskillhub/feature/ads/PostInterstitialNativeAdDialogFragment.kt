@@ -42,14 +42,14 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
 
     private val viewModel: PostInterstitialNativeAdViewModel by viewModels()
 
-    /** Vị trí inter đã mở break này - quyết định ad unit native (`NATIVE_INTER_*`) và `wait_time`. */
+    /** Vị trí inter đã mở break này - quyết định ad unit native (`native_inter_*`) và `wait_ms`. */
     private val placement: InterstitialPlacement by lazy {
         InterstitialPlacement.valueOf(requireArguments().getString(ARG_PLACEMENT) ?: InterstitialPlacement.SPLASH.name)
     }
 
     /** Sheet có một native sau mỗi inter (`NATIVE_INTER_*`), nên break chỉ có một stage. */
     private val totalStages: Int = 1
-    private val durationMs: Long by lazy { AdPolicy.config(placement.adKey).waitTimeMs }
+    private val durationMs: Long by lazy { AdPolicy.config(placement.adKey).waitMs }
 
     private var currentAd: NativeAd? = null
     private var countdownTimer: CountDownTimer? = null

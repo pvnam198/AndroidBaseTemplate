@@ -1,55 +1,37 @@
 package com.namstd.androidskillhub.core.ads
 
-import com.namstd.androidskillhub.core.config.AdKey
-import com.namstd.androidskillhub.core.config.InterDelayConfig
+import com.namstd.androidskillhub.core.config.AdsProfileRule
 
 /**
- * Bộ quảng cáo áp cho một user, chọn bởi key `ads_enable` (xem [resolveAdProfile]).
- * Tài liệu sản phẩm (`docs/ads-config.html`) gọi [REMOTE] là "kịch bản A" và [BASIC] là "kịch bản B".
+ * Bộ quảng cáo áp cho một user, chọn bởi `ads_profile` (xem [resolveAdProfile]).
  */
 enum class AdProfile {
-    /** Không quảng cáo nào (`ads_enable = 0`, hoặc user Premium). */
+    /** Không quảng cáo nào (`ads_profile = off`, hoặc user Premium). */
     OFF,
 
-    /** Quảng cáo đầy đủ, điều khiển bằng Remote Config (`enable`, `inter_delay_time`, `step_count`...). */
-    REMOTE,
+    /** Bộ đầy đủ - `ad_placements.full`. */
+    FULL,
 
-    /** Bộ gọn cố định trong app - xem [BasicAdProfile]. Remote Config không chỉnh được. */
+    /** Bộ cơ bản - `ad_placements.basic` (chỉ placement có trong đó mới chạy). */
     BASIC,
 }
 
 /**
- * `ads_enable`: 0 tắt · 1 REMOTE · 2 user từ marketing → REMOTE, còn lại (kể cả chưa biết) → BASIC ·
- * 3 máy nhận test ad → BASIC, còn lại (kể cả chưa biết) → REMOTE · giá trị khác → REMOTE.
- * Premium luôn [AdProfile.OFF]. [isMarketingUser] / [isTestAdDevice] = null khi chưa có kết quả - xem [AdAudience].
+ * `ads_profile` → bộ cho user này: off → OFF · full_for_all → FULL · full_for_paid_users: user từ marketing → FULL,
+ * còn lại (kể cả chưa biết nguồn) → BASIC · full_except_test_devices: máy nhận test ad → BASIC, còn lại (kể cả chưa
+ * biết) → FULL. Premium luôn [AdProfile.OFF]. [isMarketingUser] / [isTestAdDevice] = null khi chưa có kết quả - xem [AdAudience].
  */
 fun resolveAdProfile(
-    adsEnable: Int,
+    rule: AdsProfileRule,
     isPremium: Boolean,
     isMarketingUser: Boolean?,
     isTestAdDevice: Boolean?,
 ): AdProfile {
     if (isPremium) return AdProfile.OFF
-    return when (adsEnable) {
-        0 -> AdProfile.OFF
-        1 -> AdProfile.REMOTE
-        2 -> if (isMarketingUser == true) AdProfile.REMOTE else AdProfile.BASIC
-        3 -> if (isTestAdDevice == true) AdProfile.BASIC else AdProfile.REMOTE
-        else -> AdProfile.REMOTE
+    return when (rule) {
+        AdsProfileRule.OFF -> AdProfile.OFF
+        AdsProfileRule.FULL_FOR_ALL -> AdProfile.FULL
+        AdsProfileRule.FULL_FOR_PAID_USERS -> if (isMarketingUser == true) AdProfile.FULL else AdProfile.BASIC
+        AdsProfileRule.FULL_EXCEPT_TEST_DEVICES -> if (isTestAdDevice == true) AdProfile.BASIC else AdProfile.FULL
     }
-}
-
-/**
- * Cấu hình cố định của [AdProfile.BASIC]: AOA ở Splash, banner thường ở chân các màn in-app, interstitial
- * in-app (gap 90s), App Open khi quay lại app. Không native, không inter ở Language/Onboarding, không banner ở
- * Splash/Language/Onboarding. Sửa bộ gọn thì sửa ở đây.
- */
-object BasicAdProfile {
-    /** `enable` cố định cho từng vị trí: chỉ AOA Splash, banner Home/Cài đặt, inter Home và AOA khi quay lại app. */
-    fun enable(key: AdKey): String = when (key) {
-        AdKey.ADS_SPLASH, AdKey.BANNER_HOME, AdKey.BANNER_SETTING, AdKey.INTER_HOME, AdKey.ON_RESUME -> "1"
-        else -> "0"
-    }
-
-    val interDelay = InterDelayConfig(gapMs = 90_000L, ignore = emptySet())
 }

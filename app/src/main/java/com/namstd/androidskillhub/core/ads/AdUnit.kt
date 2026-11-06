@@ -19,8 +19,8 @@ const val TEST_BANNER_COLLAPSIBLE = "ca-app-pub-3940256099942544/2014213617"
 const val TEST_REWARDED_INTERSTITIAL = "ca-app-pub-3940256099942544/5354046379"
 
 /**
- * Các ad unit trong sheet "Ad Script" - tên đúng như cột `name1`. Mỗi unit thuộc một vị trí ([key]) và có ID riêng,
- * đặt trong `ids` của vị trí đó trên Remote Config. Chưa đặt thì dùng test ID của [format].
+ * Các ad unit - tên (viết thường) đúng như cột `ad_unit` của sheet và key trong parameter `ad_ids`. Mỗi unit thuộc
+ * một placement ([key]). Chưa có ID thì dùng test ID của [format].
  */
 enum class AdUnit(val key: AdKey, val format: AdFormat) {
     AOA_SPLASH(AdKey.ADS_SPLASH, AdFormat.APP_OPEN),
@@ -44,14 +44,18 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     BANNER_HOME(AdKey.BANNER_HOME, AdFormat.BANNER),
     NATIVE_HOME(AdKey.BANNER_HOME, AdFormat.NATIVE),
     NATIVE_COLLAP_HOME(AdKey.BANNER_HOME, AdFormat.NATIVE),
+    NATIVE_HOME_FEED(AdKey.NATIVE_HOME_FEED, AdFormat.NATIVE),
     INTER_HOME(AdKey.INTER_HOME, AdFormat.INTERSTITIAL),
     NATIVE_INTER_HOME(AdKey.INTER_HOME, AdFormat.NATIVE),
     BANNER_SETTING(AdKey.BANNER_SETTING, AdFormat.BANNER);
 
+    /** Tên trong `ad_ids` / cột `ad_unit` của sheet. */
+    val unitName: String get() = name.lowercase()
+
     /**
-     * ID cho waterfall (id1 → id3) của unit này; chưa đặt thì là [testId] (mặc định test ID của [format]).
-     * Luôn đọc từ cấu hình REMOTE, kể cả ở kịch bản BASIC ("id lấy ở kịch bản A" theo sheet).
+     * ID cho waterfall (id_high → id_low) của unit này, từ `ad_ids`; chưa đặt thì là [testId] (mặc định test ID của
+     * [format]). Bộ full và bộ basic dùng chung ID.
      */
     fun ids(testId: String = format.testId): List<String> =
-        RemoteConfig.placement(key).ids[name].orEmpty().ifEmpty { listOf(testId) }
+        RemoteConfig.unitIds(unitName).ifEmpty { listOf(testId) }
 }

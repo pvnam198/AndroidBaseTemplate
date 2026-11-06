@@ -43,7 +43,7 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
         selectedLanguage = AppLanguage.fromCode(prefs.selectedLanguage) ?: AppLanguage.default
         if (fromSettings) return
         OnboardingPageFragment.PLACEMENTS.filter(AdPolicy::nativeEnabled).forEach(NativeAds::preload)
-        if (AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).enableDigits.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
+        if (OnboardingActivity.fullNativePages().isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
     }
 
     override fun initViews() {

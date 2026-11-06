@@ -6,10 +6,10 @@ import com.adjust.sdk.AdjustAttribution
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 
 /**
- * Hai phép kiểm tra user mà `ads_enable` cần (xem [resolveAdProfile]). Kết quả lưu trong [AppPreferences]
+ * Hai phép kiểm tra user mà `ads_profile` cần (xem [resolveAdProfile]). Kết quả lưu trong [AppPreferences]
  * nên lần mở app sau dùng luôn, không phải chờ kiểm tra lại:
- * - [isMarketingUser] (`ads_enable = 2`): user đến từ marketing, theo attribution của Adjust.
- * - [isTestAdDevice] (`ads_enable = 3`): máy nhận quảng cáo mẫu của Google - native có headline "Test Ad".
+ * - [isMarketingUser] (`full_for_paid_users`): user đến từ marketing, theo attribution của Adjust.
+ * - [isTestAdDevice] (`full_except_test_devices`): máy nhận quảng cáo mẫu của Google - native có headline "Test Ad".
  *   Chỉ kiểm tra được khi có native load, nên máy đã bị đánh dấu thì giữ nguyên (BASIC không load native).
  */
 object AdAudience {

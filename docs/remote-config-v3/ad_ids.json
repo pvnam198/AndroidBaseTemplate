@@ -1,0 +1,81 @@
+{
+  "aoa_splash": [
+    "ca-app-pub-0000000000000000/0000000011",
+    "ca-app-pub-0000000000000000/0000000012",
+    "ca-app-pub-0000000000000000/0000000013"
+  ],
+  "inter_splash": [
+    "ca-app-pub-0000000000000000/0000000021",
+    "ca-app-pub-0000000000000000/0000000022",
+    "ca-app-pub-0000000000000000/0000000023"
+  ],
+  "native_inter_splash": [
+    "ca-app-pub-0000000000000000/0000000031"
+  ],
+  "native_splash": [
+    "ca-app-pub-0000000000000000/0000000041"
+  ],
+  "native_language": [
+    "ca-app-pub-0000000000000000/0000000051"
+  ],
+  "native_language_2": [
+    "ca-app-pub-0000000000000000/0000000061"
+  ],
+  "native_language_small": [
+    "ca-app-pub-0000000000000000/0000000071"
+  ],
+  "inter_language": [
+    "ca-app-pub-0000000000000000/0000000081"
+  ],
+  "native_inter_language": [
+    "ca-app-pub-0000000000000000/0000000091"
+  ],
+  "native_onboarding_1": [
+    "ca-app-pub-0000000000000000/0000000101"
+  ],
+  "native_onboarding_2": [
+    "ca-app-pub-0000000000000000/0000000111"
+  ],
+  "native_onboarding_3": [
+    "ca-app-pub-0000000000000000/0000000121"
+  ],
+  "native_onboarding_4": [
+    "ca-app-pub-0000000000000000/0000000131"
+  ],
+  "native_full_onboarding": [
+    "ca-app-pub-0000000000000000/0000000141"
+  ],
+  "inter_onboarding": [
+    "ca-app-pub-0000000000000000/0000000151"
+  ],
+  "native_inter_onboarding": [
+    "ca-app-pub-0000000000000000/0000000161"
+  ],
+  "on_resume": [
+    "ca-app-pub-0000000000000000/0000000171"
+  ],
+  "native_welcome_back": [
+    "ca-app-pub-0000000000000000/0000000181"
+  ],
+  "banner_home": [
+    "ca-app-pub-0000000000000000/0000000191"
+  ],
+  "native_home": [
+    "ca-app-pub-0000000000000000/0000000201"
+  ],
+  "native_collap_home": [
+    "ca-app-pub-0000000000000000/0000000211"
+  ],
+  "native_home_feed": [
+    "ca-app-pub-0000000000000000/0000000221"
+  ],
+  "inter_home": [
+    "ca-app-pub-0000000000000000/0000000231"
+  ],
+  "native_inter_home": [
+    "ca-app-pub-0000000000000000/0000000241"
+  ],
+  "banner_setting": [
+    "ca-app-pub-0000000000000000/0000000251"
+  ]
+}

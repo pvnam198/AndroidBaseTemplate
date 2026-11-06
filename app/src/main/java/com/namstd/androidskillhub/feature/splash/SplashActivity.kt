@@ -38,6 +38,13 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
         ActivitySplashBinding.inflate(inflater)
 
     override fun initViews() {
+        // Bấm icon khi app đang chạy nền: hệ thống có thể tạo lại Splash ở trên màn đang mở (vd. MIUI). Khi đó
+        // chỉ cần đưa app lên lại - đóng Splash này, không chạy lại luồng Splash (quảng cáo, mở thêm màn chính
+        // đè lên Welcome back).
+        if (!isTaskRoot && intent?.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+            finish()
+            return
+        }
         if (prefs.isPremium) {
             lifecycleScope.launch {
                 delay(MIN_DELAY_MS)

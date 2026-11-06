@@ -1,31 +1,33 @@
 package com.namstd.androidskillhub.core.ads
 
+import com.namstd.androidskillhub.core.config.PlacementFormat
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FullScreenAdPlanTest {
     @Test
-    fun splashMapsAdsSplashValue() {
-        assertEquals(FullScreenAdPlan.APP_OPEN, resolveFullScreenPlan(InterstitialPlacement.SPLASH, 1))
-        assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(InterstitialPlacement.SPLASH, 2))
-        assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(InterstitialPlacement.SPLASH, 3))
-        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.SPLASH, 0))
+    fun splashFormats() {
+        assertEquals(FullScreenAdPlan.APP_OPEN, resolveFullScreenPlan(InterstitialPlacement.SPLASH, PlacementFormat.AOA))
+        assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(InterstitialPlacement.SPLASH, PlacementFormat.INTER))
+        assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(InterstitialPlacement.SPLASH, PlacementFormat.INTER_THEN_NATIVE_FULL))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.SPLASH, null))
     }
 
     @Test
-    fun interPlacementsMapTheirOwnEnable() {
+    fun interPlacementFormats() {
         for (placement in listOf(InterstitialPlacement.LANGUAGE, InterstitialPlacement.ONBOARDING, InterstitialPlacement.HOME)) {
-            assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(placement, 1))
-            assertEquals(FullScreenAdPlan.NATIVE_ONLY, resolveFullScreenPlan(placement, 2))
-            assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(placement, 3))
-            assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(placement, 0))
+            assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(placement, PlacementFormat.INTER))
+            assertEquals(FullScreenAdPlan.NATIVE_ONLY, resolveFullScreenPlan(placement, PlacementFormat.NATIVE_FULL))
+            assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(placement, PlacementFormat.INTER_THEN_NATIVE_FULL))
+            assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(placement, null))
         }
     }
 
     @Test
-    fun unknownValuesFallBackToOff() {
-        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.SPLASH, 9))
-        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, 9))
+    fun formatsThatDoNotFitThePlacementAreOff() {
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.SPLASH, PlacementFormat.NATIVE_FULL))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, PlacementFormat.AOA))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.HOME, PlacementFormat.BANNER))
     }
 
     @Test

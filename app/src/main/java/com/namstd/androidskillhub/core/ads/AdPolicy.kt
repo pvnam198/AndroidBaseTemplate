@@ -2,15 +2,16 @@ package com.namstd.androidskillhub.core.ads
 
 import android.content.Context
 import com.namstd.androidskillhub.core.config.AdKey
+import com.namstd.androidskillhub.core.config.AdSet
 import com.namstd.androidskillhub.core.config.InterDelayConfig
 import com.namstd.androidskillhub.core.config.PlacementConfig
+import com.namstd.androidskillhub.core.config.PlacementFormat
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 
 /**
- * Nguồn duy nhất cho "user này được hiện quảng cáo gì". Code quảng cáo đọc ở đây, không đọc thẳng
- * [RemoteConfig] cho các giá trị dưới đây: [RemoteConfig] chỉ trả giá trị đúng như trên Firebase,
- * còn [AdPolicy] chọn giữa giá trị đó và [BasicAdProfile] theo [profile].
+ * Nguồn duy nhất cho "user này được hiện quảng cáo gì". Code quảng cáo đọc ở đây, không đọc thẳng [RemoteConfig]:
+ * [RemoteConfig] trả cả hai bộ đúng như trên Firebase, còn [AdPolicy] chọn bộ ([AdProfile]) cho user này.
  */
 object AdPolicy {
     private lateinit var prefs: AppPreferences
@@ -19,38 +20,38 @@ object AdPolicy {
         prefs = AppPreferences.getInstance(context)
     }
 
-    /** Tính lại mỗi lần đọc, nên đổi `ads_enable` hay có kết quả [AdAudience] mới là áp ngay. */
+    /** Tính lại mỗi lần đọc, nên đổi `ads_profile` hay có kết quả [AdAudience] mới là áp ngay. */
     val profile: AdProfile
         get() = resolveAdProfile(
-            adsEnable = RemoteConfig.adsEnable,
+            rule = RemoteConfig.adsProfileRule,
             isPremium = prefs.isPremium,
             isMarketingUser = AdAudience.isMarketingUser,
             isTestAdDevice = AdAudience.isTestAdDevice,
         )
 
-    /**
-     * Cấu hình vị trí [key] cho user này: OFF = tắt hết, REMOTE = đúng như Remote Config, BASIC = `enable` cố định
-     * của [BasicAdProfile] (các cột khác, kể cả ID, vẫn lấy từ Remote Config).
-     */
+    /** Cấu hình placement [key] cho user này: OFF = tắt hết, FULL = `ad_placements.full`, BASIC = `ad_placements.basic`. */
     fun config(key: AdKey): PlacementConfig = when (profile) {
         AdProfile.OFF -> PlacementConfig.OFF
-        AdProfile.REMOTE -> RemoteConfig.placement(key)
-        AdProfile.BASIC -> RemoteConfig.placement(key).copy(enable = BasicAdProfile.enable(key), stepCount = 1)
+        AdProfile.FULL -> RemoteConfig.placement(AdSet.FULL, key)
+        AdProfile.BASIC -> RemoteConfig.placement(AdSet.BASIC, key)
     }
 
-    /** Gap giữa các interstitial - xem [RemoteConfig.interDelay]. */
+    /** Loại quảng cáo của [key] cho user này; null khi placement tắt. */
+    fun format(key: AdKey): PlacementFormat? = config(key).takeIf { it.enable }?.format
+
+    /** Khoảng cách giữa các interstitial của bộ đang dùng. */
     val interDelay: InterDelayConfig
-        get() = if (profile == AdProfile.BASIC) BasicAdProfile.interDelay else RemoteConfig.interDelay
+        get() = if (profile == AdProfile.BASIC) RemoteConfig.basicInterDelay else RemoteConfig.fullInterDelay
 
-    /** Vị trí inter bù khi Splash không kịp hiện quảng cáo - chỉ ở [AdProfile.REMOTE]. Xem [SplashFallback]. */
+    /** Placement inter bù khi Splash không kịp hiện quảng cáo - chỉ ở bộ full. Xem [SplashFallback]. */
     val splashFallback: InterstitialPlacement?
-        get() = if (profile == AdProfile.REMOTE) RemoteConfig.splashFallback else null
+        get() = if (profile == AdProfile.FULL) RemoteConfig.splashFallback else null
 
-    /** Native chỉ có ở [AdProfile.REMOTE]. */
+    /** Có quảng cáo native không (tắt khi tắt quảng cáo / Premium). Bộ nào có native thì do cấu hình của bộ đó quyết. */
     val nativeAllowed: Boolean
-        get() = Ads.adsEnabled && profile == AdProfile.REMOTE
+        get() = Ads.adsEnabled && profile != AdProfile.OFF
 
-    /** Native ở [placement] có được bật không: theo [nativeAllowed] và `enable` của vị trí đó. */
+    /** Native ở [placement] có được bật không: theo [nativeAllowed] và cấu hình placement của nó. */
     fun nativeEnabled(placement: NativePlacement): Boolean =
         nativeAllowed && placement.isEnabled(config(placement.unit.key))
 }

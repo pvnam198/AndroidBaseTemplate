@@ -23,8 +23,8 @@ import kotlinx.coroutines.launch
 
 class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     /**
-     * Nội dung của từng vị trí trong pager: index trang nội dung (tính từ 0, đọc `onboarding{index + 1}_setup`), hoặc
-     * [AD_PAGE] cho trang native full-screen mà `native_full_onboarding` chèn sau một trang nội dung.
+     * Nội dung của từng vị trí trong pager: index trang nội dung (tính từ 0), hoặc [AD_PAGE] cho trang native
+     * full-screen mà `native_full_onboarding` chèn sau một trang nội dung.
      */
     private lateinit var pages: List<Int>
     private var revealJob: Job? = null
@@ -34,7 +34,7 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 
     override fun initViews() {
         InterstitialAds.preload(InterstitialPlacement.ONBOARDING)
-        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).enableDigits)
+        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, fullNativePages())
         binding.onboardingPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = pages.size
             override fun createFragment(position: Int) =
@@ -74,17 +74,17 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         binding.nextText.setOnClickListener { advanceOnboarding() }
     }
 
-    /** Áp `onboarding{n}_setup` của trang đang hiện: kiểu nút Next, chấm tròn, vị trí cụm chấm, delay trước khi hiện Next. */
+    /** Áp cấu hình của trang đang hiện ([RemoteConfig.onboardingSetup]): kiểu nút Next, chấm tròn, vị trí cụm chấm, delay trước khi hiện Next. */
     private fun applySetup(setup: OnboardingSetup) {
-        // next: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
+        // nextStyle: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
         val useText = setup.nextStyle == 2
         val nextControl: View = if (useText) binding.nextText else binding.nextButton
         (if (useText) binding.nextButton else binding.nextText).isVisible = false
 
-        // dot: 1 = chấm tròn, 0 = ẩn.
+        // Chấm tròn báo trang.
         binding.pageDots.isVisible = setup.showDots
 
-        // ds: 0 = cụm chấm xuống dưới nút Next, 1 = phía trên.
+        // indicatorPosition: 0 = cụm chấm xuống dưới nút Next, 1 = phía trên.
         val root = binding.root
         val indicatorBelow = root.indexOfChild(binding.indicatorContainer) > root.indexOfChild(binding.nextContainer)
         if (indicatorBelow != (setup.indicatorPosition == 0)) {
@@ -127,6 +127,10 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 
     companion object {
         private const val AD_PAGE = -1
+
+        /** Các trang nội dung có trang native full chèn ngay sau (`native_full_onboarding`: bật + `pages`); rỗng = không chèn. */
+        fun fullNativePages(): Set<Int> =
+            AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).let { if (it.enable && AdPolicy.nativeAllowed) it.pages else emptySet() }
 
         /**
          * Các trang nội dung từ 0 đến trước [contentCount], có một [AD_PAGE] sau mỗi trang nội dung liệt kê trong

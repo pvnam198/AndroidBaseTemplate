@@ -16,6 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
+import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdEventCallback
+import com.google.android.libraries.ads.mobile.sdk.common.AdValue
+import androidx.core.view.isVisible
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 import com.namstd.androidskillhub.databinding.AdNativeCollapseBinding
 import com.namstd.androidskillhub.databinding.AdNativeCollapseSmallBinding
@@ -286,14 +289,25 @@ internal class NativeCollapseAd(
         binding.adAdvertiser.visibility = visibility(ad.advertiser)
         binding.adCallToAction.visibility = visibility(ad.callToAction)
         val gate = collapGate
-        if (gate.isEnabled) ad.enableCustomClickGesture()
         view.registerNativeAd(ad, binding.adMedia)
+        if (gate.isEnabled) {
+            // open_ad_on_clicks đếm mọi click trên quảng cáo: click trên thẻ do SDK tự mở quảng cáo, ta chỉ đếm qua
+            // onAdClicked (vẫn ghi doanh thu như callback gốc). Lần click do chính ta bấm hộ (dưới) không đếm lại.
+            ad.adEventCallback = object : NativeAdEventCallback {
+                override fun onAdPaid(adValue: AdValue) = AdjustRevenueLogger.log(adValue)
+                override fun onAdClicked() {
+                    if (selfClickPending) selfClickPending = false else clickCount++
+                }
+            }
+        }
         binding.adClose.setOnClickListener {
-            // collap_config: một số lần bấm X sẽ mở ad thay vì thu nhỏ - xem [CollapClickGate].
-            if (gate.opensAd(++closeTapCount)) {
-                onStatus("Native collapsible: X press $closeTapCount opens the ad")
-                ad.recordCustomClickGesture()
+            // Lần click nằm trong open_ad_on_clicks thì mở quảng cáo thay vì thu nhỏ - xem [CollapClickGate].
+            if (gate.opensAd(++clickCount)) {
+                onStatus("Native collapsible: click $clickCount opens the ad")
+                selfClickPending = true
+                (binding.adCallToAction.takeIf { it.isVisible } ?: binding.adHeadline).performClick()
             } else {
+                selfClickPending = false
                 showSmall()
             }
         }
@@ -322,7 +336,10 @@ internal class NativeCollapseAd(
     private fun visibility(value: Any?) = if (value == null) View.GONE else View.VISIBLE
 
     private companion object {
-        /** Số lần bấm X trên card collapsible lớn trong phiên app này - dùng chung cho mọi ad và màn (collap_config). */
-        var closeTapCount = 0
+        /** Số click trên native collapsible trong phiên app này (thẻ + nút X), dùng chung cho mọi ad và màn - open_ad_on_clicks. */
+        var clickCount = 0
+
+        /** Đang chờ onAdClicked của lần ta bấm hộ CTA, để không đếm nó hai lần. */
+        var selfClickPending = false
     }
 }

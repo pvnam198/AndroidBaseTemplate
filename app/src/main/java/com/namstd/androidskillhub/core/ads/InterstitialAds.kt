@@ -11,16 +11,16 @@ import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEv
 import com.namstd.androidskillhub.core.config.AdKey
 
 /**
- * Các điểm bung interstitial, mỗi điểm là một vị trí trong sheet: [adKey] là key cấu hình (`enable`, `step_count`,
- * `wait_time`…), [interUnit] là ad unit interstitial, [nativePlacement] là native toàn màn hình hiện sau inter.
- * [key] khớp token trong danh sách `ignore` của [AdPolicy.interDelay] và giá trị của `splash_fallback`.
+ * Các điểm bung interstitial, mỗi điểm là một placement: [adKey] là key cấu hình (`format`, `step`, `wait_ms`…),
+ * [interUnit] là ad unit interstitial, [nativePlacement] là native toàn màn hình hiện sau inter. [key] khớp tên trong
+ * `full_inter_gap_ignore` và giá trị của `splash_fallback`.
  */
 enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val nativePlacement: NativePlacement) {
     SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH),
     LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE),
     ONBOARDING(AdKey.INTER_ONBOARDING, AdUnit.INTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING),
 
-    /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của [AdProfile.BASIC]. */
+    /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của bộ basic mẫu. */
     HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME);
 
     val key: String get() = adKey.key

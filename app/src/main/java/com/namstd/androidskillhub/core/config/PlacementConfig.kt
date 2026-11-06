@@ -1,139 +1,153 @@
 package com.namstd.androidskillhub.core.config
 
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Các key vị trí quảng cáo trong sheet "Ad Script" (cột `key`) - mỗi key là một object trong JSON `ad_config`
- * (xem [AdConfigDocument]). [defaultEnable] là `enable` khi `ad_config` chưa có vị trí này.
+ * Loại quảng cáo của một placement (`format` trong `ad_placements`). [key] là đúng giá trị ghi trong JSON / sheet.
+ * Placement nào nhận format nào: xem `docs/remote-config-v3/README.md`.
  */
-enum class AdKey(val key: String, val defaultEnable: String) {
-    ADS_SPLASH("ads_splash", "2"),
-    NATIVE_SPLASH("native_splash", "0"),
-    NATIVE_LANGUAGE("native_language", "1"),
-    NATIVE_LANGUAGE_SMALL("native_language_small", "0"),
-    INTER_LANGUAGE("inter_language", "1"),
-    NATIVE_ONBOARDING("native_onboarding", "1234"),
-    NATIVE_FULL_ONBOARDING("native_full_onboarding", "0"),
-    INTER_ONBOARDING("inter_onboarding", "1"),
-
-    /** Nằm trong `settings` của `ad_config` (`on_resume`, `on_resume_id`), không phải một object riêng. */
-    ON_RESUME("on_resume", "1"),
-    NATIVE_WELCOME_BACK("native_welcome_back", "1"),
-    BANNER_HOME("banner_home", "2"),
-    INTER_HOME("inter_home", "0"),
-    BANNER_SETTING("banner_setting", "2"),
-}
-
-/**
- * Cấu hình một vị trí quảng cáo - một object trong `ad_config`, vd:
- * ```
- * "ads_splash": {
- *   "enable": 3, "wait_time": 5000,
- *   "inter":        { "name1": "INTER_SPLASH", "id1": "ca-app-pub-…", "id2": "…", "id3": "…" },
- *   "native_inter": { "name1": "NATIVE_INTER_SPLASH", "id1": "…" }
- * }
- * ```
- * Mỗi object con có `name1` là một ad unit; tên object con (`inter`, `native_inter`, `native_onboarding1`…) không quan
- * trọng, app nhận ra unit qua `name1`. Cột nào thiếu thì dùng mặc định. Thời gian tính bằng **ms**.
- *
- * - [enable]: giữ nguyên chuỗi, vì có vị trí đọc theo từng chữ số (`native_onboarding` = `24`, `native_full_onboarding` = `123`).
- * - [stepCount]: inter chỉ hiện ở lần chia hết cho N (tối thiểu 1).
- * - [refreshRateMs]: tự reload banner/native sau bấy nhiêu ms, `0` = không tự reload.
- * - [collapConfig]: lần bấm nút X của native collapsible mở quảng cáo (xem `CollapClickGate`).
- * - [waitTimeMs]: đếm ngược trên màn native toàn màn hình trước khi cho đóng/đi tiếp.
- * - [nativeTemplate]: tên template native (Big5, Tiny1…), trống = mặc định.
- * - [ids]: ID theo tên ad unit (`name1`) → `[id1, id2, id3]` cho waterfall.
- */
-data class PlacementConfig(
-    val enable: String,
-    val stepCount: Int = 1,
-    val refreshRateMs: Long = 0L,
-    val collapConfig: String = "",
-    val waitTimeMs: Long = 0L,
-    val nativeTemplate: String = "",
-    val ids: Map<String, List<String>> = emptyMap(),
-) {
-    /** `enable` dạng số: `0` = tắt, các số khác theo bảng mã của từng vị trí. */
-    val enableCode: Int get() = enable.trim().toIntOrNull() ?: 0
-
-    /** `enable` đọc theo từng chữ số (`24` = {2, 4}) - cho vị trí liệt kê trang. */
-    val enableDigits: Set<Int>
-        get() = enable.filter { it.isDigit() }.map { it.digitToInt() }.filter { it >= 1 }.toSet()
+enum class PlacementFormat(val key: String) {
+    AOA("aoa"),
+    INTER("inter"),
+    NATIVE_FULL("native_full"),
+    INTER_THEN_NATIVE_FULL("inter_then_native_full"),
+    BANNER("banner"),
+    BANNER_COLLAPSIBLE("banner_collapsible"),
+    NATIVE("native"),
+    NATIVE_COLLAPSIBLE("native_collapsible"),
+    WELCOME_BACK("welcome_back"),
+    ;
 
     companion object {
-        /** Vị trí tắt hẳn - dùng khi `ads_enable = 0` hoặc user Premium. */
-        val OFF = PlacementConfig(enable = "0")
-
-        /** Đọc một object vị trí trong `ad_config`; null thì dùng [AdKey.defaultEnable]. */
-        fun fromJson(json: JSONObject?, key: AdKey): PlacementConfig {
-            if (json == null) return PlacementConfig(enable = key.defaultEnable)
-            return PlacementConfig(
-                enable = json.opt("enable")?.toString() ?: key.defaultEnable,
-                stepCount = json.optInt("step_count", 1).coerceAtLeast(1),
-                refreshRateMs = json.optLong("refresh_rate", 0L).coerceAtLeast(0L),
-                collapConfig = json.opt("collap_config")?.toString().orEmpty(),
-                waitTimeMs = json.optLong("wait_time", 0L).coerceAtLeast(0L),
-                nativeTemplate = json.optString("native_template", ""),
-                ids = unitIds(json),
-            )
-        }
-
-        /**
-         * Giá trị override một vị trí ở màn Debug Config: một object JSON như trong `ad_config`, hoặc chỉ một số
-         * (= `enable`). JSON hỏng thì coi như vị trí đó tắt.
-         */
-        fun parseOverride(raw: String, key: AdKey): PlacementConfig {
-            val text = raw.trim()
-            if (!text.startsWith("{")) return PlacementConfig(enable = text)
-            return try {
-                fromJson(JSONObject(text), key)
-            } catch (e: Exception) {
-                OFF
-            }
-        }
-
-        /**
-         * Mọi object con có `name1` → danh sách `id1`, `id2`, `id3` của nó (bỏ id trống). `name1` được đưa về chữ hoa
-         * để khớp tên ad unit trong code: sheet ghi `native_splash` hay `NATIVE_SPLASH` đều được.
-         */
-        private fun unitIds(json: JSONObject): Map<String, List<String>> =
-            json.keys().asSequence().mapNotNull { json.optJSONObject(it) }
-                .filter { it.optString("name1").isNotBlank() }
-                .associate { unit ->
-                    unit.optString("name1").trim().uppercase() to
-                        listOf("id1", "id2", "id3").map { unit.optString(it).trim() }.filter(String::isNotEmpty)
-                }
+        fun fromKey(value: String?): PlacementFormat? =
+            value?.trim()?.lowercase()?.let { v -> entries.firstOrNull { it.key == v } }
     }
 }
 
 /**
- * Toàn bộ JSON của key Remote Config `ad_config`: object `settings` (cấu hình chung) + mỗi vị trí quảng cáo một
- * object (xem [PlacementConfig]). Hỏng hoặc trống thì coi như rỗng - mọi giá trị về mặc định.
+ * Cấu hình một placement - một object trong `ad_placements.full` / `ad_placements.basic`, vd
+ * `"ads_splash": { "format": "inter_then_native_full", "wait_ms": 5000 }`. Thời gian tính bằng ms.
+ *
+ * - [enable]: bật / tắt, chỉ nghĩa này.
+ * - [format]: loại quảng cáo (placement không chọn loại thì null).
+ * - [template]: tên mẫu native (Big1…, Tiny1…), trống = mẫu mặc định của placement.
+ * - [pages]: `native_onboarding` = trang có native; `native_full_onboarding` = chèn trang native full sau các trang này.
+ * - [step]: inter chỉ hiện ở lần yêu cầu chia hết cho [step].
+ * - [waitMs]: chờ / đếm ngược trước khi đóng được native.
+ * - [refreshMs]: tự tải lại ô banner, 0 = không.
+ * - [openAdOnClicks]: native collapsible - lần click thứ mấy trên quảng cáo thì mở trang quảng cáo.
  */
-class AdConfigDocument(raw: String) {
-    private val root: JSONObject = try {
-        if (raw.isBlank()) JSONObject() else JSONObject(raw)
-    } catch (e: Exception) {
-        JSONObject()
+data class PlacementConfig(
+    val enable: Boolean,
+    val format: PlacementFormat? = null,
+    val template: String = "",
+    val pages: Set<Int> = emptySet(),
+    val step: Int = 1,
+    val waitMs: Long = 0L,
+    val refreshMs: Long = 0L,
+    val openAdOnClicks: Set<Int> = emptySet(),
+) {
+    /** Ghi đè các trường có trong [json] lên cấu hình này; trường thiếu hoặc sai kiểu giữ nguyên. */
+    fun mergedWith(json: JSONObject?): PlacementConfig {
+        if (json == null) return this
+        return PlacementConfig(
+            enable = if (json.has("enable")) json.optBoolean("enable", enable) else enable,
+            format = if (json.has("format")) PlacementFormat.fromKey(json.optString("format")) ?: format else format,
+            template = if (json.has("template")) json.optString("template").trim() else template,
+            pages = if (json.has("pages")) intSet(json.opt("pages")) else pages,
+            step = if (json.has("step")) json.optInt("step", step).coerceAtLeast(1) else step,
+            waitMs = if (json.has("wait_ms")) json.optLong("wait_ms", waitMs).coerceAtLeast(0L) else waitMs,
+            refreshMs = if (json.has("refresh_ms")) json.optLong("refresh_ms", refreshMs).coerceAtLeast(0L) else refreshMs,
+            openAdOnClicks = if (json.has("open_ad_on_clicks")) intSet(json.opt("open_ad_on_clicks")) else openAdOnClicks,
+        )
     }
 
-    private val settings: JSONObject = root.optJSONObject("settings") ?: JSONObject()
+    companion object {
+        /** Placement tắt hẳn - khi tắt quảng cáo hoặc user Premium. */
+        val OFF = PlacementConfig(enable = false)
 
-    /** Giá trị trong `settings` dạng chuỗi (số / boolean cũng đọc được), null nếu không có. */
-    fun setting(name: String): String? = settings.opt(name)?.takeIf { it != JSONObject.NULL }?.toString()
+        /** `[2, 4]` (hoặc chuỗi `"2,4"`) → {2, 4}; bỏ số < 1. */
+        internal fun intSet(value: Any?): Set<Int> = when (value) {
+            is JSONArray -> (0 until value.length()).mapNotNull { value.opt(it)?.toString()?.trim()?.toIntOrNull() }
+            null, JSONObject.NULL -> emptyList()
+            else -> value.toString().split(",").mapNotNull { it.trim().toIntOrNull() }
+        }.filter { it >= 1 }.toSet()
+    }
+}
 
-    /** Cấu hình vị trí [key]. Riêng `on_resume`: lấy từ `settings.on_resume` và `settings.on_resume_id`. */
-    fun placement(key: AdKey): PlacementConfig {
-        if (key == AdKey.ON_RESUME && !root.has(key.key)) {
-            val id = setting("on_resume_id")?.trim().orEmpty()
-            return PlacementConfig(
-                enable = setting("on_resume") ?: key.defaultEnable,
-                ids = if (id.isEmpty()) emptyMap() else mapOf("ON_RESUME" to listOf(id)),
-            )
+/**
+ * Các placement quảng cáo của base app (key trong `ad_placements`) kèm cấu hình mặc định của bộ full - dùng khi
+ * JSON không ghi. Mặc định ở đây phải khớp bảng "Mặc định của bộ full" trong `docs/remote-config-v3/README.md`.
+ */
+enum class AdKey(val key: String, val fullDefault: PlacementConfig) {
+    ADS_SPLASH("ads_splash", PlacementConfig(enable = true, format = PlacementFormat.INTER)),
+    NATIVE_SPLASH("native_splash", PlacementConfig(enable = false)),
+    NATIVE_LANGUAGE("native_language", PlacementConfig(enable = true)),
+    NATIVE_LANGUAGE_SMALL("native_language_small", PlacementConfig(enable = false)),
+    INTER_LANGUAGE("inter_language", PlacementConfig(enable = true, format = PlacementFormat.INTER)),
+    NATIVE_ONBOARDING("native_onboarding", PlacementConfig(enable = true, pages = setOf(1, 2, 3, 4))),
+    NATIVE_FULL_ONBOARDING("native_full_onboarding", PlacementConfig(enable = false)),
+    INTER_ONBOARDING("inter_onboarding", PlacementConfig(enable = true, format = PlacementFormat.INTER)),
+    ON_RESUME("on_resume", PlacementConfig(enable = true, format = PlacementFormat.AOA)),
+    NATIVE_WELCOME_BACK("native_welcome_back", PlacementConfig(enable = true)),
+    BANNER_HOME("banner_home", PlacementConfig(enable = true, format = PlacementFormat.BANNER_COLLAPSIBLE)),
+    NATIVE_HOME_FEED("native_home_feed", PlacementConfig(enable = true)),
+    INTER_HOME("inter_home", PlacementConfig(enable = false, format = PlacementFormat.INTER)),
+    BANNER_SETTING("banner_setting", PlacementConfig(enable = true, format = PlacementFormat.BANNER_COLLAPSIBLE)),
+    ;
+
+    companion object {
+        fun fromKey(value: String): AdKey? = entries.firstOrNull { it.key == value.trim() }
+    }
+}
+
+/** Bộ quảng cáo: [FULL] đầy đủ (`ad_placements.full`), [BASIC] cơ bản (`ad_placements.basic`). */
+enum class AdSet { FULL, BASIC }
+
+/**
+ * Parameter `ad_placements`: `{ "full": { placement: {...} }, "basic": { placement: {...} } }`.
+ * - full: placement không ghi = [AdKey.fullDefault]; có ghi thì đè từng trường lên mặc định.
+ * - basic: **chỉ placement có mặt mới chạy** (mặc định bật, `"enable": false` để tắt), các trường đè lên mặc định
+ *   của full (format...), `step` mặc định 1. Placement không có trong basic = tắt.
+ * JSON hỏng hoặc trống = như `{}`.
+ */
+class AdPlacementsDocument(raw: String) {
+    private val root: JSONObject = parseObject(raw)
+    private val full: JSONObject = root.optJSONObject("full") ?: JSONObject()
+    private val basic: JSONObject = root.optJSONObject("basic") ?: JSONObject()
+
+    fun placement(set: AdSet, key: AdKey): PlacementConfig = when (set) {
+        AdSet.FULL -> key.fullDefault.mergedWith(full.optJSONObject(key.key))
+        AdSet.BASIC -> basic.optJSONObject(key.key)
+            ?.let { key.fullDefault.copy(enable = true, step = 1).mergedWith(it) }
+            ?: PlacementConfig.OFF
+    }
+
+    /** JSON của [key] trong [set] (để hiện ở Debug Config), trống nếu không có. */
+    fun placementJson(set: AdSet, key: AdKey): String =
+        (if (set == AdSet.FULL) full else basic).optJSONObject(key.key)?.toString().orEmpty()
+}
+
+/** Parameter `ad_ids`: `{ ad_unit: [id_high, id_medium, id_low] }`. Tên ad unit không phân biệt hoa thường. */
+class AdIdsDocument(raw: String) {
+    private val ids: Map<String, List<String>> = parseObject(raw).let { json ->
+        json.keys().asSequence().associate { name ->
+            val value = json.opt(name)
+            name.trim().lowercase() to when (value) {
+                is JSONArray -> (0 until value.length()).map { value.optString(it).trim() }
+                else -> listOf(value?.toString().orEmpty().trim())
+            }.filter { it.isNotEmpty() }
         }
-        return PlacementConfig.fromJson(root.optJSONObject(key.key), key)
     }
 
-    /** JSON của riêng vị trí [key] (để hiện ở Debug Config), trống nếu `ad_config` không có. */
-    fun placementJson(key: AdKey): String = root.optJSONObject(key.key)?.toString().orEmpty()
+    /** ID của ad unit [name] theo thứ tự thử (cao → thấp); rỗng nếu chưa đặt. */
+    fun ids(name: String): List<String> = ids[name.lowercase()].orEmpty()
+}
+
+/** Object JSON từ chuỗi; trống hoặc hỏng = `{}`. */
+internal fun parseObject(raw: String): JSONObject = try {
+    if (raw.isBlank()) JSONObject() else JSONObject(raw)
+} catch (e: Exception) {
+    JSONObject()
 }

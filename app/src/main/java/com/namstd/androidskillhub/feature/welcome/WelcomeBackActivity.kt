@@ -16,8 +16,8 @@ import com.namstd.androidskillhub.databinding.ActivityWelcomeBackBinding
 import kotlin.math.ceil
 
 /**
- * Màn "Welcome back" khi quay lại app nếu `enable.onresume=2` (thay cho App Open ad).
- * Hiện 1 native ad + đếm ngược `wait_time` của `native_welcome_back` rồi mới cho đóng. Mở qua [launch].
+ * Màn "Welcome back" khi quay lại app nếu `on_resume` có format `welcome_back` (thay cho App Open ad).
+ * Hiện 1 native ad + đếm ngược `wait_ms` của `native_welcome_back` rồi mới cho đóng. Mở qua [launch].
  */
 class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     private var countdown: CountDownTimer? = null
@@ -38,7 +38,7 @@ class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     }
 
     private fun startCountdown() {
-        val total = AdPolicy.config(AdKey.NATIVE_WELCOME_BACK).waitTimeMs
+        val total = AdPolicy.config(AdKey.NATIVE_WELCOME_BACK).waitMs
         if (total <= 0L) {
             binding.ivClose.isVisible = true
             return

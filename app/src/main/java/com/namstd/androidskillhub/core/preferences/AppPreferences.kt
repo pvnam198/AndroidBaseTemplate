@@ -32,19 +32,19 @@ class AppPreferences private constructor(context: Context) {
 
     /**
      * Đếm số lần đã yêu cầu hiện interstitial ở vị trí [placementKey], lưu qua các lần mở app. Dùng cho
-     * `step_count` của vị trí đó: chỉ hiện ở lần chia hết cho `step_count`.
+     * `step` của placement đó: chỉ hiện ở lần chia hết cho `step`.
      */
     fun interstitialStepCounter(placementKey: String): Int = values.getInt(KEY_INTER_STEP_COUNTER + "_" + placementKey, 0)
 
     fun setInterstitialStepCounter(placementKey: String, count: Int) =
         values.edit { putInt(KEY_INTER_STEP_COUNTER + "_" + placementKey, count) }
 
-    /** Kết quả kiểm tra nguồn user cho `ads_enable = 2`: true = đến từ marketing, null = attribution chưa về. */
+    /** Kết quả kiểm tra nguồn user cho `ads_profile = full_for_paid_users`: true = đến từ marketing, null = attribution chưa về. */
     var isMarketingUser: Boolean?
         get() = optionalBoolean(KEY_MARKETING_USER)
         set(value) = putOptionalBoolean(KEY_MARKETING_USER, value)
 
-    /** Kết quả kiểm tra test ad cho `ads_enable = 3`: true = máy nhận quảng cáo mẫu, null = chưa load native nào. */
+    /** Kết quả kiểm tra test ad cho `ads_profile = full_except_test_devices`: true = máy nhận quảng cáo mẫu, null = chưa load native nào. */
     var isTestAdDevice: Boolean?
         get() = optionalBoolean(KEY_TEST_AD_DEVICE)
         set(value) = putOptionalBoolean(KEY_TEST_AD_DEVICE, value)

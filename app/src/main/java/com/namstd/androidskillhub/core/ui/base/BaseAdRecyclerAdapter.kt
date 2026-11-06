@@ -8,6 +8,7 @@ import android.widget.FrameLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
 import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.databinding.AdNativeBinding
@@ -71,7 +72,8 @@ abstract class BaseAdRecyclerAdapter<T>(
     }
 
     private fun bindAdSlot(holder: NativeAdViewHolder, position: Int) {
-        if (adsHidden) {
+        // Placement tắt (vd. native_home_feed enable false) thì ô quảng cáo ẩn như khi tắt quảng cáo.
+        if (adsHidden || !AdPolicy.nativeEnabled(placement)) {
             holder.hide()
             return
         }

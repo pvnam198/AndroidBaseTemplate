@@ -23,8 +23,8 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
     override fun initViews() {
         loadNative(binding.nativeContainer, NativePlacement.ONBOARDING_AD)
 
-        val control: View = if (RemoteConfig.nativeOnboardingUseIconNext) binding.adClose else binding.adNext
-        val waitMs = AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).waitTimeMs
+        val control: View = if (RemoteConfig.onboardingFullCloseWithX) binding.adClose else binding.adNext
+        val waitMs = AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).waitMs
         if (waitMs > 0L) {
             binding.adLoading.isVisible = true
             viewLifecycleOwner.lifecycleScope.launch {

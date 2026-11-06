@@ -26,9 +26,8 @@ import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 /**
- * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit trong sheet ([unit] - lấy ID và `native_template` từ
- * vị trí của unit đó). Mỗi chỗ có slot cache riêng, nên hai chỗ dùng chung một unit (vd [HOME_FEED] và
- * [BANNER_NATIVE] cùng là `NATIVE_HOME`) vẫn không giành ad của nhau.
+ * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit ([unit] - ID trong `ad_ids`, `template` của placement
+ * chứa unit đó). Mỗi chỗ có slot cache riêng, nên hai chỗ dùng chung một unit vẫn không giành ad của nhau.
  */
 enum class NativePlacement(val unit: AdUnit) {
     /** Native trên màn Splash (`native_splash`). */
@@ -42,7 +41,7 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt) - vị trí `native_language_small`. */
     LANGUAGE_SMALL(AdUnit.NATIVE_LANGUAGE_SMALL),
 
-    /** Native ở chân các trang nội dung Onboarding; `native_onboarding` liệt kê trang có native (`24` = trang 2 và 4). */
+    /** Native ở chân các trang nội dung Onboarding; `pages` của `native_onboarding` liệt kê trang có native. */
     ONBOARDING_1(AdUnit.NATIVE_ONBOARDING_1),
     ONBOARDING_2(AdUnit.NATIVE_ONBOARDING_2),
     ONBOARDING_3(AdUnit.NATIVE_ONBOARDING_3),
@@ -51,8 +50,8 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Trang native toàn màn hình trong Onboarding (`native_full_onboarding`). */
     ONBOARDING_AD(AdUnit.NATIVE_FULL_ONBOARDING),
 
-    /** Native xen trong feed màn chính - sheet không có dòng riêng, dùng ID của `NATIVE_HOME`. */
-    HOME_FEED(AdUnit.NATIVE_HOME),
+    /** Native xen trong feed màn chính (`native_home_feed`). */
+    HOME_FEED(AdUnit.NATIVE_HOME_FEED),
 
     /** Native toàn màn hình hiện sau inter của từng vị trí (`NATIVE_INTER_*`). */
     AFTER_INTER_SPLASH(AdUnit.NATIVE_INTER_SPLASH),
@@ -60,26 +59,26 @@ enum class NativePlacement(val unit: AdUnit) {
     AFTER_INTER_ONBOARDING(AdUnit.NATIVE_INTER_ONBOARDING),
     AFTER_INTER_HOME(AdUnit.NATIVE_INTER_HOME),
 
-    /** Native collapsible ở ô banner màn chính (`banner_home` = 4) - xem [NativeCollapseAd]. */
+    /** Native collapsible ở ô banner màn chính (`banner_home` format native_collapsible) - xem [NativeCollapseAd]. */
     NATIVE_COLLAPSIBLE(AdUnit.NATIVE_COLLAP_HOME),
 
-    /** Native hiển thị như một slot banner thường (`banner_home` = 3) - xem [BannerAds]. */
+    /** Native hiển thị như một slot banner thường (`banner_home` format native) - xem [BannerAds]. */
     BANNER_NATIVE(AdUnit.NATIVE_HOME),
 
-    /** Native trên màn welcome-back (`on_resume` = 2) - xem WelcomeBackActivity. */
+    /** Native trên màn welcome-back (`on_resume` format welcome_back) - xem WelcomeBackActivity. */
     WELCOME_BACK(AdUnit.NATIVE_WELCOME_BACK);
 
     /**
-     * Chỗ này có bật theo `enable` của vị trí ([config]) không. Native Onboarding đọc theo chữ số (trang có native);
-     * native Splash / Language / Welcome back cần `enable` > 0; các chỗ còn lại do vị trí cha quyết định
-     * (inter, banner, trang native full) nên luôn được phép ở đây.
+     * Chỗ này có bật theo cấu hình placement ([config]) không. Native Onboarding: placement bật và trang có trong
+     * `pages`; native Splash / Language / Welcome back / feed: placement bật; các chỗ còn lại do placement cha quyết
+     * định (format của inter / banner, trang native full) nên luôn được phép ở đây.
      */
     fun isEnabled(config: PlacementConfig): Boolean = when (this) {
-        ONBOARDING_1 -> 1 in config.enableDigits
-        ONBOARDING_2 -> 2 in config.enableDigits
-        ONBOARDING_3 -> 3 in config.enableDigits
-        ONBOARDING_4 -> 4 in config.enableDigits
-        SPLASH, LANGUAGE, LANGUAGE_SETTING, LANGUAGE_SMALL, WELCOME_BACK -> config.enableCode > 0
+        ONBOARDING_1 -> config.enable && 1 in config.pages
+        ONBOARDING_2 -> config.enable && 2 in config.pages
+        ONBOARDING_3 -> config.enable && 3 in config.pages
+        ONBOARDING_4 -> config.enable && 4 in config.pages
+        SPLASH, LANGUAGE, LANGUAGE_SETTING, LANGUAGE_SMALL, WELCOME_BACK, HOME_FEED -> config.enable
         else -> true
     }
 }
@@ -364,8 +363,8 @@ object NativeAds {
     }
 
     /**
-     * Template của [placement]: theo cột `native_template` của vị trí chứa unit đó (trống → Big1), riêng
-     * `native_language` theo `enable` - xem [NativeAdTemplate.forPlacement].
+     * Template của [placement]: theo `template` của placement chứa unit đó (trống → mẫu mặc định) - xem
+     * [NativeAdTemplate.forPlacement].
      */
     fun templateFor(placement: NativePlacement): NativeAdTemplate =
         NativeAdTemplate.forPlacement(placement.unit.key, AdPolicy.config(placement.unit.key))

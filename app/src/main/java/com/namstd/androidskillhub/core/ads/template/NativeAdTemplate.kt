@@ -6,8 +6,8 @@ import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.PlacementConfig
 
 /**
- * Bộ template card native dùng chung cho mọi vị trí, chọn bằng cột `native_template` của vị trí đó trong
- * `ad_config`. [key] là đúng tên mẫu trong tài liệu / Figma "Wavez - ADs" (Big1…Big9, Small1…, Tiny1, Tiny2,
+ * Bộ template card native dùng chung cho mọi placement, chọn bằng `template` của placement đó trong
+ * `ad_placements`. [key] là đúng tên mẫu trong tài liệu / Figma "Wavez - ADs" (Big1…Big9, Small1…, Tiny1, Tiny2,
  * Collap1…, Full1…), không phân biệt hoa thường; màn nào cần mẫu nào thì ghi đúng tên đó.
  *
  * Mọi layout (layout/ad_tpl_*.xml) dùng chung view id, nên
@@ -56,32 +56,18 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
 
     companion object {
         /**
-         * Vị trí chọn layout bằng `enable` thay vì `native_template` (ghi chú sheet: "native_language:
-         * 1 layout 1, 2 layout 2"): layout 1 = nút Install ở dưới ([BIG1]), layout 2 = nút Install ở trên ([BIG5]).
-         */
-        private val LAYOUT_BY_ENABLE: Map<AdKey, Map<Int, NativeAdTemplate>> = mapOf(
-            AdKey.NATIVE_LANGUAGE to mapOf(1 to BIG1, 2 to BIG5),
-        )
-
-        /**
-         * Template cho vị trí [key] với cấu hình [config]. Ở [LAYOUT_BY_ENABLE] thì `enable` quyết định và
-         * `native_template` bị bỏ qua (lỡ ghi cả hai cũng không sao; mã lạ thì về layout 1). Các vị trí khác theo
-         * `native_template`.
-         */
-        fun forPlacement(key: AdKey, config: PlacementConfig): NativeAdTemplate {
-            val layouts = LAYOUT_BY_ENABLE[key] ?: return fromKey(config.nativeTemplate, DEFAULT_BY_KEY[key] ?: BIG1)
-            return layouts[config.enableCode] ?: layouts.getValue(1)
-        }
-
-        /**
-         * Template mặc định khi `native_template` của vị trí bỏ trống / ghi sai, cho vị trí mà [BIG1] không vừa chỗ:
+         * Template mặc định khi `template` của placement bỏ trống / ghi sai, cho placement mà [BIG1] không vừa chỗ:
          * `native_language_small` là dải nằm dưới tiêu đề nên mặc định [TINY1] (đúng như sheet).
          */
         private val DEFAULT_BY_KEY: Map<AdKey, NativeAdTemplate> = mapOf(
             AdKey.NATIVE_LANGUAGE_SMALL to TINY1,
         )
 
-        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [fallback]. */
+        /** Template cho placement [key] theo `template` của nó; trống / sai thì mặc định của placement (thường [BIG1]). */
+        fun forPlacement(key: AdKey, config: PlacementConfig): NativeAdTemplate =
+            fromKey(config.template, DEFAULT_BY_KEY[key] ?: BIG1)
+
+        /** Template ứng với một tên mẫu (không phân biệt hoa thường); không khớp hoặc rỗng thì về [fallback]. */
         fun fromKey(value: String?, fallback: NativeAdTemplate = BIG1): NativeAdTemplate {
             val key = value?.trim()?.lowercase().orEmpty()
             return entries.firstOrNull { it.key == key } ?: fallback

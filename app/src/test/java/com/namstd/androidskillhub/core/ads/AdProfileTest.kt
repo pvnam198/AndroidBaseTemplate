@@ -1,40 +1,47 @@
 package com.namstd.androidskillhub.core.ads
 
+import com.namstd.androidskillhub.core.config.AdsProfileRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class AdProfileTest {
-    private fun profile(adsEnable: Int, premium: Boolean = false, marketing: Boolean? = null, testAd: Boolean? = null) =
-        resolveAdProfile(adsEnable, premium, marketing, testAd)
+    private fun profile(rule: AdsProfileRule, premium: Boolean = false, marketing: Boolean? = null, testAd: Boolean? = null) =
+        resolveAdProfile(rule, premium, marketing, testAd)
 
     @Test
-    fun zeroIsOffAndOneIsAlwaysRemote() {
-        assertEquals(AdProfile.OFF, profile(0))
-        assertEquals(AdProfile.REMOTE, profile(1, marketing = false, testAd = true))
+    fun offAndFullForAll() {
+        assertEquals(AdProfile.OFF, profile(AdsProfileRule.OFF))
+        assertEquals(AdProfile.FULL, profile(AdsProfileRule.FULL_FOR_ALL, marketing = false, testAd = true))
     }
 
     @Test
-    fun twoMarketingUserIsRemoteEveryoneElseBasic() {
-        assertEquals(AdProfile.REMOTE, profile(2, marketing = true))
-        assertEquals(AdProfile.BASIC, profile(2, marketing = false))
-        assertEquals(AdProfile.BASIC, profile(2, marketing = null))
+    fun fullForPaidUsersOnly() {
+        assertEquals(AdProfile.FULL, profile(AdsProfileRule.FULL_FOR_PAID_USERS, marketing = true))
+        assertEquals(AdProfile.BASIC, profile(AdsProfileRule.FULL_FOR_PAID_USERS, marketing = false))
+        // Chưa biết nguồn (Adjust chưa trả attribution) = như user tự nhiên.
+        assertEquals(AdProfile.BASIC, profile(AdsProfileRule.FULL_FOR_PAID_USERS, marketing = null))
     }
 
     @Test
-    fun threeTestAdDeviceIsBasicEveryoneElseRemote() {
-        assertEquals(AdProfile.BASIC, profile(3, testAd = true))
-        assertEquals(AdProfile.REMOTE, profile(3, testAd = false))
-        assertEquals(AdProfile.REMOTE, profile(3, testAd = null))
+    fun fullExceptTestDevices() {
+        assertEquals(AdProfile.BASIC, profile(AdsProfileRule.FULL_EXCEPT_TEST_DEVICES, testAd = true))
+        assertEquals(AdProfile.FULL, profile(AdsProfileRule.FULL_EXCEPT_TEST_DEVICES, testAd = false))
+        assertEquals(AdProfile.FULL, profile(AdsProfileRule.FULL_EXCEPT_TEST_DEVICES, testAd = null))
     }
 
     @Test
-    fun unknownValueIsRemote() {
-        assertEquals(AdProfile.REMOTE, profile(4))
-        assertEquals(AdProfile.REMOTE, profile(-1))
+    fun premiumAlwaysOff() {
+        for (rule in AdsProfileRule.entries) assertEquals(AdProfile.OFF, profile(rule, premium = true, marketing = true))
     }
 
     @Test
-    fun premiumIsAlwaysOff() {
-        for (value in 0..4) assertEquals(AdProfile.OFF, profile(value, premium = true, marketing = true, testAd = false))
+    fun ruleNamesMatchTheSheet() {
+        assertEquals(
+            listOf("off", "full_for_all", "full_for_paid_users", "full_except_test_devices"),
+            AdsProfileRule.entries.map { it.key },
+        )
+        assertEquals(AdsProfileRule.FULL_FOR_PAID_USERS, AdsProfileRule.fromKey(" Full_For_Paid_Users "))
+        assertNull(AdsProfileRule.fromKey("2"))
     }
 }

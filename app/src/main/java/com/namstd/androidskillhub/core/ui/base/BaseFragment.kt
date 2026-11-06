@@ -35,7 +35,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
     /**
      * Load banner của [placement] vào [container] và tự huỷ nó khi view bị huỷ. Loại banner và timer reload
-     * theo `enable` / `refresh_rate` của vị trí đó; [autoReload] = false cho màn tự reload bằng tay qua
+     * theo `format` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay qua
      * [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
     protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {

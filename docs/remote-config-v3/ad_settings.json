@@ -1,0 +1,14 @@
+{
+  "ads_profile": "full_for_paid_users",
+  "splash_fallback": "inter_language",
+  "language_next_style": "icon",
+  "language_next_delay_ms": 800,
+  "language_show_loading": true,
+  "full_inter_gap_ms": 10000,
+  "full_inter_gap_ignore": [
+    "ads_splash",
+    "inter_language",
+    "inter_onboarding"
+  ],
+  "basic_inter_gap_ms": 90000
+}

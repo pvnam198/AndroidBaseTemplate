@@ -56,12 +56,11 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
 
     companion object {
         /**
-         * Vị trí chọn layout bằng `enable` thay vì `native_template` (ghi chú sheet: "native_language, native_get_start:
+         * Vị trí chọn layout bằng `enable` thay vì `native_template` (ghi chú sheet: "native_language:
          * 1 layout 1, 2 layout 2"): layout 1 = nút Install ở dưới ([BIG1]), layout 2 = nút Install ở trên ([BIG5]).
          */
         private val LAYOUT_BY_ENABLE: Map<AdKey, Map<Int, NativeAdTemplate>> = mapOf(
             AdKey.NATIVE_LANGUAGE to mapOf(1 to BIG1, 2 to BIG5),
-            AdKey.NATIVE_GET_START to mapOf(1 to BIG1, 2 to BIG5),
         )
 
         /**

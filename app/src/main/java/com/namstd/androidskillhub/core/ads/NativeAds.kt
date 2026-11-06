@@ -365,7 +365,7 @@ object NativeAds {
 
     /**
      * Template của [placement]: theo cột `native_template` của vị trí chứa unit đó (trống → Big1), riêng
-     * `native_language` / `native_get_start` theo `enable` - xem [NativeAdTemplate.forPlacement].
+     * `native_language` theo `enable` - xem [NativeAdTemplate.forPlacement].
      */
     fun templateFor(placement: NativePlacement): NativeAdTemplate =
         NativeAdTemplate.forPlacement(placement.unit.key, AdPolicy.config(placement.unit.key))

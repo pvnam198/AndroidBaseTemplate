@@ -94,7 +94,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `refresh_rate` | Ms tự tải lại banner/native của ô banner. `0` = không tự tải lại. |
 | `collap_config` | Native collapsible: lần bấm **nút X** nào mở quảng cáo thay vì thu gọn (`357` = lần 3, 5, 7). Bộ đếm chung trong một lần mở app. Cần Google duyệt *custom click gesture* cho tài khoản. |
 | `wait_time` | Ms đếm ngược trên màn native toàn màn hình (sau inter, trang native Intro, Welcome back) trước khi cho đóng/đi tiếp. |
-| `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. **Ngoại lệ:** `native_language` / `native_get_start` chọn layout bằng `enable`, bỏ qua `native_template`. Small5–Small7 team đã bỏ, không dùng. |
+| `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. **Ngoại lệ:** `native_language` chọn layout bằng `enable`, bỏ qua `native_template`. Small5–Small7 team đã bỏ, không dùng. |
 
 ### Các vị trí app đang dùng
 
@@ -118,9 +118,9 @@ Native xen trong feed màn chính không có dòng riêng trong sheet: luôn b�
 
 ### Các vị trí đã khai báo, chưa có màn hình
 
-`inter_welcome_back`, `native_get_start`, `inter_start`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
+`inter_welcome_back`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
 
-**Không thuộc base app:** các vị trí theo tính năng riêng của từng app (`native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`) đã bỏ khỏi code. Khối của chúng trong `ad_config` (nếu có) bị bỏ qua; app nào có màn đó thì tự thêm key vào `AdKey` / `AdUnit`.
+**Không thuộc base app:** các vị trí theo tính năng riêng của từng app (`native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`) và `native_get_start`, `inter_start` (base không có màn Get start) đã bỏ khỏi code. Khối của chúng trong `ad_config` (nếu có) bị bỏ qua; app nào có màn đó thì tự thêm key vào `AdKey` / `AdUnit`.
 
 ---
 

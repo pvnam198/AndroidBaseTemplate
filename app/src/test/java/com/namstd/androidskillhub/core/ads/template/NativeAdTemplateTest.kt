@@ -13,7 +13,6 @@ class NativeAdTemplateTest {
     fun languageLayoutComesFromEnable() {
         assertEquals(NativeAdTemplate.BIG1, template(AdKey.NATIVE_LANGUAGE, "1"))
         assertEquals(NativeAdTemplate.BIG5, template(AdKey.NATIVE_LANGUAGE, "2"))
-        assertEquals(NativeAdTemplate.BIG5, template(AdKey.NATIVE_GET_START, "2"))
     }
 
     @Test

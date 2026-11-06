@@ -190,7 +190,7 @@
       <div class="card"><h4>Native – <code>native_*</code></h4><ul>
         <li><code>0</code> tắt</li><li><code>1</code> bật</li>
         <li><code>native_intro = 24</code>: native ở trang Intro <b>2</b> và <b>4</b> (mỗi chữ số là một trang)</li>
-        <li><code>native_intro_full = 2</code>: chèn trang native toàn màn hình sau màn Intro 2. Mỗi chữ số là một màn: <code>123</code> = sau màn 1, 2 và 3. <code>native_get_start = 2</code>: layout 2</li></ul></div>
+        <li><code>native_intro_full = 2</code>: chèn trang native toàn màn hình sau màn Intro 2. Mỗi chữ số là một màn: <code>123</code> = sau màn 1, 2 và 3.</li></ul></div>
     </div>
   </section>
 
@@ -199,7 +199,7 @@
     <div class="card">
       <p>Bộ template native <b>dùng chung cho mọi vị trí</b>: muốn vị trí nào hiện mẫu nào thì ghi đúng tên mẫu vào cột <code>native_template</code> của vị trí đó (không phân biệt hoa thường). Để trống thì dùng <code>Big1</code>.</p>
       <p>App đã có sẵn: <code>Big1</code>–<code>Big9</code> (<code>Big6</code> giống hệt <code>Big5</code>), <code>Small1</code>–<code>Small4</code>, <code>Tiny1</code>, <code>Tiny2</code>, <code>Collap1</code>–<code>Collap3</code>, <code>Full1</code>–<code>Full5</code>. (<code>Small5</code>–<code>Small7</code> team đã bỏ, không dùng.)</p>
-      <p><b>Ngoại lệ</b> – màn Language / Get start (<code>native_language</code>, <code>native_get_start</code>): layout chọn bằng <code>enable</code>, không dùng <code>native_template</code>. <code>1</code> = layout 1, nút Install ở dưới (<code>Big1</code>); <code>2</code> = layout 2, nút Install ở trên (<code>Big5</code>). Lỡ ghi cả <code>native_template</code> thì vẫn theo <code>enable</code>.</p>
+      <p><b>Ngoại lệ</b> – màn Language (<code>native_language</code>): layout chọn bằng <code>enable</code>, không dùng <code>native_template</code>. <code>1</code> = layout 1, nút Install ở dưới (<code>Big1</code>); <code>2</code> = layout 2, nút Install ở trên (<code>Big5</code>). Lỡ ghi cả <code>native_template</code> thì vẫn theo <code>enable</code>.</p>
     </div>
   </section>
 
@@ -253,8 +253,8 @@
       <h4>Chưa làm</h4>
       <ul>
         
-        <li><span class="pill no">Chưa có</span> <b>Màn hình chưa có:</b> Get start, Inter khi Back, inter Welcome back.</li>
-        <li><span class="pill drop">Bỏ</span> <b>Màn theo tính năng riêng của từng app</b> (06/11): Theme, Icon, Widget, Collection, Result, Wallpaper không thuộc base app nên đã bỏ khỏi code và bảng này; app nào có màn đó thì tự thêm.</li>
+        <li><span class="pill no">Chưa có</span> <b>Màn hình chưa có:</b> Inter khi Back, inter Welcome back.</li>
+        <li><span class="pill drop">Bỏ</span> <b>Màn theo tính năng riêng của từng app</b> (06/11): Theme, Icon, Widget, Collection, Result, Wallpaper không thuộc base app; <code>native_get_start</code>, <code>inter_start</code> cũng bỏ vì base không có màn Get start nên đã bỏ khỏi code và bảng này; app nào có màn đó thì tự thêm.</li>
         <li><span class="pill no">Chưa có</span> <b><code>refresh_rate</code> cho native:</b> app mới tự tải lại banner.</li>
         <li><span class="pill no">Chưa có</span> <b>Key mới trong sheet "Bản sao":</b> <code>time_out_init</code>, <code>mt_native_cta_only</code>, các vị trí <code>_first</code> cho lần mở app đầu tiên.</li>
         <li><span class="pill no">Chưa có</span> <b>Kiểm tra lại máy thử nghiệm:</b> máy đã bị đánh dấu nhận quảng cáo mẫu sẽ ở kịch bản B mãi, chưa có kiểm tra lại định kỳ.</li>
@@ -314,10 +314,6 @@ const PLACEMENTS = [
     "Trang native toàn màn hình chen giữa các màn Intro. Mỗi chữ số là một màn Intro có trang native full ngay sau: <code>2</code> = sau màn 2; với 4 màn Intro, giá trị đầy đủ là <code>123</code> = sau màn 1, 2 và 3. Trống hoặc <code>0</code> = không có. Trang native full không có chấm tròn, chấm chỉ đếm các màn Intro.", OK],
   ["Intro", ["INTER_INTRO", "NATIVE_INTER_INTRO"], "inter_intro", "1", "", "", "", "5", "",
     "Quảng cáo khi hoàn tất Onboarding. <code>1</code> = Interstitial.", OK],
-  ["Get start", ["NATIVE_GET_START_1", "NATIVE_GET_START_2"], "native_get_start", "2", "", "", "", "", "",
-    "Native ở màn Get started. <code>2</code>: " + ASK + " – có thể ứng với biến thể Figma \"Get start enable = 2\" (CTA tím phía trên).", NO],
-  ["Get start", ["INTER_START", "NATIVE_INTER_START"], "inter_start", "3", "", "", "", "", "",
-    "Quảng cáo khi bấm Get started. <code>3</code> = Inter rồi Native toàn màn hình.", NO],
   ["Home", ["BANNER_HOME", "NATIVE_HOME", "NATIVE_COLLAP_HOME"], "banner_home", "4", "", "", "", "", "",
     "Ô banner ở Home. <code>4</code> = Native collapsible (bản lớn rồi thu gọn thành dải).", OK],
   ["Home", ["INTER_HOME", "NATIVE_INTER_HOME"], "inter_home", "3", "2", "", "", "", "",

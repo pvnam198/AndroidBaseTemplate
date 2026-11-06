@@ -23,6 +23,7 @@ googleServices = "4.4.2"
 firebaseBom = "33.7.0"
 adjust = "5.8.0"
 installReferrer = "2.2"
+billing = "8.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,7 @@ androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref =
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
 adjust-android = { group = "com.adjust.sdk", name = "adjust-android", version.ref = "adjust" }
+google-play-billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 androidx-installreferrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
 
 [plugins]

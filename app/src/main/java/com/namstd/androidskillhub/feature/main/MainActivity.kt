@@ -1,6 +1,7 @@
 package com.namstd.androidskillhub.feature.main
 
 import android.content.Intent
+import com.namstd.androidskillhub.core.billing.Premium
 import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -67,6 +68,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun onResume() {
         super.onResume()
         if (hasResumedOnce) reloadBanner() else hasResumedOnce = true
+        if (!paymentIssueChecked) {
+            // Gia hạn bị từ chối: để Google Play nhắc user sửa thanh toán, mỗi phiên một lần.
+            paymentIssueChecked = true
+            Premium.showPaymentIssueMessage(this)
+        }
     }
 
     override fun releaseResources() {
@@ -75,5 +81,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     private companion object {
         const val TAB_COUNT = 3
+
+        /** Đã cho Google Play kiểm tra lỗi thanh toán trong phiên này chưa (sống theo process). */
+        var paymentIssueChecked = false
     }
 }

@@ -13,6 +13,7 @@ import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.billing.Premium
 import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
@@ -35,6 +36,8 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
         val preferences = AppPreferences.getInstance(this)
         preferences.applyLocale()
         Ads.adsEnabled = !preferences.isPremium
+        // Đồng bộ Premium với Google Play (gói hết hạn / hoàn tiền thì bật lại quảng cáo từ lần mở sau).
+        Premium.initialize(this)
         RemoteConfig.initialize(this)
         registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)

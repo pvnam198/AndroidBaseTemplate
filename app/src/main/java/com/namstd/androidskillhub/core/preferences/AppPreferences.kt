@@ -20,9 +20,15 @@ class AppPreferences private constructor(context: Context) {
         get() = values.getBoolean(KEY_SETUP_COMPLETE, false)
         set(value) = values.edit { putBoolean(KEY_SETUP_COMPLETE, value) }
 
+    /** User có Premium (bỏ quảng cáo) hay không - do [com.namstd.androidskillhub.core.billing.Premium] đồng bộ từ Google Play. */
     var isPremium: Boolean
         get() = values.getBoolean(KEY_PREMIUM, false)
         set(value) = values.edit { putBoolean(KEY_PREMIUM, value) }
+
+    /** Chỉ bản debug: Premium giả để test luồng không quảng cáo mà không cần mua thật. */
+    var mockPremium: Boolean
+        get() = values.getBoolean(KEY_MOCK_PREMIUM, false)
+        set(value) = values.edit { putBoolean(KEY_MOCK_PREMIUM, value) }
 
     /**
      * Đếm số lần đã yêu cầu hiện interstitial ở vị trí [placementKey], lưu qua các lần mở app. Dùng cho
@@ -80,6 +86,7 @@ class AppPreferences private constructor(context: Context) {
         private const val KEY_LANGUAGE = "selected_language"
         private const val KEY_SETUP_COMPLETE = "setup_completed"
         private const val KEY_PREMIUM = "is_premium"
+        private const val KEY_MOCK_PREMIUM = "mock_premium"
         private const val KEY_INTER_STEP_COUNTER = "interstitial_step_counter"
         private const val KEY_MARKETING_USER = "is_marketing_user"
         private const val KEY_TEST_AD_DEVICE = "is_test_ad_device"

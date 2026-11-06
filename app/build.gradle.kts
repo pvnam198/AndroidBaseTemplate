@@ -19,6 +19,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "ADJUST_APP_TOKEN", "\"{YourAppToken}\"")
+        // Event token Adjust cho doanh thu mua trong app (gói Premium). Để trống = không gửi.
+        buildConfigField("String", "ADJUST_IAP_EVENT_TOKEN", "\"\"")
     }
 
     buildTypes {
@@ -54,6 +56,7 @@ dependencies {
     implementation(libs.google.ump)
     implementation(libs.adjust.android)
     implementation(libs.androidx.installreferrer)
+    implementation(libs.google.play.billing)
     implementation(libs.facebook.shimmer)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.config)

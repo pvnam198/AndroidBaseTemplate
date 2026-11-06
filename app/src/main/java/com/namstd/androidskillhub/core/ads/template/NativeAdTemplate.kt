@@ -51,6 +51,9 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     FULL5("full5", R.layout.ad_tpl_full5),
     ;
 
+    /** Dải thấp (Tiny1, Tiny2): lúc load dùng shimmer thấp như banner thay vì shimmer card. */
+    val isStrip: Boolean get() = this == TINY1 || this == TINY2
+
     companion object {
         /**
          * Vị trí chọn layout bằng `enable` thay vì `native_template` (ghi chú sheet: "native_language, native_get_start:
@@ -67,14 +70,22 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
          * `native_template`.
          */
         fun forPlacement(key: AdKey, config: PlacementConfig): NativeAdTemplate {
-            val layouts = LAYOUT_BY_ENABLE[key] ?: return fromKey(config.nativeTemplate)
+            val layouts = LAYOUT_BY_ENABLE[key] ?: return fromKey(config.nativeTemplate, DEFAULT_BY_KEY[key] ?: BIG1)
             return layouts[config.enableCode] ?: layouts.getValue(1)
         }
 
-        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [BIG1]. */
-        fun fromKey(value: String?): NativeAdTemplate {
+        /**
+         * Template mặc định khi `native_template` của vị trí bỏ trống / ghi sai, cho vị trí mà [BIG1] không vừa chỗ:
+         * `native_language_small` là dải nằm dưới tiêu đề nên mặc định [TINY1] (đúng như sheet).
+         */
+        private val DEFAULT_BY_KEY: Map<AdKey, NativeAdTemplate> = mapOf(
+            AdKey.NATIVE_LANGUAGE_SMALL to TINY1,
+        )
+
+        /** Template ứng với một giá trị `native_template` (không phân biệt hoa thường); không khớp hoặc rỗng thì về [fallback]. */
+        fun fromKey(value: String?, fallback: NativeAdTemplate = BIG1): NativeAdTemplate {
             val key = value?.trim()?.lowercase().orEmpty()
-            return entries.firstOrNull { it.key == key } ?: BIG1
+            return entries.firstOrNull { it.key == key } ?: fallback
         }
 
         /** Toàn bộ key, dùng cho gợi ý ở Debug Config. */

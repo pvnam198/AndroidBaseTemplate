@@ -50,6 +50,7 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
         binding.languageList.layoutManager = LinearLayoutManager(this)
         binding.languageList.adapter =
             LanguageAdapter(AppLanguage.entries, selectedLanguage) { selectedLanguage = it }
+        loadNative(binding.nativeSmallContainer, NativePlacement.LANGUAGE_SMALL)
         loadNative(binding.nativeContainer, if (fromSettings) NativePlacement.LANGUAGE_SETTING else NativePlacement.LANGUAGE)
 
         val setup = RemoteConfig.languageSetup

@@ -103,6 +103,7 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `ads_splash` | `2` | 1 AOA · 2 Inter · 3 Inter + native sau inter | `AOA_SPLASH`, `INTER_SPLASH`, `NATIVE_INTER_SPLASH` | Cuối màn Splash |
 | `native_splash` | `0` | 0 tắt · 1 bật | `NATIVE_SPLASH` | Native trên màn Splash |
 | `native_language` | `1` | 0 tắt · 1 layout 1 (nút Install ở dưới = Big1) · 2 layout 2 (nút Install ở trên = Big5). **Layout chỉ theo `enable`, `native_template` bị bỏ qua** (ghi cả hai vẫn theo `enable`); mã lạ → layout 1 | `NATIVE_LANGUAGE`: màn Language **lần đầu cài app**; `NATIVE_LANGUAGE_2`: màn Language **mở từ Cài đặt** | Màn Language |
+| `native_language_small` | `0` | 0 tắt · ≥1 bật. Template theo `native_template`, **mặc định Tiny1** khi trống / ghi sai | `NATIVE_LANGUAGE_SMALL` | Dải nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt), ngoài native `native_language` ở chân màn |
 | `inter_language` | `1` | 1 Inter · 2 chỉ native · 3 Inter + native | `INTER_LANGUAGE`, `NATIVE_INTER_LANGUAGE` | Bấm Apply ở Language |
 | `native_intro` | `1234` | Mỗi chữ số = trang Intro có native (`24` = trang 2 và 4) | `NATIVE_INTRO_1` … `NATIVE_INTRO_4` | Chân các trang nội dung Intro |
 | `native_intro_full` | `0` | Mỗi chữ số = trang nội dung có trang native toàn màn hình ngay sau (`123` = sau trang 1, 2, 3); không chèn sau trang cuối | `NATIVE_INTRO_FULL` | Trang native toàn màn hình trong Intro (không có chấm tròn) |
@@ -117,7 +118,7 @@ Native xen trong feed màn chính không có dòng riêng trong sheet: luôn b�
 
 ### Các vị trí đã khai báo, chưa có màn hình
 
-`native_language_small`, `inter_welcome_back`, `native_get_start`, `inter_start`, `native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
+`inter_welcome_back`, `native_get_start`, `inter_start`, `native_theme_setup`, `reward_theme_setup`, `inter_icon`, `reward_icon_setup`, `native_dialog_icon`, `native_icon_setup`, `reward_widget`, `inter_collection`, `banner_result`, `native_result`, `banner_wallpaper`, `inter_back` — có trong `AdKey` / `AdUnit` (đọc được cấu hình và ID trong `ad_config`) nhưng app mẫu chưa có màn hình dùng.
 
 ---
 

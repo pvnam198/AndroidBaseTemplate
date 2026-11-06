@@ -174,7 +174,9 @@ const CASES = [
 [55,"inter_language (dòng riêng)","ad_config có inter_language enable 1 + dòng inter_language = 0","Language bấm Apply","Không có inter (dòng riêng thắng ad_config)",""],
 [56,"native_language","2","Vào màn Language","Native layout 2: nút Install ở trên ảnh (Big5)",""],
 [57,"native_language","{\"enable\":2,\"native_template\":\"Big1\"}","Vào màn Language","Vẫn layout 2 (nút Install ở trên) - native_template bị bỏ qua",""],
-[58,"native_language (NATIVE_LANGUAGE_2)","1 (default)","Cài đặt → bấm nút ngôn ngữ","Mở màn chọn ngôn ngữ có native (ad unit NATIVE_LANGUAGE_2); chọn ngôn ngữ, bấm Apply → lưu và quay lại Cài đặt, không có inter",""]
+[58,"native_language (NATIVE_LANGUAGE_2)","1 (default)","Cài đặt → bấm nút ngôn ngữ","Mở màn chọn ngôn ngữ có native (ad unit NATIVE_LANGUAGE_2); chọn ngôn ngữ, bấm Apply → lưu và quay lại Cài đặt, không có inter",""],
+[59,"native_language_small","1","Vào màn Language (lần đầu và từ Cài đặt)","Dải native nhỏ Tiny1 ngay dưới tiêu đề \"Choose your language\", native lớn vẫn ở chân màn",""],
+[60,"native_language_small","0 (default)","Vào màn Language","Không có dải native dưới tiêu đề, danh sách ngôn ngữ nằm sát tiêu đề",""]
 ];
 const GROUPS = [
   ["Debug Config", id => id >= 1 && id <= 3],
@@ -192,7 +194,8 @@ const GROUPS = [
   ["inter_home", id => id >= 52 && id <= 52],
   ["Regression", id => id >= 53 && id <= 53],
   ["ad_config", id => id >= 54 && id <= 55],
-  ["native_language (layout)", id => id >= 56 && id <= 58]
+  ["native_language (layout)", id => id >= 56 && id <= 58],
+  ["native_language_small", id => id >= 59 && id <= 60]
 ];
 const RESTART = new Set([4,5,6,7,21,22,25,26,27,28,29,30,44,45]);
 const groupOf = id => GROUPS.find(g => g[1](id))[0];
@@ -232,7 +235,9 @@ const RESULTS = /*RESULTS-START*/{5:["pass","Luồng mặc định (case 25, 31,
 55:["pass","Không có inter",false],
 56:["pass","enable 2 (kèm native_template Big1): nút Install y=1599 nằm trên ảnh y=2017 → layout 2 (Big5). Máy 23090RA98G",false],
 57:["pass","enable 2 + native_template Big1 → vẫn layout 2; ngược lại enable 1 + native_template Big5 → nút Install y=2462 dưới ảnh y=1849 → layout 1. native_template bị bỏ qua đúng",false],
-58:["pass","Cài đặt → nút ngôn ngữ → màn Language: với test ID có native; cho NATIVE_LANGUAGE_2 ID hỏng thì không có native (còn màn Language lần đầu vẫn có) → đúng ad unit riêng. Bấm Apply quay lại Cài đặt, không có inter",false]}/*RESULTS-END*/;
+58:["pass","Cài đặt → nút ngôn ngữ → màn Language: với test ID có native; cho NATIVE_LANGUAGE_2 ID hỏng thì không có native (còn màn Language lần đầu vẫn có) → đúng ad unit riêng. Bấm Apply quay lại Cài đặt, không có inter",false],
+59:["pass","Lần đầu cài và mở từ Cài đặt: dải Tiny1 (Test Ad) ngay dưới tiêu đề Choose your language, native lớn vẫn ở chân màn. Máy 7DXK6H95X85PJ7FM",false],
+60:["pass","native_language_small = 0: không có dải dưới tiêu đề, danh sách ngôn ngữ nằm sát tiêu đề, native lớn ở chân màn vẫn hiện",false]}/*RESULTS-END*/;
 
 const PARAMS = [
  ["Cấu hình chung (settings trong ad_config)", [

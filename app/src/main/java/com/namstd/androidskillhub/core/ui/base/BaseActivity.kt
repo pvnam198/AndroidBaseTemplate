@@ -37,9 +37,11 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     protected val prefs: AppPreferences get() = AppPreferences.getInstance(this)
 
     private var bannerHandle: BannerSlotHandle? = null
-    private var nativeHandle: AdHandle? = null
     private var bannerContainer: ViewGroup? = null
-    private var nativeContainer: FrameLayout? = null
+
+    /** Các native [loadNative] của màn này - một màn có thể có nhiều (vd. Language: dải dưới tiêu đề + card ở chân). */
+    private val nativeHandles = mutableListOf<AdHandle>()
+    private val nativeContainers = mutableListOf<FrameLayout>()
 
     /**
      * Load banner của [placement] vào [container] và tự huỷ nó trong [onDestroy]. Loại banner và timer
@@ -68,13 +70,13 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
      * vị trí tắt chỗ này ([AdPolicy.nativeEnabled]), thì không load gì và [container] bị ẩn.
      */
     protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
-        nativeContainer = container
+        nativeContainers += container
         if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
             return
         }
         container.post {
-            if (!isPremiumUser()) nativeHandle = NativeAds.subscribe(this, placement, container, preloadOnShow)
+            if (!isPremiumUser() && !isDestroyed) nativeHandles += NativeAds.subscribe(this, placement, container, preloadOnShow)
         }
     }
 
@@ -93,10 +95,9 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     private fun hideAds() {
         bannerHandle?.destroy()
         bannerHandle = null
-        nativeHandle?.destroy()
-        nativeHandle = null
+        destroyNatives()
         bannerContainer?.isVisible = false
-        nativeContainer?.isVisible = false
+        nativeContainers.forEach { it.isVisible = false }
     }
 
     /**
@@ -156,6 +157,11 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
             .show(supportFragmentManager, PostInterstitialNativeAdDialogFragment.TAG)
     }
 
+    private fun destroyNatives() {
+        nativeHandles.forEach { it.destroy() }
+        nativeHandles.clear()
+    }
+
     protected abstract fun inflateBinding(inflater: LayoutInflater): VB
 
     protected open fun initConfig(savedInstanceState: Bundle?) = Unit
@@ -205,10 +211,9 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         } finally {
             bannerHandle?.destroy()
             bannerHandle = null
-            nativeHandle?.destroy()
-            nativeHandle = null
+            destroyNatives()
             bannerContainer = null
-            nativeContainer = null
+            nativeContainers.clear()
             super.onDestroy()
         }
     }

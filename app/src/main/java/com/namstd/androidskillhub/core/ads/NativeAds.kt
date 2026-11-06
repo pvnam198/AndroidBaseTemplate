@@ -21,6 +21,8 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
 import com.namstd.androidskillhub.core.config.PlacementConfig
+import com.facebook.shimmer.ShimmerFrameLayout
+import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 /**
@@ -36,6 +38,9 @@ enum class NativePlacement(val unit: AdUnit) {
 
     /** Màn Language mở từ Cài đặt - cùng vị trí `native_language` (enable, layout), ad unit `NATIVE_LANGUAGE_2`. */
     LANGUAGE_SETTING(AdUnit.NATIVE_LANGUAGE_2),
+
+    /** Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt) - vị trí `native_language_small`. */
+    LANGUAGE_SMALL(AdUnit.NATIVE_LANGUAGE_SMALL),
 
     /** Native ở chân các trang nội dung Intro; `native_intro` liệt kê trang có native (`24` = trang 2 và 4). */
     ONBOARDING_1(AdUnit.NATIVE_INTRO_1),
@@ -74,7 +79,7 @@ enum class NativePlacement(val unit: AdUnit) {
         ONBOARDING_2 -> 2 in config.enableDigits
         ONBOARDING_3 -> 3 in config.enableDigits
         ONBOARDING_4 -> 4 in config.enableDigits
-        SPLASH, LANGUAGE, LANGUAGE_SETTING, WELCOME_BACK -> config.enableCode > 0
+        SPLASH, LANGUAGE, LANGUAGE_SETTING, LANGUAGE_SMALL, WELCOME_BACK -> config.enableCode > 0
         else -> true
     }
 }
@@ -252,18 +257,18 @@ object NativeAds {
         }
         var currentView: NativeAdView? = null
         var attachedAd: NativeAd? = null
-        var shimmer: AdNativeShimmerBinding? = showShimmer(activity, container)
+        var shimmer: ShimmerFrameLayout? = showShimmer(activity, container, templateFor(placement).isStrip)
 
         val request = request(
             activity, placement,
             onFailed = {
                 // Không có ad để hiện - ẩn slot đi thay vì để shimmer chạy mãi.
-                shimmer?.let { it.root.stopShimmer(); container.removeView(it.root) }
+                shimmer?.let { it.stopShimmer(); container.removeView(it) }
                 shimmer = null
                 container.visibility = View.GONE
             },
         ) { ad ->
-            shimmer?.let { it.root.stopShimmer(); container.removeView(it.root) }
+            shimmer?.let { it.stopShimmer(); container.removeView(it) }
             shimmer = null
             val view = render(activity, ad)
             container.removeAllViews()
@@ -282,7 +287,7 @@ object NativeAds {
             activity.runOnUiThread {
                 currentView?.destroy()
                 currentView = null
-                shimmer?.let { it.root.stopShimmer(); container.removeView(it.root) }
+                shimmer?.let { it.stopShimmer(); container.removeView(it) }
                 shimmer = null
                 container.removeAllViews()
             }
@@ -322,12 +327,14 @@ object NativeAds {
     }
 
     /** Hiện skeleton shimmer trong [container] để slot ad không bao giờ đột ngột hiện ra từ chỗ trống. */
-    private fun showShimmer(activity: Activity, container: FrameLayout): AdNativeShimmerBinding {
-        val binding = AdNativeShimmerBinding.inflate(LayoutInflater.from(activity))
+    /** Shimmer giữ chỗ trong lúc load; [strip] = true (template dải Tiny) thì dùng shimmer thấp như banner. */
+    private fun showShimmer(activity: Activity, container: FrameLayout, strip: Boolean): ShimmerFrameLayout {
+        val inflater = LayoutInflater.from(activity)
+        val shimmer = if (strip) AdBannerShimmerBinding.inflate(inflater).root else AdNativeShimmerBinding.inflate(inflater).root
         container.removeAllViews()
-        container.addView(binding.root)
-        binding.root.startShimmer()
-        return binding
+        container.addView(shimmer)
+        shimmer.startShimmer()
+        return shimmer
     }
 
     private fun startLoad(

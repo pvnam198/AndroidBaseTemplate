@@ -48,6 +48,12 @@
             android:visibility="invisible" />
     </FrameLayout>
 
+    <!-- native_language_small: dải native nhỏ (mặc định Tiny1) ngay dưới tiêu đề; tắt / không có ad thì ẩn. -->
+    <FrameLayout
+        android:id="@+id/native_small_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/language_list"
         android:layout_width="match_parent"

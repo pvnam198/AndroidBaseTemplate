@@ -226,6 +226,7 @@
         </li>
         <li><span class="pill ok">Có</span> <b>Mỗi trang Intro một cấu hình</b> (05/11): Intro có 4 trang nội dung, trang thứ N dùng <code>introN_setup</code> (trống thì dùng <code>intro1_setup</code>). Trang native toàn màn hình giờ chèn theo <code>native_intro_full</code>: mỗi chữ số là một màn Intro có trang native full ngay sau (<code>123</code> = sau màn 1, 2, 3), mặc định không có.</li>
         <li><span class="pill ok">Có</span> <b>Cấu hình theo từng vị trí như bảng gốc</b> (05/11): toàn bộ nằm trong <b>một key <code>ad_config</code></b> trên Firebase, đúng mẫu JSON của team: phần <code>settings</code> cho cấu hình chung, mỗi vị trí (<code>ads_splash</code>, <code>inter_language</code>, <code>banner_home</code>…) một phần chứa đủ các cột <code>enable</code>, <code>step_count</code>, <code>refresh_rate</code>, <code>collap_config</code>, <code>wait_time</code>, <code>native_template</code> và ID riêng cho từng ad unit (<code>name1</code> + <code>id1</code>–<code>id3</code>). Bộ key gộp cũ (<code>enable</code>, <code>id_*</code>…) đã bỏ. Thêm native ở màn Splash và chọn trang Intro có native (<code>native_intro = 24</code>). Bỏ banner ở Splash, Language và Intro.</li>
+        <li><span class="pill ok">Có</span> <b><code>native_language_small</code></b> (06/11): dải native nhỏ (mặc định Tiny1) ngay dưới tiêu đề màn Language, cả lần đầu cài lẫn mở từ Cài đặt.</li>
         <li><span class="pill ok">Có</span> <b><code>splash_fallback</code></b> (05/11): Splash không kịp hiện quảng cáo thì bấm Apply ở màn Language sẽ hiện inter bù. Không có màn Language thì thôi.</li>
         <li><span class="pill ok">Có</span> Splash (AOA / Inter / Inter + Native), Inter ở Language và Intro, native ở Language / Intro / trang native toàn màn hình, banner các kiểu, quay lại app (AOA / Welcome back), native Welcome back.</li>
       </ul>
@@ -246,7 +247,7 @@
         <li><span class="ask">cần xác nhận</span> <code>intro1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
         <li><span class="ask">cần xác nhận</span> <code>language_setup.loading</code>: sheet ghi "loading khi load native"; app hiện loading trong lúc chờ <code>language_delay_millis</code>.</li>
         <li><span class="ask">cần xác nhận</span> <code>collap_config</code>: cách mở quảng cáo khi bấm X (xem lỗi ở trên).</li>
-        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>); <code>native_language_small</code> nằm ở đâu trên màn Language.</li>
+        <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>).</li>
       </ul>
     </div>
 
@@ -305,7 +306,7 @@ const PLACEMENTS = [
   ["Splash", ["NATIVE_SPLASH"], "native_splash", "1", "", "", "", "", "Big5", "Native trên màn Splash.", OK],
   ["Language", ["NATIVE_LANGUAGE", "NATIVE_LANGUAGE_2"], "native_language", "1", "", "", "", "", "",
     "Native ở màn chọn ngôn ngữ. <code>enable</code> chọn layout: <code>1</code> = nút Install ở dưới (Big1), <code>2</code> = nút Install ở trên (Big5). Vị trí này không dùng <code>native_template</code> (lỡ ghi cũng theo <code>enable</code>). <code>NATIVE_LANGUAGE</code> dùng ở màn chọn ngôn ngữ lần đầu cài app; <code>NATIVE_LANGUAGE_2</code> dùng khi mở màn chọn ngôn ngữ từ Cài đặt.", OK],
-  ["Language", ["NATIVE_LANGUAGE_SMALL"], "native_language_small", "1", "", "", "", "", "Tiny1", "Native nhỏ (dải Tiny1) ở màn Language.", NO],
+  ["Language", ["NATIVE_LANGUAGE_SMALL"], "native_language_small", "1", "", "", "", "", "Tiny1", "Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu cài lẫn mở từ Cài đặt), thêm vào native <code>native_language</code> ở chân màn. <code>native_template</code> trống thì mặc định Tiny1.", OK],
   ["Language", ["INTER_LANGUAGE", "NATIVE_INTER_LANGUAGE"], "inter_language", "3", "", "", "", "3",
     "", "Quảng cáo khi bấm xác nhận ngôn ngữ. <code>3</code> = Inter rồi Native toàn màn hình, đếm ngược 3s.", OK],
   ["Intro", ["NATIVE_INTRO_1", "NATIVE_INTRO_2", "NATIVE_INTRO_3", "NATIVE_INTRO_4"], "native_intro", "24", "", "", "", "", "Big4",

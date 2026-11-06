@@ -34,4 +34,11 @@ class NativeAdTemplateTest {
         assertEquals(NativeAdTemplate.BIG1, template(AdKey.NATIVE_SPLASH, "1", nativeTemplate = "lang2_a"))
         assertEquals(NativeAdTemplate.BIG1, template(AdKey.NATIVE_SPLASH, "1"))
     }
+
+    @Test
+    fun languageSmallDefaultsToTiny1ButHonoursNativeTemplate() {
+        assertEquals(NativeAdTemplate.TINY1, template(AdKey.NATIVE_LANGUAGE_SMALL, "1"))
+        assertEquals(NativeAdTemplate.TINY1, template(AdKey.NATIVE_LANGUAGE_SMALL, "1", nativeTemplate = "xyz"))
+        assertEquals(NativeAdTemplate.TINY2, template(AdKey.NATIVE_LANGUAGE_SMALL, "1", nativeTemplate = "Tiny2"))
+    }
 }

@@ -41,7 +41,7 @@ fun resolveAdProfile(
 
 /**
  * Cấu hình cố định của [AdProfile.BASIC]: AOA ở Splash, banner thường ở chân các màn in-app, interstitial
- * in-app (gap 90s), App Open khi quay lại app. Không native, không inter ở Language/Intro, không banner ở
+ * in-app (gap 90s), App Open khi quay lại app. Không native, không inter ở Language/Onboarding, không banner ở
  * Splash/Language/Onboarding. Sửa bộ gọn thì sửa ở đây.
  */
 object BasicAdProfile {

@@ -33,7 +33,7 @@ import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 enum class NativePlacement(val unit: AdUnit) {
     /** Native trên màn Splash (`native_splash`). */
     SPLASH(AdUnit.NATIVE_SPLASH),
-    /** Màn Language lần đầu cài app (luồng Splash → Language → Intro). */
+    /** Màn Language lần đầu cài app (luồng Splash → Language → Onboarding). */
     LANGUAGE(AdUnit.NATIVE_LANGUAGE),
 
     /** Màn Language mở từ Cài đặt - cùng vị trí `native_language` (enable, layout), ad unit `NATIVE_LANGUAGE_2`. */
@@ -42,14 +42,14 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt) - vị trí `native_language_small`. */
     LANGUAGE_SMALL(AdUnit.NATIVE_LANGUAGE_SMALL),
 
-    /** Native ở chân các trang nội dung Intro; `native_intro` liệt kê trang có native (`24` = trang 2 và 4). */
-    ONBOARDING_1(AdUnit.NATIVE_INTRO_1),
-    ONBOARDING_2(AdUnit.NATIVE_INTRO_2),
-    ONBOARDING_3(AdUnit.NATIVE_INTRO_3),
-    ONBOARDING_4(AdUnit.NATIVE_INTRO_4),
+    /** Native ở chân các trang nội dung Onboarding; `native_onboarding` liệt kê trang có native (`24` = trang 2 và 4). */
+    ONBOARDING_1(AdUnit.NATIVE_ONBOARDING_1),
+    ONBOARDING_2(AdUnit.NATIVE_ONBOARDING_2),
+    ONBOARDING_3(AdUnit.NATIVE_ONBOARDING_3),
+    ONBOARDING_4(AdUnit.NATIVE_ONBOARDING_4),
 
-    /** Trang native toàn màn hình trong Intro (`native_intro_full`). */
-    ONBOARDING_AD(AdUnit.NATIVE_INTRO_FULL),
+    /** Trang native toàn màn hình trong Onboarding (`native_full_onboarding`). */
+    ONBOARDING_AD(AdUnit.NATIVE_FULL_ONBOARDING),
 
     /** Native xen trong feed màn chính - sheet không có dòng riêng, dùng ID của `NATIVE_HOME`. */
     HOME_FEED(AdUnit.NATIVE_HOME),
@@ -57,7 +57,7 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Native toàn màn hình hiện sau inter của từng vị trí (`NATIVE_INTER_*`). */
     AFTER_INTER_SPLASH(AdUnit.NATIVE_INTER_SPLASH),
     AFTER_INTER_LANGUAGE(AdUnit.NATIVE_INTER_LANGUAGE),
-    AFTER_INTER_INTRO(AdUnit.NATIVE_INTER_INTRO),
+    AFTER_INTER_ONBOARDING(AdUnit.NATIVE_INTER_ONBOARDING),
     AFTER_INTER_HOME(AdUnit.NATIVE_INTER_HOME),
 
     /** Native collapsible ở ô banner màn chính (`banner_home` = 4) - xem [NativeCollapseAd]. */
@@ -70,7 +70,7 @@ enum class NativePlacement(val unit: AdUnit) {
     WELCOME_BACK(AdUnit.NATIVE_WELCOME_BACK);
 
     /**
-     * Chỗ này có bật theo `enable` của vị trí ([config]) không. Native Intro đọc theo chữ số (trang có native);
+     * Chỗ này có bật theo `enable` của vị trí ([config]) không. Native Onboarding đọc theo chữ số (trang có native);
      * native Splash / Language / Welcome back cần `enable` > 0; các chỗ còn lại do vị trí cha quyết định
      * (inter, banner, trang native full) nên luôn được phép ở đây.
      */

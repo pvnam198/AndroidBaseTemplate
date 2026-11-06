@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Màn chọn ngôn ngữ, dùng ở hai chỗ:
- * - lần đầu cài app (Splash → Language → Intro): native `NATIVE_LANGUAGE`, bấm Apply có inter `inter_language`, rồi
- *   sang Intro / Home;
+ * - lần đầu cài app (Splash → Language → Onboarding): native `NATIVE_LANGUAGE`, bấm Apply có inter `inter_language`, rồi
+ *   sang Onboarding / Home;
  * - mở từ Cài đặt ([openFromSettings]): native `NATIVE_LANGUAGE_2`, bấm Apply thì lưu ngôn ngữ và quay lại Cài đặt,
  *   không có inter.
  * Cả hai dùng chung vị trí `native_language` (`enable` bật/tắt và chọn layout).
@@ -43,7 +43,7 @@ class LanguageActivity : BaseActivity<ActivityLanguageBinding>() {
         selectedLanguage = AppLanguage.fromCode(prefs.selectedLanguage) ?: AppLanguage.default
         if (fromSettings) return
         OnboardingPageFragment.PLACEMENTS.filter(AdPolicy::nativeEnabled).forEach(NativeAds::preload)
-        if (AdPolicy.config(AdKey.NATIVE_INTRO_FULL).enableDigits.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
+        if (AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).enableDigits.isNotEmpty()) NativeAds.preload(NativePlacement.ONBOARDING_AD)
     }
 
     override fun initViews() {

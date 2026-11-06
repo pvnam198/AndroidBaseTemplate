@@ -2,7 +2,7 @@
 "1) Dùng bản DEBUG. Vào Settings → 'Debug config', đặt giá trị từng key rồi bấm 'Lưu override'.",,,,,,,
 "2) Firebase chỉ có key ad_config (cả khối JSON). Ở Debug config: dán cả khối vào dòng ad_config, hoặc sửa riêng từng dòng (tên trong settings / key vị trí: một số = enable, hoặc JSON). Thời gian tính bằng ms.",,,,,,,
 "3) Key ở Splash (ads_enable, ads_splash, native_splash, on_resume, splash_fallback): ĐÓNG HẲN & MỞ LẠI app.",,,,,,,
-4) Xem lại Language/Intro: Settings → 'Reset onboarding' rồi mở lại app.,,,,,,,
+4) Xem lại Language/Onboarding: Settings → 'Reset onboarding' rồi mở lại app.,,,,,,,
 5) 'Xoá hết override' để về giá trị Firebase/mặc định.,,,,,,,
 ,,,,,,,
 STT,Nhóm,Key,Giá trị đặt (Debug Config),Các bước,Kỳ vọng,Kết quả (Pass/Fail),Ghi chú
@@ -11,25 +11,25 @@ STT,Nhóm,Key,Giá trị đặt (Debug Config),Các bước,Kỳ vọng,Kết qu
 3,Debug Config,(màn debug),-,"Bấm ""Xoá hết override""",Mọi key về giá trị Firebase/mặc định,,
 4,Cấu hình chung,ads_enable,0,"Mở app, đi hết luồng",Không có quảng cáo nào,,
 5,Cấu hình chung,ads_enable,1 (default),Mở app lần đầu,Kịch bản A: quảng cáo theo cấu hình từng vị trí,Pass,"Luồng mặc định (case 25, 31, 33, 38, 43, 46) đều đúng"
-6,Cấu hình chung,ads_enable,2,Mở app (token Adjust đang giả),"Kịch bản B: AOA ở Splash, không native, không inter ở Language/Intro",,
+6,Cấu hình chung,ads_enable,2,Mở app (token Adjust đang giả),"Kịch bản B: AOA ở Splash, không native, không inter ở Language/Onboarding",,
 7,Cấu hình chung,ads_enable,3,Mở app 2 lần,"Lần đầu máy bị đánh dấu nhận test ad → kịch bản B; lần sau AOA ở Splash, Language không có native",Pass,Lần 1 không có QC ở Splash (chuyển B giữa chừng); lần 2 AOA hiện ~6s; Language không native; is_test_ad_device=true
 8,Cấu hình chung,language_delay_millis,3000,Vào màn Language,Nút xác nhận hiện sau ~3s,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
 9,Cấu hình chung,language_setup,"next=2,loading=false (default)",Vào màn Language,"Nút chữ ""Apply"", không vòng loading",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
 10,Cấu hình chung,language_setup,"next=1,loading=true",Vào màn Language,"Vòng loading trước, rồi icon dấu check trên thanh tiêu đề",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-11,Cấu hình chung,intro1_setup,"next=1,ds=1,delay=0,dot=1 (default)",Vào Intro,"Nút Next dạng button, chấm tròn phía trên nút, hiện ngay",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-12,Cấu hình chung,intro1_setup,"next=1,ds=1,delay=0,dot=0",Vào Intro,Ẩn chấm tròn,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-13,Cấu hình chung,intro1_setup,"next=2,ds=1,delay=0,dot=1",Vào Intro,Next là chữ không nền; bấm vào chữ sang trang kế,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-14,Cấu hình chung,intro1_setup,"next=1,ds=1,delay=1500,dot=1","Vào Intro, sang trang",Mỗi trang chờ ~1.5s mới hiện Next,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-15,Cấu hình chung,intro1_setup,"next=1,ds=0,delay=0,dot=1",Vào Intro,Chấm tròn nằm dưới nút Next,,
-16,Cấu hình chung,intro2_setup,"next=2,ds=1,delay=0,dot=0",Đi qua trang 1 → 2 → 3,"Trang 2: chữ Next không nền, không chấm; trang 1, 3 theo intro1",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-17,Cấu hình chung,intro2_setup … intro4_setup,"(trống) + intro1_setup=next=2,…",Đi qua cả 4 trang,Cả 4 trang dùng intro1,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
-18,Cấu hình chung,intro_swipe,false,"Vào Intro, vuốt ngang","Không vuốt được, chỉ bấm Next",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+11,Cấu hình chung,onboarding1_setup,"next=1,ds=1,delay=0,dot=1 (default)",Vào Onboarding,"Nút Next dạng button, chấm tròn phía trên nút, hiện ngay",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+12,Cấu hình chung,onboarding1_setup,"next=1,ds=1,delay=0,dot=0",Vào Onboarding,Ẩn chấm tròn,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+13,Cấu hình chung,onboarding1_setup,"next=2,ds=1,delay=0,dot=1",Vào Onboarding,Next là chữ không nền; bấm vào chữ sang trang kế,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+14,Cấu hình chung,onboarding1_setup,"next=1,ds=1,delay=1500,dot=1","Vào Onboarding, sang trang",Mỗi trang chờ ~1.5s mới hiện Next,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+15,Cấu hình chung,onboarding1_setup,"next=1,ds=0,delay=0,dot=1",Vào Onboarding,Chấm tròn nằm dưới nút Next,,
+16,Cấu hình chung,onboarding2_setup,"next=2,ds=1,delay=0,dot=0",Đi qua trang 1 → 2 → 3,"Trang 2: chữ Next không nền, không chấm; trang 1, 3 theo onboarding1",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+17,Cấu hình chung,onboarding2_setup … onboarding4_setup,"(trống) + onboarding1_setup=next=2,…",Đi qua cả 4 trang,Cả 4 trang dùng onboarding1,Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
+18,Cấu hình chung,onboarding_swipe,false,"Vào Onboarding, vuốt ngang","Không vuốt được, chỉ bấm Next",Pass,Đã pass trước khi đổi spec (05/11); phần này không đổi khi chuyển sang key theo vị trí
 19,Cấu hình chung,inter_delay_time,"time=30000,ignore=",2 inter cách nhau < 30s,Inter thứ 2 bị chặn,,
 20,Cấu hình chung,inter_delay_time,"time=30000,ignore=inter_language",Vừa có inter → Language bấm Apply,Inter Language vẫn hiện,,
 21,Cấu hình chung,splash_fallback,"inter_language + ads_splash={""""enable"""":1","app_open"""":{""""name1"""":""""AOA_SPLASH""""","id1"""":""""<id hỏng>""""}} + inter_language=0",Mở app lần đầu → Language → Apply,Splash không có AOA; bấm Apply hiện inter bù,,
 22,Cấu hình chung,splash_fallback,"(trống), cùng cấu hình case trên",Mở app lần đầu → Language → Apply,Không có inter,,
-23,Cấu hình chung,native_intro_use_icon_next,false (default) + native_intro_full=2,Intro tới trang quảng cáo,"Mũi tên Next góc trên phải, nút đáy ẩn",,
-24,Cấu hình chung,native_intro_use_icon_next,"true + native_intro_full={""enable"":2,""wait_time"":3000}",Intro tới trang quảng cáo,Vòng loading ~3s rồi hiện nút X,,
+23,Cấu hình chung,native_onboarding_use_icon_next,false (default) + native_full_onboarding=2,Onboarding tới trang quảng cáo,"Mũi tên Next góc trên phải, nút đáy ẩn",,
+24,Cấu hình chung,native_onboarding_use_icon_next,"true + native_full_onboarding={""enable"":2,""wait_time"":3000}",Onboarding tới trang quảng cáo,Vòng loading ~3s rồi hiện nút X,,
 25,ads_splash,ads_splash,2 (default),Mở app lần đầu,Interstitial ở cuối Splash,Pass,Inter hiện ~6s sau khi mở
 26,ads_splash,ads_splash,1,Mở lại app,App Open ở cuối Splash,Pass,Kiểm qua kịch bản B (case 7): AOA_SPLASH hiện ~6s
 27,ads_splash,ads_splash,"{""enable"":3,""wait_time"":3000}",Mở app lần đầu,"Inter, đóng inter → native toàn màn hình đếm ngược 3s rồi hiện X",Pass,Đóng inter → native đếm 2 → 1 → X; bấm X vào Language
@@ -43,12 +43,12 @@ STT,Nhóm,Key,Giá trị đặt (Debug Config),Các bước,Kỳ vọng,Kết qu
 35,inter_language,inter_language,"{""enable"":1,""inter"":{""name1"":""INTER_LANGUAGE"",""id1"":""<id hỏng>""}}",Language bấm Apply,"Không có inter (ID hỏng, không có ID khác)",Pass,Theo format ad_config (inter.name1 + id1 hỏng): không có quảng cáo
 36,inter_language,inter_language,"{""enable"":1,""inter"":{""name1"":""INTER_LANGUAGE"",""id1"":""<id hỏng>"",""id2"":""<test id>""}}",Language bấm Apply,Có inter (waterfall sang ID thứ 2),Pass,"Theo format ad_config (id1 hỏng, id2 test): waterfall sang id2, inter hiện"
 37,inter_language,inter_language,"{""enable"":1,""inter"":{""name1"":""INTER_SPLASH"",""id1"":""<id hỏng>""}}",Language bấm Apply,Có inter (ID của unit khác không ảnh hưởng),Pass,Inter hiện
-38,native_intro,native_intro,1234 (default),Đi qua 4 trang Intro,Cả 4 trang có native ở chân,Pass,Cả 4 trang có ad_headline
-39,native_intro,native_intro,24,Đi qua 4 trang Intro,Chỉ trang 2 và 4 có native,Pass,"Trang 1, 3 không; trang 2, 4 có"
-40,native_intro_full,native_intro_full,0 (default),Đi qua Intro,4 trang nội dung liền nhau,Pass,4 trang rồi vào Home
-41,native_intro_full,native_intro_full,2,Đi qua Intro,"Trang quảng cáo sau trang 2 (5 trang), không có chấm tròn",,
-42,native_intro_full,native_intro_full,123,Đi qua Intro,"7 trang: QC sau trang 1, 2, 3",,
-43,inter_intro,inter_intro,1 (default),Bấm Get started ở trang cuối Intro,Interstitial rồi vào Home,Pass,Lần đầu FAIL: inter Intro không hiện vì INTER_INTRO chưa được tải sẵn (mỗi unit giờ có ô riêng). Đã sửa: màn Intro tải sẵn inter của nó
+38,native_onboarding,native_onboarding,1234 (default),Đi qua 4 trang Onboarding,Cả 4 trang có native ở chân,Pass,Cả 4 trang có ad_headline
+39,native_onboarding,native_onboarding,24,Đi qua 4 trang Onboarding,Chỉ trang 2 và 4 có native,Pass,"Trang 1, 3 không; trang 2, 4 có"
+40,native_full_onboarding,native_full_onboarding,0 (default),Đi qua Onboarding,4 trang nội dung liền nhau,Pass,4 trang rồi vào Home
+41,native_full_onboarding,native_full_onboarding,2,Đi qua Onboarding,"Trang quảng cáo sau trang 2 (5 trang), không có chấm tròn",,
+42,native_full_onboarding,native_full_onboarding,123,Đi qua Onboarding,"7 trang: QC sau trang 1, 2, 3",,
+43,inter_onboarding,inter_onboarding,1 (default),Bấm Get started ở trang cuối Onboarding,Interstitial rồi vào Home,Pass,Lần đầu FAIL: inter Onboarding không hiện vì INTER_ONBOARDING chưa được tải sẵn (mỗi unit giờ có ô riêng). Đã sửa: màn Onboarding tải sẵn inter của nó
 44,on_resume,on_resume,1 (default),Về nền rồi quay lại app,App Open,,
 45,on_resume,on_resume,2,Về nền rồi quay lại app,"Màn Welcome back có native, đếm ngược wait_time của native_welcome_back",Pass,settings.on_resume = 2: về nền rồi mở lại → màn Welcome back
 46,banner_home,banner_home,2 (default),Vào màn chính,Banner collapsible ở chân màn,Pass,Có AdView ở ô banner
@@ -59,7 +59,7 @@ STT,Nhóm,Key,Giá trị đặt (Debug Config),Các bước,Kỳ vọng,Kết qu
 51,banner_setting,banner_setting,3,Vào Cài đặt,Banner thường (Cài đặt không có native trong ô banner),Pass,Có AdView
 52,inter_home,inter_home,1,Màn chính bấm Cài đặt,Interstitial rồi vào Cài đặt,,
 53,Regression,premium,-,"Settings → Premium → Upgrade, quay lại app",Tắt mọi quảng cáo,,
-54,ad_config,ad_config,"{""settings"":{""ads_enable"":1,…},""ads_splash"":{""enable"":3,""wait_time"":3000},""inter_language"":{""enable"":1},""native_intro"":{""enable"":24},""inter_intro"":{""enable"":0},""banner_home"":{""enable"":4}}","Dán cả khối vào dòng ad_config, đi hết luồng","Inter + native sau inter (3s) ở Splash; inter ở Language; native trang 2, 4; không inter cuối Intro; native collapsible ở màn chính",Pass,"Splash inter ~6s, native sau inter đếm 1 → X; Language inter; Intro native trang 2, 4; không inter cuối Intro; màn chính có thẻ collapsible"
+54,ad_config,ad_config,"{""settings"":{""ads_enable"":1,…},""ads_splash"":{""enable"":3,""wait_time"":3000},""inter_language"":{""enable"":1},""native_onboarding"":{""enable"":24},""inter_onboarding"":{""enable"":0},""banner_home"":{""enable"":4}}","Dán cả khối vào dòng ad_config, đi hết luồng","Inter + native sau inter (3s) ở Splash; inter ở Language; native trang 2, 4; không inter cuối Onboarding; native collapsible ở màn chính",Pass,"Splash inter ~6s, native sau inter đếm 1 → X; Language inter; Onboarding native trang 2, 4; không inter cuối Onboarding; màn chính có thẻ collapsible"
 55,ad_config,inter_language (dòng riêng),ad_config có inter_language enable 1 + dòng inter_language = 0,Language bấm Apply,Không có inter (dòng riêng thắng ad_config),Pass,Không có inter
 56,native_language,native_language,2,Vào màn Language,Native layout 2: nút Install ở trên ảnh (Big5),Pass,enable 2 (kèm native_template Big1): nút Install y=1599 nằm trên ảnh y=2017 → layout 2 (Big5). Máy 23090RA98G
 57,native_language,native_language,"{""enable"":2,""native_template"":""Big1""}",Vào màn Language,Vẫn layout 2 (nút Install ở trên) - native_template bị bỏ qua,Pass,enable 2 + native_template Big1 → vẫn layout 2; ngược lại enable 1 + native_template Big5 → nút Install y=2462 dưới ảnh y=1849 → layout 1. native_template bị bỏ qua đúng

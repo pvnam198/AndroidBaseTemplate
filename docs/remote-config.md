@@ -35,10 +35,10 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
     "language_delay_millis": 800,
     "splash_fallback": "inter_language",
     "language_setup": "next=1, loading=true",
-    "intro1_setup": "next=1,ds=1,delay=0,dot=1",
-    "intro_swipe": true,
-    "inter_delay_time": "time=10000,ignore=ads_splash|inter_language|inter_intro",
-    "native_intro_use_icon_next": false,
+    "onboarding1_setup": "next=1,ds=1,delay=0,dot=1",
+    "onboarding_swipe": true,
+    "inter_delay_time": "time=10000,ignore=ads_splash|inter_language|inter_onboarding",
+    "native_onboarding_use_icon_next": false,
     "on_resume": 2,
     "on_resume_id": "ca-app-pub-…"
   },
@@ -74,10 +74,10 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `language_delay_millis` | ms | `800` | Chờ trước khi hiện nút xác nhận màn Language. `0` = hiện ngay. |
 | `splash_fallback` | String | trống | Splash không kịp hiện quảng cáo thì inter của vị trí này (vd `inter_language`) hiện bù **1 lần** ở lần chạy kế tiếp của nó (Language: lúc bấm Apply), bất kể `enable` / `step_count` / gap của nó. Không có màn Language thì thôi. Chỉ kịch bản A. |
 | `language_setup` | String | `next=2,loading=false` | `next`: `1` icon dấu check trên thanh tiêu đề, `2` nút chữ. `loading`: hiện vòng loading trong lúc chờ `language_delay_millis`. |
-| `intro1_setup` … `intro4_setup` | String | intro1 `next=1,ds=1,delay=0,dot=1`; intro2-4 không có | Trang nội dung thứ N của Intro dùng `introN_setup` (không có → dùng intro1). `next`: `1` nút button, `2` chữ "Next" không nền. `ds`: `1` chấm tròn trên nút Next, `0` dưới. `delay`: ms chờ trước khi hiện Next. `dot`: `1` hiện chấm, `0` ẩn. |
-| `intro_swipe` | Boolean | `true` | Cho vuốt chuyển trang ở Intro. |
-| `inter_delay_time` | String | `time=0,ignore=` | `time` = khoảng cách tối thiểu (**ms**) giữa 2 interstitial; `ignore` = các vị trí được miễn (`ads_splash\|inter_language\|inter_intro`…). |
-| `native_intro_use_icon_next` | Boolean | `false` | Trang native toàn màn hình trong Intro: `true` nút X, `false` nút Next. Nhận cả `1`/`0`. |
+| `onboarding1_setup` … `onboarding4_setup` | String | onboarding1 `next=1,ds=1,delay=0,dot=1`; onboarding2-4 không có | Trang nội dung thứ N của Onboarding dùng `onboardingN_setup` (không có → dùng onboarding1). `next`: `1` nút button, `2` chữ "Next" không nền. `ds`: `1` chấm tròn trên nút Next, `0` dưới. `delay`: ms chờ trước khi hiện Next. `dot`: `1` hiện chấm, `0` ẩn. |
+| `onboarding_swipe` | Boolean | `true` | Cho vuốt chuyển trang ở Onboarding. |
+| `inter_delay_time` | String | `time=0,ignore=` | `time` = khoảng cách tối thiểu (**ms**) giữa 2 interstitial; `ignore` = các vị trí được miễn (`ads_splash\|inter_language\|inter_onboarding`…). |
+| `native_onboarding_use_icon_next` | Boolean | `false` | Trang native toàn màn hình trong Onboarding: `true` nút X, `false` nút Next. Nhận cả `1`/`0`. |
 | `on_resume` | Int | `1` | Quay lại app: `0` tắt · `1` App Open · `2` màn Welcome back. |
 | `on_resume_id` | String | trống | ID App Open khi quay lại app (ad unit `ON_RESUME`). Trống → test ID. |
 
@@ -89,11 +89,11 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 
 | Cột | Ý nghĩa |
 |---|---|
-| `enable` | `0` = tắt. Các số khác theo bảng mã của từng vị trí (bảng dưới). Một số vị trí đọc **từng chữ số** (`native_intro`, `native_intro_full`). |
+| `enable` | `0` = tắt. Các số khác theo bảng mã của từng vị trí (bảng dưới). Một số vị trí đọc **từng chữ số** (`native_onboarding`, `native_full_onboarding`). |
 | `step_count` | Inter chỉ hiện ở lần yêu cầu chia hết cho N. Bộ đếm **riêng từng vị trí**, lưu qua các lần mở app. |
 | `refresh_rate` | Ms tự tải lại banner/native của ô banner. `0` = không tự tải lại. |
 | `collap_config` | Native collapsible: lần bấm **nút X** nào mở quảng cáo thay vì thu gọn (`357` = lần 3, 5, 7). Bộ đếm chung trong một lần mở app. Cần Google duyệt *custom click gesture* cho tài khoản. |
-| `wait_time` | Ms đếm ngược trên màn native toàn màn hình (sau inter, trang native Intro, Welcome back) trước khi cho đóng/đi tiếp. |
+| `wait_time` | Ms đếm ngược trên màn native toàn màn hình (sau inter, trang native Onboarding, Welcome back) trước khi cho đóng/đi tiếp. |
 | `native_template` | Tên mẫu native đúng như tài liệu: Big1…Big9 (Big6 = Big5), Small1…Small4, Tiny1, Tiny2, Collap1…Collap3, Full1…Full5. Không phân biệt hoa thường. Trống hoặc không khớp → `Big1`. Bộ mẫu dùng chung, vị trí nào cũng gọi được. **Ngoại lệ:** `native_language` chọn layout bằng `enable`, bỏ qua `native_template`. Small5–Small7 team đã bỏ, không dùng. |
 
 ### Các vị trí app đang dùng
@@ -105,9 +105,9 @@ quảng cáo một object. Đúng theo mẫu JSON của team.
 | `native_language` | `1` | 0 tắt · 1 layout 1 (nút Install ở dưới = Big1) · 2 layout 2 (nút Install ở trên = Big5). **Layout chỉ theo `enable`, `native_template` bị bỏ qua** (ghi cả hai vẫn theo `enable`); mã lạ → layout 1 | `NATIVE_LANGUAGE`: màn Language **lần đầu cài app**; `NATIVE_LANGUAGE_2`: màn Language **mở từ Cài đặt** | Màn Language |
 | `native_language_small` | `0` | 0 tắt · ≥1 bật. Template theo `native_template`, **mặc định Tiny1** khi trống / ghi sai | `NATIVE_LANGUAGE_SMALL` | Dải nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt), ngoài native `native_language` ở chân màn |
 | `inter_language` | `1` | 1 Inter · 2 chỉ native · 3 Inter + native | `INTER_LANGUAGE`, `NATIVE_INTER_LANGUAGE` | Bấm Apply ở Language |
-| `native_intro` | `1234` | Mỗi chữ số = trang Intro có native (`24` = trang 2 và 4) | `NATIVE_INTRO_1` … `NATIVE_INTRO_4` | Chân các trang nội dung Intro |
-| `native_intro_full` | `0` | Mỗi chữ số = trang nội dung có trang native toàn màn hình ngay sau (`123` = sau trang 1, 2, 3); không chèn sau trang cuối | `NATIVE_INTRO_FULL` | Trang native toàn màn hình trong Intro (không có chấm tròn) |
-| `inter_intro` | `1` | như `inter_language` | `INTER_INTRO`, `NATIVE_INTER_INTRO` | Kết thúc Intro |
+| `native_onboarding` | `1234` | Mỗi chữ số = trang Onboarding có native (`24` = trang 2 và 4) | `NATIVE_ONBOARDING_1` … `NATIVE_ONBOARDING_4` | Chân các trang nội dung Onboarding |
+| `native_full_onboarding` | `0` | Mỗi chữ số = trang nội dung có trang native toàn màn hình ngay sau (`123` = sau trang 1, 2, 3); không chèn sau trang cuối | `NATIVE_FULL_ONBOARDING` | Trang native toàn màn hình trong Onboarding (không có chấm tròn) |
+| `inter_onboarding` | `1` | như `inter_language` | `INTER_ONBOARDING`, `NATIVE_INTER_ONBOARDING` | Kết thúc Onboarding |
 | `on_resume` *(trong `settings`)* | `1` | 0 tắt · 1 App Open · 2 màn Welcome back | `ON_RESUME` (`on_resume_id`) | Quay lại app |
 | `native_welcome_back` | `1` | 0 tắt · ≥1 bật | `NATIVE_WELCOME_BACK` | Màn Welcome back |
 | `banner_home` | `2` | 1 Banner · 2 Banner collapsible · 3 Native trong ô banner · 4 Native collapsible | `BANNER_HOME`, `NATIVE_HOME`, `NATIVE_COLLAP_HOME` | Chân màn chính |
@@ -141,7 +141,7 @@ Kiểm tra người dùng (`AdAudience`): nguồn marketing qua attribution Adju
 | `core/config/PlacementConfig.kt` | `AdKey` (các vị trí + `enable` mặc định), `PlacementConfig` (cấu hình một vị trí), `AdConfigDocument` (đọc cả khối `ad_config`) |
 | `core/ads/AdUnit.kt` | `AdUnit` (tên đúng cột `name1`, thuộc `AdKey` nào, loại quảng cáo), `AdFormat` (test ID) |
 | `core/ads/AdPolicy.kt` | `config(key)` = cấu hình vị trí cho user này (áp kịch bản A/B/tắt), `interDelay`, `splashFallback`, `nativeEnabled(placement)` |
-| `core/ads/InterstitialAds.kt` | `InterstitialPlacement` (SPLASH, LANGUAGE, INTRO, HOME → key, unit inter, chỗ native sau inter); cache 1 inter mỗi unit |
+| `core/ads/InterstitialAds.kt` | `InterstitialPlacement` (SPLASH, LANGUAGE, ONBOARDING, HOME → key, unit inter, chỗ native sau inter); cache 1 inter mỗi unit |
 | `core/ads/AppOpenAds.kt` | Cache 1 AOA mỗi unit (`AOA_SPLASH`, `ON_RESUME`) |
 | `core/ads/NativeAds.kt` | `NativePlacement` → `AdUnit`; ID và `native_template` lấy từ vị trí của unit |
 | `core/ads/BannerAds.kt` | `BannerPlacement` (HOME, SETTING) → key + unit banner |
@@ -162,9 +162,9 @@ Code quảng cáo **luôn** đọc qua `AdPolicy.config(key)`, không đọc th�
 | `banner_slot_auto_reload` | `refresh_rate` > 0 là tự reload |
 | `post_interstitial_native_ad_count` | Cố định 1 native sau mỗi inter (`NATIVE_INTER_*`) |
 | `open_open_gap_millis`, `inter_open_gap_millis` | Bỏ (sheet không có) |
-| `native_intro_full` dạng chuỗi số riêng | Vị trí `native_intro_full`, `enable` theo chữ số |
+| `native_full_onboarding` dạng chuỗi số riêng | Vị trí `native_full_onboarding`, `enable` theo chữ số |
 | `release_log`, `taller_banner_enabled` | Bỏ (sheet không ghi rõ / không cần) |
-| Banner ở Splash, Language, Intro | Bỏ (sheet không có vị trí này) |
+| Banner ở Splash, Language, Onboarding | Bỏ (sheet không có vị trí này) |
 
 ---
 
@@ -174,3 +174,4 @@ Code quảng cáo **luôn** đọc qua `AdPolicy.config(key)`, không đọc th�
 - **04–05/11/2026** — theo sheet "Template Info": `ads_enable` + kịch bản A/B, mọi thời gian sang ms, sửa 5 key theo ghi chú sheet, Intro 4 trang với `intro1…4_setup`, `native_intro_full`, `splash_fallback`, bỏ `release_log` / `taller_banner_enabled`.
 - **05/11/2026** — chuyển hẳn sang cấu hình **theo từng vị trí** như sheet, gói trong **một key `ad_config`** đúng mẫu JSON của team (ID theo ad unit qua `name1`/`id1`–`id3`), xoá bộ key cũ; thêm `native_splash`, `native_intro` theo trang, `step_count` / `wait_time` / `native_template` / `refresh_rate` / `collap_config` riêng từng vị trí.
 - **06/11/2026** — tên template đúng như tài liệu (Big1…, Tiny1…; bỏ Small5–7); `native_language` chọn layout theo `enable`, `NATIVE_LANGUAGE_2` cho màn Language mở từ Cài đặt; thêm `native_language_small` (dải Tiny1 dưới tiêu đề màn Language); bỏ khỏi base các vị trí không có màn: theme / icon / widget / collection / result / wallpaper, `native_get_start`, `inter_start`, `inter_back`, `inter_welcome_back`. Thêm mua Premium thật qua Google Play Billing (xem `billing.md`).
+- **06/11/2026** — đổi tên theo tab "Kịch bản A new" của sheet: Intro → Onboarding (`native_onboarding`, `native_full_onboarding`, `inter_onboarding`, `onboarding1…4_setup`, `onboarding_swipe`, `native_onboarding_use_icon_next`, ad unit `NATIVE_ONBOARDING_1…4`, `NATIVE_FULL_ONBOARDING`, `INTER_ONBOARDING`, `NATIVE_INTER_ONBOARDING`); `name1` không phân biệt hoa thường. Thêm mua Premium thật qua Google Play Billing (xem `billing.md`).

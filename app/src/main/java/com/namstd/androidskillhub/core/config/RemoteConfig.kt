@@ -18,11 +18,11 @@ data class InterDelayConfig(val gapMs: Long, val ignore: Set<String>)
 data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
 /**
- * Giá trị đã parse của một `intro1_setup` … `intro4_setup` (`next=1,ds=1,delay=0,dot=1`), mỗi key cho một trang nội dung.
+ * Giá trị đã parse của một `onboarding1_setup` … `onboarding4_setup` (`next=1,ds=1,delay=0,dot=1`), mỗi key cho một trang nội dung.
  * nextStyle: 1=nút (button), 2=chữ không nền. indicatorPosition: 1=indicator trên nút Next, 0=dưới. delayMs: chờ trước khi hiện Next (ms).
  * showDots: hiện chấm tròn.
  */
-data class IntroSetup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
+data class OnboardingSetup(val nextStyle: Int, val indicatorPosition: Int, val delayMs: Long, val showDots: Boolean)
 
 /** Một dòng trên màn Debug Config: tên key, giá trị thô hiện tại, và gợi ý định dạng. */
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
@@ -102,7 +102,7 @@ object RemoteConfig {
 
     /**
      * Gap giữa các Interstitial + danh sách loại inter được MIỄN gap đó (`settings.inter_delay_time`, dạng
-     * `time=10000,ignore=ads_splash|inter_language|inter_intro`): `time` = gap (ms), `ignore` = các
+     * `time=10000,ignore=ads_splash|inter_language|inter_onboarding`): `time` = gap (ms), `ignore` = các
      * [com.namstd.androidskillhub.core.ads.InterstitialPlacement.key] luôn được hiện bất kể gap.
      * Giá trị thô - code quảng cáo đọc qua [com.namstd.androidskillhub.core.ads.AdPolicy.interDelay].
      */
@@ -125,9 +125,9 @@ object RemoteConfig {
     val languageDelayMillis: Long
         get() = (setting("language_delay_millis")?.trim()?.toLongOrNull() ?: 800L).coerceAtLeast(0L)
 
-    /** Cho vuốt chuyển trang ở Intro (`settings.intro_swipe`), mặc định `true`. */
-    val introSwipe: Boolean
-        get() = setting("intro_swipe")?.let(::parseBoolean) ?: true
+    /** Cho vuốt chuyển trang ở Onboarding (`settings.onboarding_swipe`), mặc định `true`. */
+    val onboardingSwipe: Boolean
+        get() = setting("onboarding_swipe")?.let(::parseBoolean) ?: true
 
     /**
      * Nút Next màn Language (`settings.language_setup`, dạng `next=1,loading=true`): `next` = 1 icon dấu check trên
@@ -143,16 +143,16 @@ object RemoteConfig {
         }
 
     /**
-     * Cấu hình trang nội dung thứ [page] (1-4) của Intro (`settings.intro{page}_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
+     * Cấu hình trang nội dung thứ [page] (1-4) của Onboarding (`settings.onboarding{page}_setup`, dạng `next=1,ds=1,delay=0,dot=1`):
      * `next` 1 nút button / 2 chữ "Next" không nền, `ds` 1 chấm trên nút Next / 0 dưới, `delay` ms chờ trước khi hiện
-     * Next, `dot` 1 hiện chấm / 0 ẩn. Trang native toàn màn hình không tính. Trang nào không có thì dùng `intro1_setup`.
+     * Next, `dot` 1 hiện chấm / 0 ẩn. Trang native toàn màn hình không tính. Trang nào không có thì dùng `onboarding1_setup`.
      */
-    fun introSetup(page: Int): IntroSetup {
-        val raw = setting("intro${page}_setup")?.takeIf { it.isNotBlank() }
-            ?: setting("intro1_setup")?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_INTRO1_SETUP
+    fun onboardingSetup(page: Int): OnboardingSetup {
+        val raw = setting("onboarding${page}_setup")?.takeIf { it.isNotBlank() }
+            ?: setting("onboarding1_setup")?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_ONBOARDING1_SETUP
         val m = parseKeyValues(raw)
-        return IntroSetup(
+        return OnboardingSetup(
             nextStyle = m["next"]?.toIntOrNull() ?: 1,
             indicatorPosition = m["ds"]?.toIntOrNull() ?: 1,
             delayMs = m["delay"]?.toLongOrNull()?.coerceAtLeast(0L) ?: 0L,
@@ -171,11 +171,11 @@ object RemoteConfig {
         }
 
     /**
-     * Nút trên trang native toàn màn hình trong Intro (`settings.native_intro_use_icon_next`): `true` = icon X,
+     * Nút trên trang native toàn màn hình trong Onboarding (`settings.native_onboarding_use_icon_next`): `true` = icon X,
      * `false` = mũi tên Next. Nhận cả `1`/`0`.
      */
-    val nativeIntroUseIconNext: Boolean
-        get() = setting("native_intro_use_icon_next")?.let(::parseBoolean) ?: false
+    val nativeOnboardingUseIconNext: Boolean
+        get() = setting("native_onboarding_use_icon_next")?.let(::parseBoolean) ?: false
 
     /**
      * [DEBUG] Các dòng cho màn Debug Config: `ad_config` (cả khối), rồi từng giá trị `settings`, rồi từng vị trí -
@@ -196,13 +196,13 @@ object RemoteConfig {
         "language_delay_millis" to "[ms] chờ trước khi hiện nút Language",
         "splash_fallback" to "Splash không kịp hiện QC thì inter này bù, vd inter_language (trống = tắt)",
         "language_setup" to "next=1 icon/2 nút chữ,loading=true/false",
-        "intro1_setup" to "trang nội dung 1: next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
-        "intro2_setup" to "trang nội dung 2, cùng dạng intro1 (trống = dùng intro1)",
-        "intro3_setup" to "trang nội dung 3, cùng dạng intro1 (trống = dùng intro1)",
-        "intro4_setup" to "trang nội dung 4, cùng dạng intro1 (trống = dùng intro1)",
-        "intro_swipe" to "true/false (vuốt Intro)",
-        "inter_delay_time" to "time=ms,ignore=ads_splash|inter_language|inter_intro",
-        "native_intro_use_icon_next" to "true = icon X / false = Next",
+        "onboarding1_setup" to "trang nội dung 1: next=1 button/2 chữ,ds=0/1,delay=ms,dot=0 ẩn/1 hiện",
+        "onboarding2_setup" to "trang nội dung 2, cùng dạng onboarding1 (trống = dùng onboarding1)",
+        "onboarding3_setup" to "trang nội dung 3, cùng dạng onboarding1 (trống = dùng onboarding1)",
+        "onboarding4_setup" to "trang nội dung 4, cùng dạng onboarding1 (trống = dùng onboarding1)",
+        "onboarding_swipe" to "true/false (vuốt Onboarding)",
+        "inter_delay_time" to "time=ms,ignore=ads_splash|inter_language|inter_onboarding",
+        "native_onboarding_use_icon_next" to "true = icon X / false = Next",
         "on_resume" to "0 tắt · 1 App Open · 2 Welcome back",
         "on_resume_id" to "ID App Open khi quay lại app (trống = test id)",
     )
@@ -226,6 +226,6 @@ object RemoteConfig {
     /** Tên cache trong [AppPreferences] - khác tên mọi key cũ để không đọc nhầm kiểu dữ liệu bản cũ đã lưu. */
     private const val CACHE_AD_CONFIG = "cache_ad_config"
     private const val DEFAULT_LANGUAGE_SETUP = "next=2,loading=false"
-    private const val DEFAULT_INTRO1_SETUP = "next=1,ds=1,delay=0,dot=1"
+    private const val DEFAULT_ONBOARDING1_SETUP = "next=1,ds=1,delay=0,dot=1"
     private val TRUE_VALUES = setOf("true", "1", "t", "yes", "y", "on")
 }

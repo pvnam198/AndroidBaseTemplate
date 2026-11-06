@@ -59,7 +59,7 @@ class MainFlowTest {
             onView(withId(R.id.next_button)).perform(click())
             waitUntilDisplayed(withText(R.string.onboarding_title_3))
             onView(withId(R.id.next_button)).perform(click())
-            // Mặc định không có trang native full-screen (native_intro_full = 0): bốn trang nội dung liên tiếp.
+            // Mặc định không có trang native full-screen (native_full_onboarding = 0): bốn trang nội dung liên tiếp.
             waitUntilDisplayed(withText(R.string.onboarding_title_4))
             onView(withId(R.id.next_button)).perform(click())
 

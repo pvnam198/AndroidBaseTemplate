@@ -14,7 +14,7 @@ class FullScreenAdPlanTest {
 
     @Test
     fun interPlacementsMapTheirOwnEnable() {
-        for (placement in listOf(InterstitialPlacement.LANGUAGE, InterstitialPlacement.INTRO, InterstitialPlacement.HOME)) {
+        for (placement in listOf(InterstitialPlacement.LANGUAGE, InterstitialPlacement.ONBOARDING, InterstitialPlacement.HOME)) {
             assertEquals(FullScreenAdPlan.INTERSTITIAL, resolveFullScreenPlan(placement, 1))
             assertEquals(FullScreenAdPlan.NATIVE_ONLY, resolveFullScreenPlan(placement, 2))
             assertEquals(FullScreenAdPlan.INTER_PLUS_NATIVE, resolveFullScreenPlan(placement, 3))
@@ -30,6 +30,6 @@ class FullScreenAdPlanTest {
 
     @Test
     fun placementKeysMatchTheSheet() {
-        assertEquals(listOf("ads_splash", "inter_language", "inter_intro", "inter_home"), InterstitialPlacement.entries.map { it.key })
+        assertEquals(listOf("ads_splash", "inter_language", "inter_onboarding", "inter_home"), InterstitialPlacement.entries.map { it.key })
     }
 }

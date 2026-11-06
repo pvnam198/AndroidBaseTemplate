@@ -80,12 +80,12 @@
       <p>Cấu hình quảng cáo gồm 2 phần:</p>
       <ul>
         <li><b>Cấu hình chung</b> (hàng <code>setting</code>): áp cho cả app, ví dụ delay màn Language, giao diện Onboarding, khoảng cách giữa 2 interstitial.</li>
-        <li><b>Cấu hình theo vị trí</b>: mỗi <code>key</code> là một vị trí đặt quảng cáo trong luồng app (Splash, Language, Intro, Home…). Một key có thể gồm nhiều ad unit (các hàng <code>name1</code> nằm dưới key đó), ví dụ <code>ads_splash</code> gồm AOA, Inter và Native sau Inter của màn Splash.</li>
+        <li><b>Cấu hình theo vị trí</b>: mỗi <code>key</code> là một vị trí đặt quảng cáo trong luồng app (Splash, Language, Onboarding, Home…). Một key có thể gồm nhiều ad unit (các hàng <code>name1</code> nằm dưới key đó), ví dụ <code>ads_splash</code> gồm AOA, Inter và Native sau Inter của màn Splash.</li>
       </ul>
       <p><code>id1</code>, <code>id2</code>, <code>id3</code> là 3 tầng ID quảng cáo cho waterfall theo thứ tự ưu tiên <b>highfloor → medium → all_price</b>: tầng trước không có quảng cáo thì thử tầng sau. Để trống thì dùng test ID.</p>
     </div>
     <div class="card note">
-      <p><b>Đơn vị thời gian:</b> app đọc <b>mọi giá trị thời gian bằng mili-giây</b> (1 giây = 1000). Bảng gốc của team ghi một số giá trị bằng giây (<code>wait_time</code>, <code>refresh_rate</code>, <code>inter_delay_time</code>, <code>delay</code> của Intro), nên khi nhập lên Firebase phải nhân 1000. Ví dụ <code>wait_time</code> 5 giây nhập <code>5000</code>.</p>
+      <p><b>Đơn vị thời gian:</b> app đọc <b>mọi giá trị thời gian bằng mili-giây</b> (1 giây = 1000). Bảng gốc của team ghi một số giá trị bằng giây (<code>wait_time</code>, <code>refresh_rate</code>, <code>inter_delay_time</code>, <code>delay</code> của Onboarding), nên khi nhập lên Firebase phải nhân 1000. Ví dụ <code>wait_time</code> 5 giây nhập <code>5000</code>.</p>
       <p><b>Ghi chú khi đọc tài liệu:</b> những giá trị có nhãn <span class="ask">cần xác nhận</span> là ý nghĩa được suy ra từ tên key và giá trị mẫu, chưa có đặc tả chính thức. Cần xác nhận với người lập bảng trước khi code.</p>
     </div>
   </section>
@@ -189,8 +189,8 @@
         <li><code>0</code> tắt</li><li><code>1</code> App Open</li><li><code>2</code> Màn Welcome back (native + đếm ngược <code>wait_time</code>)</li></ul></div>
       <div class="card"><h4>Native – <code>native_*</code></h4><ul>
         <li><code>0</code> tắt</li><li><code>1</code> bật</li>
-        <li><code>native_intro = 24</code>: native ở trang Intro <b>2</b> và <b>4</b> (mỗi chữ số là một trang)</li>
-        <li><code>native_intro_full = 2</code>: chèn trang native toàn màn hình sau màn Intro 2. Mỗi chữ số là một màn: <code>123</code> = sau màn 1, 2 và 3.</li></ul></div>
+        <li><code>native_onboarding = 24</code>: native ở trang Onboarding <b>2</b> và <b>4</b> (mỗi chữ số là một trang)</li>
+        <li><code>native_full_onboarding = 2</code>: chèn trang native toàn màn hình sau màn Onboarding 2. Mỗi chữ số là một màn: <code>123</code> = sau màn 1, 2 và 3.</li></ul></div>
     </div>
   </section>
 
@@ -212,22 +212,22 @@
       <ul>
         <li><span class="pill ok">Có</span> <b><code>ads_enable</code> và 2 kịch bản quảng cáo</b> (04/11): <code>0</code> tắt, <code>1</code> kịch bản A, <code>2</code> theo nguồn người dùng, <code>3</code> theo máy thử nghiệm. Kịch bản B (AOA ở Splash, banner chân màn, quảng cáo toàn màn hình cách nhau 90 giây, quảng cáo khi quay lại app) cài cố định trong app. Đã test cả 4 giá trị trên máy.</li>
         <li><span class="pill ok">Có</span> <b>Vị trí quảng cáo toàn màn hình trong app</b> (<code>inter_inapp</code>): app mẫu hiện khi mở Cài đặt từ màn chính.</li>
-        <li><span class="pill ok">Có</span> <b>Mọi thời gian đều tính bằng mili-giây</b> (04/11): <code>wait_time</code>, <code>refresh_rate</code>, <code>inter_delay_time</code>, <code>delay</code> của Intro, <code>language_delay_millis</code>. Giá trị bảng gốc ghi bằng giây phải nhân 1000 khi nhập lên Firebase.</li>
+        <li><span class="pill ok">Có</span> <b>Mọi thời gian đều tính bằng mili-giây</b> (04/11): <code>wait_time</code>, <code>refresh_rate</code>, <code>inter_delay_time</code>, <code>delay</code> của Onboarding, <code>language_delay_millis</code>. Giá trị bảng gốc ghi bằng giây phải nhân 1000 khi nhập lên Firebase.</li>
         <li><span class="pill ok">Có</span> <b>Sửa theo ghi chú mới của sheet</b> (05/11):
           <ul>
             <li><code>language_setup</code>: <code>next=1</code> là icon, <code>next=2</code> là nút chữ.</li>
-            <li><code>intro1_setup</code>: <code>next=2</code> là chữ "Next" không có nền, bấm vào chữ để đi tiếp; <code>dot=0</code> ẩn chấm tròn.</li>
-            <li><code>native_intro_use_icon_next</code>: true/false (true là nút X, false là nút Next).</li>
+            <li><code>onboarding1_setup</code>: <code>next=2</code> là chữ "Next" không có nền, bấm vào chữ để đi tiếp; <code>dot=0</code> ẩn chấm tròn.</li>
+            <li><code>native_onboarding_use_icon_next</code>: true/false (true là nút X, false là nút Next).</li>
             <li><code>wait_time</code> mặc định 0.</li>
             <li><code>collap_config</code>: đếm số lần bấm <b>nút X</b> của native collapsible, lần được chọn sẽ mở quảng cáo thay vì thu gọn.</li>
           </ul>
         </li>
-        <li><span class="pill ok">Có</span> <b>Mỗi trang Intro một cấu hình</b> (05/11): Intro có 4 trang nội dung, trang thứ N dùng <code>introN_setup</code> (trống thì dùng <code>intro1_setup</code>). Trang native toàn màn hình giờ chèn theo <code>native_intro_full</code>: mỗi chữ số là một màn Intro có trang native full ngay sau (<code>123</code> = sau màn 1, 2, 3), mặc định không có.</li>
-        <li><span class="pill ok">Có</span> <b>Cấu hình theo từng vị trí như bảng gốc</b> (05/11): toàn bộ nằm trong <b>một key <code>ad_config</code></b> trên Firebase, đúng mẫu JSON của team: phần <code>settings</code> cho cấu hình chung, mỗi vị trí (<code>ads_splash</code>, <code>inter_language</code>, <code>banner_home</code>…) một phần chứa đủ các cột <code>enable</code>, <code>step_count</code>, <code>refresh_rate</code>, <code>collap_config</code>, <code>wait_time</code>, <code>native_template</code> và ID riêng cho từng ad unit (<code>name1</code> + <code>id1</code>–<code>id3</code>). Bộ key gộp cũ (<code>enable</code>, <code>id_*</code>…) đã bỏ. Thêm native ở màn Splash và chọn trang Intro có native (<code>native_intro = 24</code>). Bỏ banner ở Splash, Language và Intro.</li>
+        <li><span class="pill ok">Có</span> <b>Mỗi trang Onboarding một cấu hình</b> (05/11): Onboarding có 4 trang nội dung, trang thứ N dùng <code>onboardingN_setup</code> (trống thì dùng <code>onboarding1_setup</code>). Trang native toàn màn hình giờ chèn theo <code>native_full_onboarding</code>: mỗi chữ số là một màn Onboarding có trang native full ngay sau (<code>123</code> = sau màn 1, 2, 3), mặc định không có.</li>
+        <li><span class="pill ok">Có</span> <b>Cấu hình theo từng vị trí như bảng gốc</b> (05/11): toàn bộ nằm trong <b>một key <code>ad_config</code></b> trên Firebase, đúng mẫu JSON của team: phần <code>settings</code> cho cấu hình chung, mỗi vị trí (<code>ads_splash</code>, <code>inter_language</code>, <code>banner_home</code>…) một phần chứa đủ các cột <code>enable</code>, <code>step_count</code>, <code>refresh_rate</code>, <code>collap_config</code>, <code>wait_time</code>, <code>native_template</code> và ID riêng cho từng ad unit (<code>name1</code> + <code>id1</code>–<code>id3</code>). Bộ key gộp cũ (<code>enable</code>, <code>id_*</code>…) đã bỏ. Thêm native ở màn Splash và chọn trang Onboarding có native (<code>native_onboarding = 24</code>). Bỏ banner ở Splash, Language và Onboarding.</li>
         <li><span class="pill ok">Có</span> <b>Mua Premium thật qua Google Play</b> (06/11): mua gói ở màn Premium thì tắt toàn bộ quảng cáo; gói hết hạn / hoàn tiền thì quảng cáo bật lại. Chi tiết trong <code>docs/billing.md</code>.</li>
         <li><span class="pill ok">Có</span> <b><code>native_language_small</code></b> (06/11): dải native nhỏ (mặc định Tiny1) ngay dưới tiêu đề màn Language, cả lần đầu cài lẫn mở từ Cài đặt.</li>
         <li><span class="pill ok">Có</span> <b><code>splash_fallback</code></b> (05/11): Splash không kịp hiện quảng cáo thì bấm Apply ở màn Language sẽ hiện inter bù. Không có màn Language thì thôi.</li>
-        <li><span class="pill ok">Có</span> Splash (AOA / Inter / Inter + Native), Inter ở Language và Intro, native ở Language / Intro / trang native toàn màn hình, banner các kiểu, quay lại app (AOA / Welcome back), native Welcome back.</li>
+        <li><span class="pill ok">Có</span> Splash (AOA / Inter / Inter + Native), Inter ở Language và Onboarding, native ở Language / Onboarding / trang native toàn màn hình, banner các kiểu, quay lại app (AOA / Welcome back), native Welcome back.</li>
       </ul>
     </div>
 
@@ -242,8 +242,8 @@
       <h4>Cần team xác nhận</h4>
       <ul>
         <li><span class="ask">cần xác nhận</span> <code>ads_enable = 2</code>: sheet ghi "check nguồn user <b>và</b> check test ad", app hiện chỉ xét nguồn người dùng.</li>
-        <li><span class="ask">cần xác nhận</span> Kịch bản B: quảng cáo toàn màn hình hiện ở mọi vị trí inter của kịch bản A (cả Language, Intro) hay chỉ trong app.</li>
-        <li><span class="ask">cần xác nhận</span> <code>intro1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
+        <li><span class="ask">cần xác nhận</span> Kịch bản B: quảng cáo toàn màn hình hiện ở mọi vị trí inter của kịch bản A (cả Language, Onboarding) hay chỉ trong app.</li>
+        <li><span class="ask">cần xác nhận</span> <code>onboarding1_setup.ds</code>: sheet ghi "1 Next bên dưới, 2 Next bên phải"; app đang hiểu là vị trí chấm tròn (trên hoặc dưới nút Next).</li>
         <li><span class="ask">cần xác nhận</span> <code>language_setup.loading</code>: sheet ghi "loading khi load native"; app hiện loading trong lúc chờ <code>language_delay_millis</code>.</li>
         <li><span class="ask">cần xác nhận</span> <code>collap_config</code>: cách mở quảng cáo khi bấm X (xem lỗi ở trên).</li>
         <li><span class="ask">cần xác nhận</span> <code>wait_time = 5</code> ở dòng AOA_SPLASH; số <code>2</code> ở cột <code>refresh_rate</code> của INTER_HOME (có thể là <code>step_count</code>).</li>
@@ -291,11 +291,11 @@ const SETTINGS = [
   ["release_log", "FALSE", "Boolean", "Sheet không ghi rõ ý nghĩa (chỉ có \"true/false\"). <b>Không dùng (05/11):</b> app không có key này.", DROP],
   ["splash_fallback", "inter_language", "String (key)", "Nếu màn Splash không kịp hiện quảng cáo thì bù bằng quảng cáo toàn màn hình ở vị trí này. Ví dụ <code>inter_language</code>: ở màn Language, khi bấm Apply sẽ hiện inter (kể cả khi inter Language đang tắt). Không có màn Language (người dùng cũ mở app vào thẳng màn chính) thì không hiện. Trống = tắt.", OK],
   ["language_setup", "next=1, loading=true", "String", "Nút xác nhận màn Language. <code>next</code>: 1 icon, 2 nút chữ. <code>loading</code>: hiện vòng loading trong lúc chờ <code>language_delay_millis</code>.", OK],
-  ["intro1_setup … intro4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang nội dung của Onboarding: <code>intro1_setup</code> cho trang 1, <code>intro2_setup</code> cho trang 2… (trang native toàn màn hình không tính). <code>next</code>: 1 nút dạng button, 2 chữ \"Next\" không có nền (bấm vào chữ để đi tiếp). <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: mili-giây chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 ẩn.", OK + ' <span class="muted">key nào trống thì trang đó dùng lại <code>intro1_setup</code></span>'],
-  ["intro_swipe", "TRUE", "Boolean", "Cho phép vuốt để chuyển trang Onboarding. FALSE = chỉ chuyển bằng nút Next.", OK],
+  ["onboarding1_setup … onboarding4_setup", "next=1,ds=1,delay=0,dot=1", "String", "Giao diện từng trang nội dung của Onboarding: <code>onboarding1_setup</code> cho trang 1, <code>onboarding2_setup</code> cho trang 2… (trang native toàn màn hình không tính). <code>next</code>: 1 nút dạng button, 2 chữ \"Next\" không có nền (bấm vào chữ để đi tiếp). <code>ds</code>: 1 indicator trên nút Next, 0 dưới. <code>delay</code>: mili-giây chờ trước khi hiện Next. <code>dot</code>: 1 chấm tròn, 0 ẩn.", OK + ' <span class="muted">key nào trống thì trang đó dùng lại <code>onboarding1_setup</code></span>'],
+  ["onboarding_swipe", "TRUE", "Boolean", "Cho phép vuốt để chuyển trang Onboarding. FALSE = chỉ chuyển bằng nút Next.", OK],
   ["taller_banner_enabled", "TRUE", "Boolean", "Cho phép banner cao hơn trên màn hình lớn. <b>Không dùng (05/11):</b> app luôn dùng banner co giãn theo chiều rộng màn hình (trên tablet tự cao hơn), không có công tắc này.", DROP],
-  ["inter_delay_time", "time=10,ignore=ads_splash|inter_language|inter_intro", "String", "Khoảng cách tối thiểu giữa 2 interstitial, tính bằng mili-giây (10 giây = <code>time=10000</code>), và danh sách vị trí được bỏ qua khoảng cách này (ngăn bằng <code>|</code>).", OK],
-  ["native_intro_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding: <code>true</code> = nút X, <code>false</code> = nút Next. Nếu có <code>wait_time</code> thì chờ hết thời gian đó mới hiện nút.", OK],
+  ["inter_delay_time", "time=10,ignore=ads_splash|inter_language|inter_onboarding", "String", "Khoảng cách tối thiểu giữa 2 interstitial, tính bằng mili-giây (10 giây = <code>time=10000</code>), và danh sách vị trí được bỏ qua khoảng cách này (ngăn bằng <code>|</code>).", OK],
+  ["native_onboarding_use_icon_next", "FALSE", "Boolean", "Trang native toàn màn hình trong Onboarding: <code>true</code> = nút X, <code>false</code> = nút Next. Nếu có <code>wait_time</code> thì chờ hết thời gian đó mới hiện nút.", OK],
 ];
 
 // [nhóm, [tên ad unit...], key, enable, step_count, refresh_rate, collap_config, wait_time, template, mô tả (HTML), trạng thái]
@@ -308,11 +308,11 @@ const PLACEMENTS = [
   ["Language", ["NATIVE_LANGUAGE_SMALL"], "native_language_small", "1", "", "", "", "", "Tiny1", "Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu cài lẫn mở từ Cài đặt), thêm vào native <code>native_language</code> ở chân màn. <code>native_template</code> trống thì mặc định Tiny1.", OK],
   ["Language", ["INTER_LANGUAGE", "NATIVE_INTER_LANGUAGE"], "inter_language", "3", "", "", "", "3",
     "", "Quảng cáo khi bấm xác nhận ngôn ngữ. <code>3</code> = Inter rồi Native toàn màn hình, đếm ngược 3s.", OK],
-  ["Intro", ["NATIVE_INTRO_1", "NATIVE_INTRO_2", "NATIVE_INTRO_3", "NATIVE_INTRO_4"], "native_intro", "24", "", "", "", "", "Big4",
+  ["Onboarding", ["NATIVE_ONBOARDING_1", "NATIVE_ONBOARDING_2", "NATIVE_ONBOARDING_3", "NATIVE_ONBOARDING_4"], "native_onboarding", "24", "", "", "", "", "Big4",
     "Native trong các trang Onboarding (mỗi trang một ad unit). <code>24</code> = native ở trang 2 và 4 (mỗi chữ số là một trang).", OK],
-  ["Intro", ["NATIVE_INTRO_FULL"], "native_intro_full", "2", "", "", "", "", "Full1",
-    "Trang native toàn màn hình chen giữa các màn Intro. Mỗi chữ số là một màn Intro có trang native full ngay sau: <code>2</code> = sau màn 2; với 4 màn Intro, giá trị đầy đủ là <code>123</code> = sau màn 1, 2 và 3. Trống hoặc <code>0</code> = không có. Trang native full không có chấm tròn, chấm chỉ đếm các màn Intro.", OK],
-  ["Intro", ["INTER_INTRO", "NATIVE_INTER_INTRO"], "inter_intro", "1", "", "", "", "5", "",
+  ["Onboarding", ["NATIVE_FULL_ONBOARDING"], "native_full_onboarding", "2", "", "", "", "", "Full1",
+    "Trang native toàn màn hình chen giữa các màn Onboarding. Mỗi chữ số là một màn Onboarding có trang native full ngay sau: <code>2</code> = sau màn 2; với 4 màn Onboarding, giá trị đầy đủ là <code>123</code> = sau màn 1, 2 và 3. Trống hoặc <code>0</code> = không có. Trang native full không có chấm tròn, chấm chỉ đếm các màn Onboarding.", OK],
+  ["Onboarding", ["INTER_ONBOARDING", "NATIVE_INTER_ONBOARDING"], "inter_onboarding", "1", "", "", "", "5", "",
     "Quảng cáo khi hoàn tất Onboarding. <code>1</code> = Interstitial.", OK],
   ["Home", ["BANNER_HOME", "NATIVE_HOME", "NATIVE_COLLAP_HOME"], "banner_home", "4", "", "", "", "", "",
     "Ô banner ở Home. <code>4</code> = Native collapsible (bản lớn rồi thu gọn thành dải).", OK],

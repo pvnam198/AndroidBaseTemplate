@@ -12,9 +12,9 @@ enum class AdKey(val key: String, val defaultEnable: String) {
     NATIVE_LANGUAGE("native_language", "1"),
     NATIVE_LANGUAGE_SMALL("native_language_small", "0"),
     INTER_LANGUAGE("inter_language", "1"),
-    NATIVE_INTRO("native_intro", "1234"),
-    NATIVE_INTRO_FULL("native_intro_full", "0"),
-    INTER_INTRO("inter_intro", "1"),
+    NATIVE_ONBOARDING("native_onboarding", "1234"),
+    NATIVE_FULL_ONBOARDING("native_full_onboarding", "0"),
+    INTER_ONBOARDING("inter_onboarding", "1"),
 
     /** Nằm trong `settings` của `ad_config` (`on_resume`, `on_resume_id`), không phải một object riêng. */
     ON_RESUME("on_resume", "1"),
@@ -33,10 +33,10 @@ enum class AdKey(val key: String, val defaultEnable: String) {
  *   "native_inter": { "name1": "NATIVE_INTER_SPLASH", "id1": "…" }
  * }
  * ```
- * Mỗi object con có `name1` là một ad unit; tên object con (`inter`, `native_inter`, `native_intro1`…) không quan
+ * Mỗi object con có `name1` là một ad unit; tên object con (`inter`, `native_inter`, `native_onboarding1`…) không quan
  * trọng, app nhận ra unit qua `name1`. Cột nào thiếu thì dùng mặc định. Thời gian tính bằng **ms**.
  *
- * - [enable]: giữ nguyên chuỗi, vì có vị trí đọc theo từng chữ số (`native_intro` = `24`, `native_intro_full` = `123`).
+ * - [enable]: giữ nguyên chuỗi, vì có vị trí đọc theo từng chữ số (`native_onboarding` = `24`, `native_full_onboarding` = `123`).
  * - [stepCount]: inter chỉ hiện ở lần chia hết cho N (tối thiểu 1).
  * - [refreshRateMs]: tự reload banner/native sau bấy nhiêu ms, `0` = không tự reload.
  * - [collapConfig]: lần bấm nút X của native collapsible mở quảng cáo (xem `CollapClickGate`).
@@ -92,12 +92,15 @@ data class PlacementConfig(
             }
         }
 
-        /** Mọi object con có `name1` → danh sách `id1`, `id2`, `id3` của nó (bỏ id trống). */
+        /**
+         * Mọi object con có `name1` → danh sách `id1`, `id2`, `id3` của nó (bỏ id trống). `name1` được đưa về chữ hoa
+         * để khớp tên ad unit trong code: sheet ghi `native_splash` hay `NATIVE_SPLASH` đều được.
+         */
         private fun unitIds(json: JSONObject): Map<String, List<String>> =
             json.keys().asSequence().mapNotNull { json.optJSONObject(it) }
                 .filter { it.optString("name1").isNotBlank() }
                 .associate { unit ->
-                    unit.optString("name1").trim() to
+                    unit.optString("name1").trim().uppercase() to
                         listOf("id1", "id2", "id3").map { unit.optString(it).trim() }.filter(String::isNotEmpty)
                 }
     }

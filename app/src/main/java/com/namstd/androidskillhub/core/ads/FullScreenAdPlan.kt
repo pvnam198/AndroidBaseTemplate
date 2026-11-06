@@ -6,7 +6,7 @@ enum class FullScreenAdPlan { OFF, APP_OPEN, INTERSTITIAL, INTER_PLUS_NATIVE, NA
 /**
  * Map `enable` của vị trí → loại quảng cáo:
  * - SPLASH (`ads_splash`): 1 AOA, 2 Inter, 3 Inter+Native, 0 off
- * - các vị trí inter khác (`inter_language`, `inter_intro`, `inter_home`): 1 Inter, 2 Native, 3 Inter+Native, 0 off
+ * - các vị trí inter khác (`inter_language`, `inter_onboarding`, `inter_home`): 1 Inter, 2 Native, 3 Inter+Native, 0 off
  *
  * APP_OPEN chỉ phát sinh ở SPLASH và được xử lý trong SplashActivity (AOA không phải interstitial);
  * nếu lọt vào showInterstitial thì coi như OFF.

@@ -16,7 +16,7 @@ class PlacementConfigTest {
     fun settingsAreReadAsText() {
         assertEquals("2", sample.setting("ads_enable"))
         assertEquals("inter_language", sample.setting("splash_fallback"))
-        assertEquals("true", sample.setting("intro_swipe"))
+        assertEquals("true", sample.setting("onboarding_swipe"))
         assertEquals("next=1, loading=true", sample.setting("language_setup"))
         assertNull(sample.setting("missing"))
     }
@@ -47,8 +47,8 @@ class PlacementConfigTest {
 
     @Test
     fun digitEnablesAndNumericCollapConfig() {
-        assertEquals(setOf(2, 4), sample.placement(AdKey.NATIVE_INTRO).enableDigits)
-        assertEquals(setOf(2), sample.placement(AdKey.NATIVE_INTRO_FULL).enableDigits)
+        assertEquals(setOf(2, 4), sample.placement(AdKey.NATIVE_ONBOARDING).enableDigits)
+        assertEquals(setOf(2), sample.placement(AdKey.NATIVE_FULL_ONBOARDING).enableDigits)
         val numeric = PlacementConfig.fromJson(JSONObject("""{"enable":1,"refresh_rate":20,"collap_config":24}"""), AdKey.BANNER_HOME)
         assertEquals("24", numeric.collapConfig)
         assertEquals(20L, numeric.refreshRateMs)
@@ -71,7 +71,7 @@ class PlacementConfigTest {
 
     @Test
     fun missingPlacementUsesDefaultEnable() {
-        assertEquals("1", sample.placement(AdKey.INTER_INTRO).enable)
+        assertEquals("1", sample.placement(AdKey.INTER_ONBOARDING).enable)
         assertEquals("1", sample.placement(AdKey.NATIVE_WELCOME_BACK).enable)
         assertEquals("2", AdConfigDocument("").placement(AdKey.ADS_SPLASH).enable)
         assertTrue(AdConfigDocument("{broken").placement(AdKey.NATIVE_LANGUAGE).enableCode == 1)
@@ -79,9 +79,18 @@ class PlacementConfigTest {
 
     @Test
     fun debugOverrideAcceptsNumberOrObject() {
-        assertEquals("24", PlacementConfig.parseOverride("24", AdKey.NATIVE_INTRO).enable)
+        assertEquals("24", PlacementConfig.parseOverride("24", AdKey.NATIVE_ONBOARDING).enable)
         val json = PlacementConfig.parseOverride("""{"enable":1,"inter":{"name1":"INTER_LANGUAGE","id1":"x"}}""", AdKey.INTER_LANGUAGE)
         assertEquals(listOf("x"), json.ids["INTER_LANGUAGE"])
         assertEquals(0, PlacementConfig.parseOverride("{broken", AdKey.INTER_LANGUAGE).enableCode)
+    }
+
+    @Test
+    fun name1IsMatchedIgnoringCase() {
+        val config = PlacementConfig.fromJson(
+            JSONObject("""{"enable":1,"native":{"name1":"native_onboarding_1","id1":"abc"}}"""),
+            AdKey.NATIVE_ONBOARDING,
+        )
+        assertEquals(listOf("abc"), config.ids["NATIVE_ONBOARDING_1"])
     }
 }

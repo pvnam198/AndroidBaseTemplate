@@ -123,7 +123,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
     private fun navigateToMain() {
         if (isFinishing) return
         val next = if (prefs.setupCompleted) MainActivity::class.java else LanguageActivity::class.java
-        // splash_fallback chỉ bù ad Splash trên luồng Language/Intro - Home không có placement như vậy.
+        // splash_fallback chỉ bù ad Splash trên luồng Language/Onboarding - Home không có placement như vậy.
         if (prefs.setupCompleted) SplashFallback.clear()
         startActivity(Intent(this, next))
         finish()

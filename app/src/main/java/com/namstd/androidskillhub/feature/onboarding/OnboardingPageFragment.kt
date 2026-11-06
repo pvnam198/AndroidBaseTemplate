@@ -33,7 +33,7 @@ class OnboardingPageFragment : BaseFragment<FragmentOnboardingPageBinding>() {
             NativePlacement.ONBOARDING_1, NativePlacement.ONBOARDING_2, NativePlacement.ONBOARDING_3, NativePlacement.ONBOARDING_4,
         )
 
-        /** Số trang nội dung - mỗi trang đọc `intro{n}_setup` riêng của nó. */
+        /** Số trang nội dung - mỗi trang đọc `onboarding{n}_setup` riêng của nó. */
         val CONTENT_PAGE_COUNT get() = TITLES.size
         fun newInstance(page: Int) = OnboardingPageFragment().apply { arguments = Bundle().apply { putInt(ARG_PAGE, page) } }
     }

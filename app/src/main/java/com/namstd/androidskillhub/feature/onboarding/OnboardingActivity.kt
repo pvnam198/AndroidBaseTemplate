@@ -12,7 +12,7 @@ import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.config.AdKey
-import com.namstd.androidskillhub.core.config.IntroSetup
+import com.namstd.androidskillhub.core.config.OnboardingSetup
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityOnboardingBinding
@@ -23,8 +23,8 @@ import kotlinx.coroutines.launch
 
 class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     /**
-     * Nội dung của từng vị trí trong pager: index trang nội dung (tính từ 0, đọc `intro{index + 1}_setup`), hoặc
-     * [AD_PAGE] cho trang native full-screen mà `native_intro_full` chèn sau một trang nội dung.
+     * Nội dung của từng vị trí trong pager: index trang nội dung (tính từ 0, đọc `onboarding{index + 1}_setup`), hoặc
+     * [AD_PAGE] cho trang native full-screen mà `native_full_onboarding` chèn sau một trang nội dung.
      */
     private lateinit var pages: List<Int>
     private var revealJob: Job? = null
@@ -33,14 +33,14 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         ActivityOnboardingBinding.inflate(inflater)
 
     override fun initViews() {
-        InterstitialAds.preload(InterstitialPlacement.INTRO)
-        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, AdPolicy.config(AdKey.NATIVE_INTRO_FULL).enableDigits)
+        InterstitialAds.preload(InterstitialPlacement.ONBOARDING)
+        pages = buildPages(OnboardingPageFragment.CONTENT_PAGE_COUNT, AdPolicy.config(AdKey.NATIVE_FULL_ONBOARDING).enableDigits)
         binding.onboardingPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = pages.size
             override fun createFragment(position: Int) =
                 if (pages[position] == AD_PAGE) OnboardingAdFragment() else OnboardingPageFragment.newInstance(pages[position])
         }
-        binding.onboardingPager.isUserInputEnabled = RemoteConfig.introSwipe
+        binding.onboardingPager.isUserInputEnabled = RemoteConfig.onboardingSwipe
         binding.pageIndicator.isVisible = false
         // Mỗi trang nội dung một chấm - trang native full-screen không có chấm. Chấm chỉ báo tiến độ nên không bấm được.
         repeat(OnboardingPageFragment.CONTENT_PAGE_COUNT) {
@@ -48,7 +48,7 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         }
         // ViewPager2 báo trang 0 từ bên trong lượt layout của chính nó, lúc đó thay đổi visibility không được layout lại -
         // nên setup của trang đầu được áp trước lần layout đầu tiên. Trang 0 luôn là trang nội dung.
-        applySetup(RemoteConfig.introSetup(pages.first() + 1))
+        applySetup(RemoteConfig.onboardingSetup(pages.first() + 1))
     }
 
     override fun initListeners() {
@@ -66,7 +66,7 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
                     if (binding.pageDots.isVisible) binding.pageDots.visibility = View.INVISIBLE
                 } else {
                     binding.pageDots.getTabAt(pages[position])?.select()
-                    applySetup(RemoteConfig.introSetup(pages[position] + 1))
+                    applySetup(RemoteConfig.onboardingSetup(pages[position] + 1))
                 }
             }
         })
@@ -74,8 +74,8 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         binding.nextText.setOnClickListener { advanceOnboarding() }
     }
 
-    /** Áp `intro{n}_setup` của trang đang hiện: kiểu nút Next, chấm tròn, vị trí cụm chấm, delay trước khi hiện Next. */
-    private fun applySetup(setup: IntroSetup) {
+    /** Áp `onboarding{n}_setup` của trang đang hiện: kiểu nút Next, chấm tròn, vị trí cụm chấm, delay trước khi hiện Next. */
+    private fun applySetup(setup: OnboardingSetup) {
         // next: 1 = nút (button), 2 = chữ "Next" không có nền, bấm vào chữ để đi tiếp. Ẩn control không dùng.
         val useText = setup.nextStyle == 2
         val nextControl: View = if (useText) binding.nextText else binding.nextButton
@@ -112,7 +112,7 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 
     private fun finishSetup() {
         prefs.setupCompleted = true
-        showInterstitial(InterstitialPlacement.INTRO) {
+        showInterstitial(InterstitialPlacement.ONBOARDING) {
             if (!isFinishing) {
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()

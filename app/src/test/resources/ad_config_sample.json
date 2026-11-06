@@ -5,14 +5,14 @@
     "release_log": false,
     "splash_fallback": "inter_language",
     "language_setup": "next=1, loading=true",
-    "intro1_setup": "next=1,ds=1,delay=0,dot=1",
-    "intro2_setup": "next=1,ds=1,delay=0,dot=1",
-    "intro3_setup": "next=1,ds=1,delay=0,dot=1",
-    "intro4_setup": "next=1,ds=1,delay=0,dot=1",
-    "intro_swipe": true,
+    "onboarding1_setup": "next=1,ds=1,delay=0,dot=1",
+    "onboarding2_setup": "next=1,ds=1,delay=0,dot=1",
+    "onboarding3_setup": "next=1,ds=1,delay=0,dot=1",
+    "onboarding4_setup": "next=1,ds=1,delay=0,dot=1",
+    "onboarding_swipe": true,
     "taller_banner_enabled": true,
-    "inter_delay_time": "time=10,ignore=ads_splash|inter_language|inter_intro",
-    "native_intro_use_icon_next": false,
+    "inter_delay_time": "time=10,ignore=ads_splash|inter_language|inter_onboarding",
+    "native_onboarding_use_icon_next": false,
     "on_resume": 2,
     "on_resume_id": "ca-app-pub-1234567890123456/1111111127"
   },
@@ -77,16 +77,16 @@
       "id1": "ca-app-pub-1234567890123456/1111111119"
     }
   },
-  "native_intro": {
+  "native_onboarding": {
     "enable": 24,
     "native_template": "Big4",
-    "native_intro1": { "name1": "NATIVE_INTRO_1", "id1": "ca-app-pub-1234567890123456/1111111120" },
-    "native_intro2": { "name1": "NATIVE_INTRO_2", "id1": "ca-app-pub-1234567890123456/1111111121" }
+    "native_onboarding1": { "name1": "NATIVE_ONBOARDING_1", "id1": "ca-app-pub-1234567890123456/1111111120" },
+    "native_onboarding2": { "name1": "NATIVE_ONBOARDING_2", "id1": "ca-app-pub-1234567890123456/1111111121" }
   },
-  "native_intro_full": {
+  "native_full_onboarding": {
     "enable": 2,
     "native_template": "Full1",
-    "native": { "name1": "NATIVE_INTRO_FULL" }
+    "native": { "name1": "NATIVE_FULL_ONBOARDING" }
   },
   "banner_home": {
     "enable": 4,

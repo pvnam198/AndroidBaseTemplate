@@ -18,7 +18,7 @@ import com.namstd.androidskillhub.core.config.AdKey
 enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val nativePlacement: NativePlacement) {
     SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH),
     LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE),
-    INTRO(AdKey.INTER_INTRO, AdUnit.INTER_INTRO, NativePlacement.AFTER_INTER_INTRO),
+    ONBOARDING(AdKey.INTER_ONBOARDING, AdUnit.INTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING),
 
     /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của [AdProfile.BASIC]. */
     HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME);

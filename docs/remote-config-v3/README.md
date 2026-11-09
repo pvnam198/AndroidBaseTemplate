@@ -149,3 +149,13 @@ Mọi placement: `step` 1, `wait_ms` 0, `refresh_ms` 0 (không tự tải lại)
 | `full_inter_gap_ms` | 0 |
 | `full_inter_gap_ignore` | [] |
 | `basic_inter_gap_ms` | 90000 |
+| `full_open_gap_ms` / `basic_open_gap_ms` | 30000 / 90000 - khoảng cách giữa 2 App Open khi quay lại app |
+| `full_open_inter_gap_ms` / `basic_open_inter_gap_ms` | 15000 / 30000 - khoảng cách giữa App Open và inter, cả 2 chiều (chặn App Open ngay khi user vừa bấm inter rồi quay lại) |
+| `splash_min_ms` | 3000 (0–10000) - Splash chờ tối thiểu |
+| `splash_max_ms` | 8000 (≥ min, tối đa 30000) - Splash chờ quảng cáo / Remote Config tối đa |
+
+Khoảng cách giữa các quảng cáo toàn màn hình: inter ↔ inter = `full_inter_gap_ms` / `basic_inter_gap_ms` (theo bộ, bỏ qua
+placement trong `full_inter_gap_ignore`); App Open ↔ App Open = `full_open_gap_ms` / `basic_open_gap_ms`; App Open ↔
+inter = `full_open_inter_gap_ms` / `basic_open_inter_gap_ms`. User dùng bộ nào thì lấy key của bộ đó.
+App Open cuối Splash và inter bù `splash_fallback` không xét khoảng cách. `splash_min_ms` / `splash_max_ms` có hiệu lực
+từ lần mở app **sau** lần tải được giá trị mới (Splash chạy trước khi Remote Config tải xong).

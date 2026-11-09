@@ -29,10 +29,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class SplashActivity : BaseActivity<ActivitySplashBinding>() {
 
     companion object {
-        private val MIN_DELAY_MS = 3_000L.milliseconds
-        private val MAX_DELAY_MS = 8_000L.milliseconds
         private val CHECK_INTERVAL_MS = 2_00L.milliseconds
     }
+
+    /** Chờ tối thiểu / tối đa (`splash_min_ms` / `splash_max_ms`) - chốt một lần lúc mở Splash. */
+    private val minDelay = RemoteConfig.splashMinMs.milliseconds
+    private val maxDelay = RemoteConfig.splashMaxMs.milliseconds
 
     override fun inflateBinding(inflater: LayoutInflater): ActivitySplashBinding =
         ActivitySplashBinding.inflate(inflater)
@@ -47,7 +49,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
         }
         if (prefs.isPremium) {
             lifecycleScope.launch {
-                delay(MIN_DELAY_MS)
+                delay(minDelay)
                 waitForRemoteConfig()
                 showInterstitial(InterstitialPlacement.SPLASH, ::navigateToMain)
             }
@@ -69,7 +71,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                             lifecycleScope.launch { waitForAppOpenThenNavigate() }
                         }
                         FullScreenAdPlan.OFF -> lifecycleScope.launch {
-                            delay(MIN_DELAY_MS)
+                            delay(minDelay)
                             waitForRemoteConfig()
                             navigateToMain()
                         }
@@ -82,7 +84,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                     // Tắt quảng cáo (Ads.adsEnabled = false) hoặc consent bị từ chối: không có ad nào để chờ, nhưng
                     // splash vẫn phải đi tiếp - nếu không user sẽ kẹt ở đây mãi.
                     lifecycleScope.launch {
-                        delay(MIN_DELAY_MS)
+                        delay(minDelay)
                         waitForRemoteConfig()
                         navigateToMain()
                     }
@@ -92,9 +94,9 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
     }
 
     private suspend fun waitForAdThenNavigate() {
-        delay(MIN_DELAY_MS)
-        var waitedMs = MIN_DELAY_MS
-        while (!InterstitialAds.isReady(AdUnit.INTER_SPLASH) && waitedMs < MAX_DELAY_MS) {
+        delay(minDelay)
+        var waitedMs = minDelay
+        while (!InterstitialAds.isReady(AdUnit.INTER_SPLASH) && waitedMs < maxDelay) {
             delay(CHECK_INTERVAL_MS)
             waitedMs += CHECK_INTERVAL_MS
         }
@@ -105,9 +107,9 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
 
     /** Luồng App Open ở Splash (ads_splash = 1): chờ AOA trong giới hạn thời gian, hiện nó, rồi chuyển màn. */
     private suspend fun waitForAppOpenThenNavigate() {
-        delay(MIN_DELAY_MS)
-        var waitedMs = MIN_DELAY_MS
-        while (!AppOpenAds.isLoaded(AdUnit.AOA_SPLASH) && waitedMs < MAX_DELAY_MS) {
+        delay(minDelay)
+        var waitedMs = minDelay
+        while (!AppOpenAds.isLoaded(AdUnit.AOA_SPLASH) && waitedMs < maxDelay) {
             delay(CHECK_INTERVAL_MS)
             waitedMs += CHECK_INTERVAL_MS
         }
@@ -119,9 +121,9 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
     }
 
     /** Chờ (trong giới hạn delay dùng chung) cho Remote Config ổn định trước khi Home load banner của nó. */
-    private suspend fun waitForRemoteConfig(waitedMs: Duration = MIN_DELAY_MS) {
+    private suspend fun waitForRemoteConfig(waitedMs: Duration = minDelay) {
         var elapsed = waitedMs
-        while (!RemoteConfig.isReady.value && elapsed < MAX_DELAY_MS) {
+        while (!RemoteConfig.isReady.value && elapsed < maxDelay) {
             delay(CHECK_INTERVAL_MS)
             elapsed += CHECK_INTERVAL_MS
         }

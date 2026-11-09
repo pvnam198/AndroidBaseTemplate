@@ -51,7 +51,8 @@ object AppOpenAds {
         val unit = AdUnit.ON_RESUME
         val slot = slotFor(unit)
         if (!slot.isValid()) { slot.ad?.destroy(); slot.ad = null; load(unit); return }
-        if (!AdGapGate.canShowAppOpen(openOpenGapMs = 0L, interOpenGapMs = 0L)) return
+        val gaps = AdPolicy.openGaps
+        if (!AdGapGate.canShowAppOpen(gaps.openGapMs, gaps.openInterGapMs)) return
         val current = slot.ad ?: return
         if (!FullScreenGate.acquire(current)) return
         slot.ad = null

@@ -31,7 +31,7 @@ Settings → Language (mở lại, không inter) · Premium · Privacy (khi UMP 
 | Màn | File | Làm gì / quảng cáo |
 |---|---|---|
 | App | `AndroidSkillHubApp.kt` | Khởi tạo theo thứ tự: Adjust → `AdAudience`, `AdPolicy` → locale → `Ads.adsEnabled = !premium` → `Premium.initialize` → `RemoteConfig.initialize`. Theo dõi app ra / vào nền để hiện App Open hoặc Welcome back. |
-| Splash | `feature/splash/SplashActivity.kt` | Chờ 3–8 s, consent (UMP), Remote Config. Native `native_splash`, quảng cáo cuối Splash theo `ads_splash` (AOA / inter / inter + native full). Quá 8 s chưa có ad → bật `splash_fallback`. Đã setup → Main, chưa → Language. |
+| Splash | `feature/splash/SplashActivity.kt` | Chờ `splash_min_ms`–`splash_max_ms` (mặc định 3–8 s) sau consent (UMP), chờ Remote Config. Native `native_splash`, quảng cáo cuối Splash theo `ads_splash` (AOA / inter / inter + native full). Quá `splash_max_ms` chưa có ad → bật `splash_fallback`. Đã setup → Main, chưa → Language. |
 | Language | `feature/language/LanguageActivity.kt` | Native `native_language` (lần đầu) / `native_language` unit 2 (mở từ Settings), dải `native_language_small`. Lần đầu: bấm xác nhận → `inter_language` → Onboarding. |
 | Onboarding | `feature/onboarding/` | 4 trang nội dung (`OnboardingPageFragment`), native theo `native_onboarding.pages`; trang native toàn màn (`OnboardingAdFragment`) chèn sau các trang trong `native_full_onboarding.pages`. Xong → `setup_completed = true` → `inter_onboarding` → Main. |
 | Main (Home) | `feature/main/` | 3 tab feed (`MainFeedPageFragment`), native trong list `native_home_feed`, ô banner `banner_home`. Nút Settings → `inter_home`. **Màn tính năng của app con đặt từ đây.** |
@@ -120,7 +120,7 @@ Màn Debug config tự có dòng cho placement mới.
 
 | Parameter | Nội dung |
 |---|---|
-| `ad_settings` | Cấu hình chung: `ads_profile`, `splash_fallback`, nút Language / Onboarding, khoảng cách inter. |
+| `ad_settings` | Cấu hình chung: `ads_profile`, `splash_fallback`, thời gian chờ Splash (`splash_min_ms` / `splash_max_ms`), nút Language / Onboarding, khoảng cách inter ↔ inter, App Open ↔ App Open, App Open ↔ inter. |
 | `ad_placements` | `{ "full": {...}, "basic": {...} }` — mỗi placement một object, chỉ ghi chỗ khác mặc định. |
 | `ad_ids` | `{ "ad_unit": ["id_1", "id_2", "id_3"] }` — app thử lần lượt. |
 | `ad_templates` | Mẫu native tự đặt / style đè lên mẫu có sẵn (mục 6). |

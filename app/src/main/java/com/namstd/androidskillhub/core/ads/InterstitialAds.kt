@@ -84,7 +84,7 @@ object InterstitialAds {
         val delay = AdPolicy.interDelay
         if (!ignoreGap && !AdGapGate.canShowInterstitial(
                 delay.gapMs,
-                interOpenGapMs = 0L,
+                interOpenGapMs = AdPolicy.openGaps.openInterGapMs,
                 skipInterGap = placement.key in delay.ignore,
             )
         ) {

@@ -4,6 +4,7 @@ import android.content.Context
 import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.AdSet
 import com.namstd.androidskillhub.core.config.InterDelayConfig
+import com.namstd.androidskillhub.core.config.OpenGapConfig
 import com.namstd.androidskillhub.core.config.PlacementConfig
 import com.namstd.androidskillhub.core.config.PlacementFormat
 import com.namstd.androidskillhub.core.config.RemoteConfig
@@ -42,6 +43,10 @@ object AdPolicy {
     /** Khoảng cách giữa các interstitial của bộ đang dùng. */
     val interDelay: InterDelayConfig
         get() = if (profile == AdProfile.BASIC) RemoteConfig.basicInterDelay else RemoteConfig.fullInterDelay
+
+    /** Khoảng cách App Open ↔ App Open và App Open ↔ inter của bộ đang dùng (`full_` / `basic_open_*gap_ms`). */
+    val openGaps: OpenGapConfig
+        get() = RemoteConfig.openGaps(if (profile == AdProfile.BASIC) AdSet.BASIC else AdSet.FULL)
 
     /** Placement inter bù khi Splash không kịp hiện quảng cáo - chỉ ở bộ full. Xem [SplashFallback]. */
     val splashFallback: InterstitialPlacement?

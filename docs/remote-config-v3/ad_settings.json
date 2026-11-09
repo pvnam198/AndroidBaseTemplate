@@ -10,5 +10,11 @@
     "inter_language",
     "inter_onboarding"
   ],
-  "basic_inter_gap_ms": 90000
+  "basic_inter_gap_ms": 90000,
+  "full_open_gap_ms": 30000,
+  "basic_open_gap_ms": 90000,
+  "full_open_inter_gap_ms": 15000,
+  "basic_open_inter_gap_ms": 30000,
+  "splash_min_ms": 3000,
+  "splash_max_ms": 8000
 }

@@ -16,6 +16,9 @@ import org.json.JSONObject
 /** Khoảng cách tối thiểu giữa 2 lần hiện interstitial (ms) + các placement được miễn. */
 data class InterDelayConfig(val gapMs: Long, val ignore: Set<String>)
 
+/** Khoảng cách App Open ↔ App Open và App Open ↔ inter của một bộ quảng cáo. */
+data class OpenGapConfig(val openGapMs: Long, val openInterGapMs: Long)
+
 /** Nút xác nhận màn Language. nextStyle: 1 = icon dấu tích, 2 = nút chữ. */
 data class LanguageSetup(val nextStyle: Int, val loading: Boolean)
 
@@ -178,6 +181,33 @@ object RemoteConfig {
     val basicInterDelay: InterDelayConfig
         get() = InterDelayConfig(gapMs = long("basic_inter_gap_ms", 90_000L), ignore = emptySet())
 
+    /**
+     * Khoảng cách App Open của bộ [set]. Mặc định (full / basic): 30 s / 90 s giữa hai App Open, 15 s / 30 s giữa App Open
+     * và inter - để user vừa xem / bấm một inter rồi quay lại app không gặp App Open ngay, và chuyển app qua lại nhanh
+     * không bị App Open liên tục. Đặt 0 trên remote để bỏ giới hạn.
+     * - `openGapMs`: giữa hai App Open lúc quay lại app (`full_open_gap_ms` / `basic_open_gap_ms`);
+     * - `openInterGapMs`: giữa App Open và inter, cả hai chiều (`full_open_inter_gap_ms` / `basic_open_inter_gap_ms`) -
+     *   inter vừa hiện thì App Open lúc quay lại app phải chờ, và ngược lại.
+     */
+    fun openGaps(set: AdSet): OpenGapConfig {
+        val basic = set == AdSet.BASIC
+        val prefix = if (basic) "basic" else "full"
+        return OpenGapConfig(
+            openGapMs = long("${prefix}_open_gap_ms", if (basic) 90_000L else 30_000L),
+            openInterGapMs = long("${prefix}_open_inter_gap_ms", if (basic) 30_000L else 15_000L),
+        )
+    }
+
+    /**
+     * Splash chờ tối thiểu / tối đa (`splash_min_ms`, `splash_max_ms`), mặc định 3 s / 8 s; giới hạn 0–10 s và min–30 s.
+     * Splash chạy trước khi fetch xong nên dùng giá trị của lần fetch trước (lần mở app đầu tiên = mặc định).
+     */
+    val splashMinMs: Long
+        get() = long("splash_min_ms", 3_000L).coerceIn(0L, 10_000L)
+
+    val splashMaxMs: Long
+        get() = long("splash_max_ms", 8_000L).coerceIn(splashMinMs, 30_000L)
+
     /** Nút xác nhận màn Language: `language_next_style` (icon / text), `language_show_loading`. */
     val languageSetup: LanguageSetup
         get() = LanguageSetup(
@@ -259,6 +289,12 @@ object RemoteConfig {
         "full_inter_gap_ms" to "[ms] khoảng cách inter bộ full",
         "full_inter_gap_ignore" to "[\"ads_splash\",\"inter_language\"] hoặc ads_splash,inter_language",
         "basic_inter_gap_ms" to "[ms] khoảng cách inter bộ basic (mặc định 90000)",
+        "full_open_gap_ms" to "[ms] bộ full: khoảng cách giữa 2 App Open khi quay lại app (mặc định 30000)",
+        "basic_open_gap_ms" to "[ms] bộ basic: khoảng cách giữa 2 App Open khi quay lại app (mặc định 90000)",
+        "full_open_inter_gap_ms" to "[ms] bộ full: khoảng cách giữa App Open và inter, cả 2 chiều (mặc định 15000)",
+        "basic_open_inter_gap_ms" to "[ms] bộ basic: khoảng cách giữa App Open và inter, cả 2 chiều (mặc định 30000)",
+        "splash_min_ms" to "[ms] Splash chờ tối thiểu (mặc định 3000)",
+        "splash_max_ms" to "[ms] Splash chờ tối đa chờ quảng cáo / Remote Config (mặc định 8000)",
     )
 
     private const val BUNDLE_HINT =

@@ -61,7 +61,17 @@ Helper quảng cáo (gọi trong `initViews` / khi bấm):
 loadNative(binding.nativeContainer, NativePlacement.X)        // container là FrameLayout; tự ẩn khi tắt / Premium
 loadBanner(binding.bannerContainer, BannerPlacement.HOME)     // banner / collapsible / native trong ô banner theo config
 showInterstitial(InterstitialPlacement.HOME) { openNext() }   // luôn đi qua hàm này: step, khoảng cách, inter + native…
+preloadReward(RewardPlacement.X)                              // tải sẵn khi mở màn có nút "Xem quảng cáo để nhận…"
+showReward(RewardPlacement.X) { result -> … }                 // REWARDED: cho thưởng · SKIPPED: không · UNAVAILABLE: app tự quyết
 ```
+
+Quảng cáo thưởng (`core/ads/RewardAds.kt`) có 2 type, đều **không có format**:
+- `reward`: user tự bấm xem → `showReward` hiện quảng cáo ngay.
+- `reward_inter` (rewarded interstitial): tự hiện khi chuyển màn → `showReward` hiện trước một màn đếm ngược `wait_ms`
+  (mặc định 5 s) có nút Bỏ qua, như chính sách AdMob yêu cầu; hết giờ mới hiện quảng cáo.
+- `UNAVAILABLE` gồm cả user Premium (không có quảng cáo): app tự quyết vẫn cho thưởng hay báo thử lại.
+- Base có 2 placement mẫu `reward_sample`, `reward_inter_sample` (thử ở Debug config); app con thêm placement thật:
+  `AdKey` + `AdUnit` (format `REWARDED` / `REWARDED_INTERSTITIAL`) + dòng trong `RewardPlacement`.
 
 - `onPremiumUser(premium)` chạy mỗi `onResume`: mặc định ẩn và huỷ banner / native. Màn có quảng cáo riêng (vd. list) thì
   override và gọi `super`.
@@ -78,7 +88,7 @@ showInterstitial(InterstitialPlacement.HOME) { openNext() }   // luôn đi qua h
 | **Placement** (`AdKey`) | Một vị trí quảng cáo trong app, đơn vị cấu hình (vd. `inter_home`). Có cấu hình mặc định `fullDefault`. | `core/config/PlacementConfig.kt` |
 | **Ad unit** (`AdUnit`) | Một ad unit AdMob mà placement dùng; tên viết thường = key trong `ad_ids`. Chưa có ID → test ID. | `core/ads/AdUnit.kt` |
 | **NativePlacement** / **InterstitialPlacement** / **BannerPlacement** | Cách màn gọi quảng cáo, mỗi cái trỏ tới AdUnit / AdKey. | `NativeAds.kt`, `InterstitialAds.kt`, `BannerAds.kt` |
-| **Format** | Loại quảng cáo của placement: `aoa`, `inter`, `native_full`, `inter_then_native_full`, `banner`, `banner_collapsible`, `native`, `native_collapsible`, `welcome_back`. | `PlacementFormat` |
+| **Format** | Loại quảng cáo của placement: `aoa`, `inter`, `native_full`, `inter_then_native_full`, `banner`, `banner_collapsible`, `native`, `native_collapsible`, `welcome_back`. Type `native`, `reward`, `reward_inter` không có format. | `PlacementFormat` |
 | **Template** | Mẫu vẽ native (Big1…Full5 hoặc mẫu tự đặt). | `core/ads/template/` |
 | **Bộ full / basic** | Hai bộ cấu hình: full = mọi placement (ô trống = mặc định), basic = chỉ placement được liệt kê mới chạy. | `ad_placements` |
 | **ads_profile** | Ai dùng bộ nào: 0 tắt hết · 1 mọi user full · 2 user marketing (Adjust) full, còn lại basic · 3 mọi user full trừ máy test ad dùng basic. Premium luôn không có quảng cáo. | `AdProfile.kt`, `AdPolicy.kt` |
@@ -95,9 +105,10 @@ Ví dụ native ở màn mới "Detail" (app con):
    (không thì placement bỏ qua `enable`).
 4. Màn: `loadNative(binding.nativeContainer, NativePlacement.DETAIL)`; có thể `NativeAds.preload(...)` ở màn trước.
 5. Template mặc định khác Big1: thêm vào `DEFAULT_BY_KEY` trong `NativeAdTemplate.kt`.
-6. Inter: thêm `InterstitialPlacement` + unit `INTER_*`, `NATIVE_INTER_*` + `NativePlacement.AFTER_INTER_*` (test `AdStateTest` kiểm tra cho khớp). Banner: thêm `BannerPlacement`.
-7. Sheet: thêm dòng ad unit / placement ở tab cấu hình; cập nhật bảng mặc định trong `docs/remote-config-v3/README.md`.
-8. Chạy unit test.
+6. Quảng cáo thưởng: thêm vào `RewardPlacement` (mục 3), type `reward` / `reward_inter` trên sheet.
+7. Inter: thêm `InterstitialPlacement` + unit `INTER_*`, `NATIVE_INTER_*` + `NativePlacement.AFTER_INTER_*` (test `AdStateTest` kiểm tra cho khớp). Banner: thêm `BannerPlacement`.
+8. Sheet: thêm dòng ad unit / placement ở tab cấu hình; cập nhật bảng mặc định trong `docs/remote-config-v3/README.md`.
+9. Chạy unit test.
 
 Màn Debug config tự có dòng cho placement mới.
 
@@ -222,7 +233,7 @@ không được ẩn / che các phần này. Kiểm tra bằng popup "AdMob nati
 
 | Công cụ | Dùng | Cách mở |
 |---|---|---|
-| Debug config | Override Remote Config trên máy, xem App build | Settings → Debug config (bản debug) |
+| Debug config | Override Remote Config trên máy, xem App build, nút thử reward / reward_inter | Settings → Debug config (bản debug) |
 | Native preview | Xem từng mẫu native + style `ad_templates`, mẫu Collap kèm dải thu gọn | `adb shell am start -n com.namstd.androidskillhub/.debug.NativePreviewActivity [--es name big5]` (đổi applicationId thì thay phần trước `/`) |
 | AdbDriver | Chạm / vuốt / gõ / back qua adb trên máy chặn `adb shell input` (MIUI) | `adb shell am broadcast -a com.namstd.androidskillhub.debug.TAP --ei x 540 --ei y 1200` (cũng `SWIPE`, `TYPE`, `BACK`; tên action cố định trong `AdbDriver.kt`) |
 | Premium giả | Bật / tắt Premium không cần mua | Màn Premium (bản debug) |
@@ -270,7 +281,7 @@ Công cụ chỉ dùng khi phát triển đặt trong `app/src/debug/` (không l
   sau inter dùng layout riêng `dialog_native_full.xml`; Onboarding / Welcome back vẽ theo `template` (mặc định Big1) với
   nút + đếm ngược của màn.
 - `onboarding_next_position = right` chưa có giao diện (đang như `bottom`).
-- Rewarded / rewarded interstitial có code (`RewardedAds`…) nhưng chưa màn nào dùng.
+- Quảng cáo thưởng mới có 2 placement mẫu, chưa màn nào của base gọi (app con gọi `showReward`).
 - `docs/ads-config.html`, `docs/remote-config-testcases.*` viết cho format cũ (`ad_config` với `name1`, `id1..3`, Intro…)
   — **đã lỗi thời**, tin file này và `docs/remote-config-v3/`.
 

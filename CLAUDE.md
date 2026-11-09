@@ -10,7 +10,7 @@ có sẵn AdMob Next-Gen, Firebase Remote Config, Adjust, Google Play Billing. A
 - Trả lời và viết comment / docs bằng tiếng Việt.
 - Base chỉ chứa màn chung. Không thêm màn / placement theo tính năng riêng của một app vào base.
 - Màn mới kế thừa `BaseActivity` / `BaseFragment` / `BaseDialogFragment`; quảng cáo chỉ qua helper `loadNative`,
-  `loadBanner`, `showInterstitial`; cấu hình quảng cáo chỉ đọc qua `AdPolicy`. Không gọi SDK AdMob trực tiếp trong màn.
+  `loadBanner`, `showInterstitial`, `showReward`; cấu hình quảng cáo chỉ đọc qua `AdPolicy`. Không gọi SDK AdMob trực tiếp trong màn.
 - Remote Config: app luôn đọc cùng các key `ad_settings`, `ad_placements`, `ad_ids`, `ad_templates` (+ `ad_config` gộp).
   **Không** tạo key theo version, **không** thêm `app_version` để chọn config — tách theo bản bằng Firebase Condition
   "App build ≥ N"; `versionCode` tăng mỗi bản.

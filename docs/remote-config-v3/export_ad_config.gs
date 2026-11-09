@@ -40,7 +40,9 @@ var TYPE_FORMATS = {
   banner: ['banner', 'banner_collapsible'],
   banner_native: ['banner', 'banner_collapsible', 'native', 'native_collapsible'],
   resume: ['aoa', 'welcome_back'],
-  native: []
+  native: [],
+  reward: [],
+  reward_inter: []
 };
 
 function onOpen() {

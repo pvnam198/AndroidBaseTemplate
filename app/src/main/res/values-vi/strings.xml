@@ -38,4 +38,8 @@
     <string name="onboarding_title_4">Bạn đã sẵn sàng</string>
     <string name="onboarding_body_4">Khám phá app mẫu và các tùy chọn riêng tư.</string>
     <string name="action_may_display_ad">Hành động này có thể hiển thị quảng cáo.</string>
+    <string name="rewarded_intro_title">Quảng cáo có thưởng</string>
+    <string name="rewarded_intro_message">Xem hết quảng cáo này để nhận phần thưởng. Bạn có thể bỏ qua, khi đó sẽ không nhận thưởng.</string>
+    <string name="rewarded_intro_countdown">Quảng cáo bắt đầu sau %1$d giây</string>
+    <string name="skip_label">Bỏ qua</string>
 </resources>

@@ -10,13 +10,11 @@ enum class AdFormat(val testId: String) {
     NATIVE("ca-app-pub-3940256099942544/2247696110"),
     BANNER("ca-app-pub-3940256099942544/6300978111"),
     REWARDED("ca-app-pub-3940256099942544/5224354917"),
+    REWARDED_INTERSTITIAL("ca-app-pub-3940256099942544/5354046379"),
 }
 
 /** Test ID riêng cho banner collapsible (cùng ad unit với banner thường, khác test ID). */
 const val TEST_BANNER_COLLAPSIBLE = "ca-app-pub-3940256099942544/2014213617"
-
-/** Test ID cho rewarded interstitial (hiện chưa dùng). */
-const val TEST_REWARDED_INTERSTITIAL = "ca-app-pub-3940256099942544/5354046379"
 
 /**
  * Các ad unit - tên (viết thường) đúng như cột `ad_unit` của sheet và key trong parameter `ad_ids`. Mỗi unit thuộc
@@ -47,7 +45,9 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     NATIVE_HOME_FEED(AdKey.NATIVE_HOME_FEED, AdFormat.NATIVE),
     INTER_HOME(AdKey.INTER_HOME, AdFormat.INTERSTITIAL),
     NATIVE_INTER_HOME(AdKey.INTER_HOME, AdFormat.NATIVE),
-    BANNER_SETTING(AdKey.BANNER_SETTING, AdFormat.BANNER);
+    BANNER_SETTING(AdKey.BANNER_SETTING, AdFormat.BANNER),
+    REWARD_SAMPLE(AdKey.REWARD_SAMPLE, AdFormat.REWARDED),
+    REWARD_INTER_SAMPLE(AdKey.REWARD_INTER_SAMPLE, AdFormat.REWARDED_INTERSTITIAL);
 
     /** Tên trong `ad_ids` / cột `ad_unit` của sheet. */
     val unitName: String get() = name.lowercase()

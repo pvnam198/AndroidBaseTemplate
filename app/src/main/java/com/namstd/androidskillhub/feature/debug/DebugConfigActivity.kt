@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.Toast
 import com.namstd.androidskillhub.BuildConfig
+import com.namstd.androidskillhub.core.ads.RewardPlacement
 import com.namstd.androidskillhub.core.config.DebugOverrides
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
@@ -28,9 +29,12 @@ class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
         // Số build là thứ điều kiện "App build" trên Firebase so sánh - xem docs/BASE_GUIDE.md (Remote Config theo phiên bản).
         binding.buildInfo.text = "App build ${BuildConfig.VERSION_CODE} (version ${BuildConfig.VERSION_NAME})"
         fillRows()
+        RewardPlacement.entries.forEach { preloadReward(it) }
     }
 
     override fun initListeners() {
+        binding.testRewardButton.setOnClickListener { testReward(RewardPlacement.REWARD_SAMPLE) }
+        binding.testRewardInterButton.setOnClickListener { testReward(RewardPlacement.REWARD_INTER_SAMPLE) }
         binding.saveButton.setOnClickListener {
             fields.forEach { (key, editText) ->
                 val value = editText.text.toString().trim()
@@ -44,6 +48,13 @@ class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
             DebugOverrides.clear()
             fillRows()
             Toast.makeText(this, "Đã xoá hết override.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Thử placement thưởng mẫu: hiện quảng cáo (reward_inter có màn đếm ngược trước) rồi báo kết quả. */
+    private fun testReward(placement: RewardPlacement) {
+        showReward(placement) { result ->
+            Toast.makeText(this, "${placement.adKey.key}: $result", Toast.LENGTH_LONG).show()
         }
     }
 

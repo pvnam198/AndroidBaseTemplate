@@ -12,6 +12,7 @@
     <string name="rewarded_intro_title">Rewarded ad</string>
     <string name="rewarded_intro_message">Watch this ad to receive its advertised reward. You can skip without receiving a reward.</string>
     <string name="skip_label">Skip</string>
+    <string name="rewarded_intro_countdown">The ad starts in %1$d s</string>
     <string name="apply_label">Apply</string>
     <string name="app_name">AndroidSkillHub</string>
     <string name="choose_language">Choose your language</string>
@@ -57,4 +58,6 @@
     <string name="debug_config_subtitle">Sửa giá trị từng key rồi bấm Lưu. Để trống = dùng giá trị Firebase/default.</string>
     <string name="debug_save">Lưu override</string>
     <string name="debug_reset">Xoá hết override</string>
+    <string name="debug_test_reward">Thử reward</string>
+    <string name="debug_test_reward_inter">Thử reward_inter</string>
 </resources>

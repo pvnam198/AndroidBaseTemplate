@@ -95,6 +95,11 @@ enum class AdKey(val key: String, val fullDefault: PlacementConfig) {
     NATIVE_HOME_FEED("native_home_feed", PlacementConfig(enable = true)),
     INTER_HOME("inter_home", PlacementConfig(enable = false, format = PlacementFormat.INTER)),
     BANNER_SETTING("banner_setting", PlacementConfig(enable = true, format = PlacementFormat.BANNER_COLLAPSIBLE)),
+
+    // Quảng cáo thưởng (type reward / reward_inter, không có format). Hai placement mẫu, base chưa màn nào gọi - app
+    // con đổi / thêm theo màn của mình. wait_ms của reward_inter = thời gian màn đếm ngược trước quảng cáo.
+    REWARD_SAMPLE("reward_sample", PlacementConfig(enable = true)),
+    REWARD_INTER_SAMPLE("reward_inter_sample", PlacementConfig(enable = true, waitMs = 5000)),
     ;
 
     companion object {

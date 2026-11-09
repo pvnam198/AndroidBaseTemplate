@@ -262,7 +262,7 @@ object RemoteConfig {
     )
 
     private const val BUNDLE_HINT =
-        "Cả 3 phần trong 1 JSON {\"ad_settings\":{…},\"ad_placements\":{…},\"ad_ids\":{…}}. Các dòng bên dưới thắng phần tương ứng."
+        "Cả 4 phần trong 1 JSON {\"ad_settings\":{…},\"ad_placements\":{…},\"ad_ids\":{…},\"ad_templates\":{…}}. Các dòng bên dưới thắng phần tương ứng."
     private const val PLACEMENT_HINT = "JSON {\"enable\":true,\"format\":\"inter\",\"wait_ms\":3000}, true/false, hoặc tên format"
 
     private fun long(name: String, default: Long): Long =

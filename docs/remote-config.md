@@ -39,6 +39,7 @@ Mọi thời gian tính bằng **mili-giây**.
 | `core/ads/AdUnit.kt` | Ad unit (tên viết thường = `ad_ids` / cột `ad_unit`), `ids()` |
 | `core/ads/FullScreenAdPlan.kt` | `format` → loại full-screen (AOA / inter / inter + native / chỉ native) |
 | `core/ads/BannerAds.kt` | `format` của `banner_*` → banner / collapsible / native / native collapsible |
+| `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement` (type reward / reward_inter, không format), tải theo `ad_ids`, `BaseActivity.showReward` |
 | `core/ads/NativeAds.kt` | `NativePlacement` → `AdUnit`; bật theo `enable` / `pages`; mẫu theo `template` (`templateFor` → `NativeTemplateSpec`) |
 | `core/ads/template/NativeStyle.kt`, `NativeStyleApplier.kt` | `ad_templates`: `NativeStyle`, `AdTemplatesDocument.resolve`; áp màu / bo góc / viền / kích thước lên view native |
 | `debug/NativePreviewActivity.kt` (chỉ bản debug) | Xem trước mọi mẫu + style: `adb shell am start -n com.namstd.androidskillhub/.debug.NativePreviewActivity [--es name big5]` |
@@ -58,3 +59,4 @@ Mọi thời gian tính bằng **mili-giây**.
 - **06/11/2026** — app chuyển sang **format mới**: 3 parameter `ad_settings`, `ad_placements` (`full` / `basic`), `ad_ids` (hoặc 1 key `ad_config` chứa cả 3); `enable` chỉ là bật/tắt, loại ở `format`, mẫu ở `template`, trang ở `pages`; bộ basic đọc từ config; thêm `native_home_feed`; `open_ad_on_clicks` đếm mọi click trên quảng cáo (bấm thẻ lại mở được quảng cáo); bấm icon khi app đang chạy nền không còn chạy lại Splash. Bỏ hẳn format `ad_config` cũ (`settings`, `name1`, `id1..3`).
 
 - **06/11/2026** — thêm parameter **`ad_templates`** (tab `templates` của sheet): đổi màu / bo góc / viền / cỡ chữ / kích thước (CTA, ảnh, icon, đệm) của mọi native từ remote, đặt mẫu tự đặt (layout gốc `base` + style) cho cột `template`; màn debug `NativePreviewActivity` xem trước mọi mẫu. Sheet: `id_1..3`, `ads_profile` 0–3, cột `type` + dropdown `format` theo type (tab `types`).
+- **09/11/2026** — thêm quảng cáo thưởng: type `reward` (user bấm xem) và `reward_inter` (rewarded interstitial, màn đếm ngược `wait_ms` có Bỏ qua), không có format; 2 placement mẫu `reward_sample`, `reward_inter_sample`; `showReward` / `preloadReward` trong lớp base; nút thử ở Debug config. Bỏ `RewardedAds` / `RewardedInterstitialAds` cũ (chỉ test ID).

@@ -15,8 +15,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Lifecycle consent/init và config dùng chung cho mọi định dạng ad. Logic load/show riêng của từng
- * định dạng nằm trong file riêng (BannerAds, NativeAds, InterstitialAds, RewardedAds,
- * RewardedInterstitialAds, AppOpenAds) - object này chỉ điều phối khởi động/dọn dẹp.
+ * định dạng nằm trong file riêng (BannerAds, NativeAds, InterstitialAds, RewardAds,
+ * AppOpenAds) - object này chỉ điều phối khởi động/dọn dẹp.
  */
 object Ads {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -122,8 +122,7 @@ object Ads {
 
     private fun clearAll() {
         InterstitialAds.clear()
-        RewardedAds.clear()
-        RewardedInterstitialAds.clear()
+        RewardAds.clear()
         AppOpenAds.clear()
         NativeAds.clear()
     }

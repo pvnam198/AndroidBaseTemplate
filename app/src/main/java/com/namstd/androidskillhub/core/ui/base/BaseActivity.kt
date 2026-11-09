@@ -2,6 +2,7 @@ package com.namstd.androidskillhub.core.ui.base
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.viewbinding.ViewBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.AdHandle
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
@@ -24,6 +27,10 @@ import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.RewardAds
+import com.namstd.androidskillhub.core.ads.RewardKind
+import com.namstd.androidskillhub.core.ads.RewardPlacement
+import com.namstd.androidskillhub.core.ads.RewardResult
 import com.namstd.androidskillhub.core.ads.SplashFallback
 import com.namstd.androidskillhub.core.ads.fullScreenPlan
 import com.namstd.androidskillhub.core.preferences.AppPreferences
@@ -137,6 +144,69 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         }
     }
 
+    /** Tải sẵn quảng cáo thưởng của [placement] (vd. khi mở màn có nút "Xem quảng cáo để nhận…"). */
+    protected fun preloadReward(placement: RewardPlacement) = RewardAds.preload(placement)
+
+    /**
+     * Quảng cáo thưởng cho [placement]; [onResult] chạy đúng một lần: [RewardResult.REWARDED] (xem đủ - cho thưởng),
+     * [RewardResult.SKIPPED] (đóng sớm / bấm Bỏ qua), [RewardResult.UNAVAILABLE] (tắt, Premium, chưa có ad... - app tự
+     * quyết cho thưởng luôn hay báo thử lại).
+     * - type reward: hiện quảng cáo ngay (user đã tự bấm).
+     * - type reward_inter: trước đó hiện màn đếm ngược `wait_ms` (mặc định 5 s) có nút Bỏ qua - bắt buộc theo chính
+     *   sách rewarded interstitial của AdMob; hết giờ thì hiện quảng cáo.
+     * Chỉ một implementation cho toàn app - [BaseFragment.showReward] uỷ quyền về đây.
+     */
+    internal fun showReward(placement: RewardPlacement, onResult: (RewardResult) -> Unit) {
+        if (!RewardAds.isEnabled(placement) || !RewardAds.isReady(placement) || FullScreenGate.isBusy()) {
+            RewardAds.preload(placement)
+            onResult(RewardResult.UNAVAILABLE)
+            return
+        }
+        if (placement.kind == RewardKind.REWARD) {
+            RewardAds.show(this, placement, onResult)
+            return
+        }
+        showRewardIntro(AdPolicy.config(placement.adKey).waitMs.takeIf { it > 0 } ?: DEFAULT_REWARD_INTRO_MS) { start ->
+            if (start && !isFinishing && !isDestroyed) RewardAds.show(this, placement, onResult)
+            else onResult(RewardResult.SKIPPED)
+        }
+    }
+
+    /** Màn giới thiệu của reward_inter: đếm ngược [durationMs], nút Bỏ qua. [onDone] (true = hết giờ, hiện quảng cáo). */
+    private fun showRewardIntro(durationMs: Long, onDone: (Boolean) -> Unit) {
+        val token = Any()
+        FullScreenGate.acquire(token)
+        var finished = false
+        val finish = { start: Boolean ->
+            if (!finished) {
+                finished = true
+                FullScreenGate.release(token)
+                onDone(start)
+            }
+        }
+        val seconds = { ms: Long -> ((ms + 999) / 1000).toInt() }
+        val message = { ms: Long ->
+            getString(R.string.rewarded_intro_message) + "\n\n" + getString(R.string.rewarded_intro_countdown, seconds(ms))
+        }
+        lateinit var timer: CountDownTimer
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.rewarded_intro_title)
+            .setMessage(message(durationMs))
+            .setCancelable(false)
+            .setNegativeButton(R.string.skip_label) { _, _ -> timer.cancel(); finish(false) }
+            .create()
+        timer = object : CountDownTimer(durationMs, 250L) {
+            override fun onTick(millisUntilFinished: Long) = dialog.setMessage(message(millisUntilFinished))
+            override fun onFinish() {
+                finish(true) // trước dismiss: listener dismiss bên dưới coi đóng là bỏ qua
+                if (dialog.isShowing) dialog.dismiss()
+            }
+        }
+        dialog.setOnDismissListener { timer.cancel(); finish(false) }
+        dialog.show()
+        timer.start()
+    }
+
     /**
      * Tần suất interstitial theo lần yêu cầu (`step` của vị trí): tăng bộ đếm riêng của vị trí (lưu qua các
      * lần mở app) và chỉ cho hiện ở lần chia hết cho step; các lần khác bỏ qua (gọi onComplete luôn).
@@ -221,3 +291,6 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
 /** Thời gian một native-only break (`enable` = 2 của vị trí inter) đợi ad đầu tiên trước khi bỏ cuộc và đi tiếp. */
 private const val NATIVE_ONLY_WAIT_MS = 5_000L
+
+/** Màn đếm ngược trước reward_inter khi placement không đặt `wait_ms`. */
+private const val DEFAULT_REWARD_INTRO_MS = 5_000L

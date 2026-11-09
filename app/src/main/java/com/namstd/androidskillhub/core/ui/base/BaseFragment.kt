@@ -14,6 +14,9 @@ import com.namstd.androidskillhub.core.ads.BannerAds
 import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
+import com.namstd.androidskillhub.core.ads.RewardAds
+import com.namstd.androidskillhub.core.ads.RewardPlacement
+import com.namstd.androidskillhub.core.ads.RewardResult
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.preferences.AppPreferences
@@ -99,6 +102,13 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     protected fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
         (requireActivity() as BaseActivity<*>).showInterstitial(placement, onComplete)
     }
+
+    /** Uỷ quyền cho [BaseActivity.showReward] - xem ở đó. */
+    protected fun showReward(placement: RewardPlacement, onResult: (RewardResult) -> Unit) {
+        (requireActivity() as BaseActivity<*>).showReward(placement, onResult)
+    }
+
+    protected fun preloadReward(placement: RewardPlacement) = RewardAds.preload(placement)
 
     protected abstract fun inflateBinding(inflater: LayoutInflater, container: ViewGroup?): VB
 

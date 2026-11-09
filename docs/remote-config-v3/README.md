@@ -77,6 +77,8 @@ User Premium luôn không có quảng cáo. App cũng nhận tên (`off`, `full_
 | `banner` | banner_setting | `banner` · `banner_collapsible` (không có ad unit native) |
 | `resume` | on_resume | `aoa` · `welcome_back` |
 | `native` | các placement native_* | không có format |
+| `reward` | reward_sample (mẫu) | không có format - quảng cáo thưởng user tự bấm xem |
+| `reward_inter` | reward_inter_sample (mẫu) | không có format - rewarded interstitial, có màn đếm ngược `wait_ms` cho bỏ qua |
 
 Trên sheet, cột `type` nằm ngay cạnh `format` (đầu nhóm FULL). Tab **`types`** là bảng `type → format` (tối đa 4 format, thêm type mới thì thêm dòng ở đó). Mỗi dòng của `ad_config` có **4 cột phụ ẩn** (sau nhóm BASIC, không tiêu đề) dùng công thức lấy danh sách format theo `type` của dòng; dropdown `format` (FULL và BASIC) lấy từ các cột phụ đó, nên **đổi `type` là dropdown đổi ngay**, không cần script. Đổi `type` thì `format` cũ không hợp không tự xoá, ô chỉ báo đỏ; script xuất JSON cũng cảnh báo. **Thêm dòng mới: copy cả dòng bên trên rồi paste xuống** để kéo theo công thức phụ và dropdown. Không xoá / dời các cột phụ.
 
@@ -124,6 +126,8 @@ Script cảnh báo màu / số sai, `base` sai và placement chọn template kh�
 | native_home_feed | bật, Big1 |
 | inter_home | **tắt**, `inter` |
 | banner_setting | bật, `banner_collapsible` |
+| reward_sample | bật (mẫu, base chưa màn nào gọi) |
+| reward_inter_sample | bật, `wait_ms` 5000 (mẫu, base chưa màn nào gọi) |
 
 Mọi placement: `step` 1, `wait_ms` 0, `refresh_ms` 0 (không tự tải lại), `open_ad_on_clicks` [] (click nào cũng xử lý bình thường).
 

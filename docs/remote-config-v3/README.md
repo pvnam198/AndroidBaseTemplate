@@ -13,9 +13,16 @@ Sheet xuất ra 4 parameter trên Firebase (app cũng đọc 1 parameter `ad_con
 | `ad_ids` | `ad_ids.json` | `ad_unit → [id_1, id_2, id_3]` (app thử id_1 → id_3) | Một lần lúc phát hành |
 | `ad_templates` | `ad_templates.json` | Mẫu native tự đặt / style đè lên mẫu có sẵn (tab `templates`) | Khi đổi giao diện native |
 
+## Cấu hình khác nhau theo bản app
+
+App luôn đọc cùng các parameter trên, **không tạo parameter theo version** (`ad_config_109`...). Bản mới cần cấu hình khác
+thì trên Firebase thêm *Conditional value* cho parameter đó với điều kiện **App build ≥ versionCode của bản mới**; giá trị
+mặc định giữ cho bản cũ. Trên sheet: nhân bản tab cấu hình (vd. `version 201`), sửa, đứng ở tab đó rồi Export. Chi tiết:
+`docs/BASE_GUIDE.md` mục 5.3.
+
 ## Xuất JSON từ Google Sheet
 
-Script `export_ad_config.gs` (Google Apps Script) đọc tab `ad_config` + `templates` và tạo 4 JSON.
+Script `export_ad_config.gs` (Google Apps Script) đọc **tab cấu hình đang mở** (`ad_config`, `version 201`...) + tab `templates` và tạo 4 JSON.
 
 **Cài một lần:**
 1. Mở Google Sheet → **Extensions → Apps Script**.

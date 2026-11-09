@@ -7,7 +7,10 @@
  * Remote Config (kiểu JSON): nút Copy để dán vào parameter cùng tên, nút Tải để lưu file. Nút "Tải tất cả" lưu
  * ad_config.json gồm cả 4 (để lưu trữ / gửi team xem, không phải để import).
  *
- * Bố cục tab ad_config mà script đọc:
+ * Tab được xuất: tab đang mở nếu nó là tab cấu hình (có ô "setting" và "ad_unit" ở cột A) - nên mỗi bản app có thể
+ * một tab riêng ("version 109", "version 201"...), mở tab nào thì xuất tab đó. Đang mở tab khác thì dùng tab "ad_config".
+ *
+ * Bố cục tab cấu hình mà script đọc:
  * - hàng có ô đầu "setting": tên key; hàng ngay dưới ("value"): giá trị. Ô value trống = bỏ qua (app dùng mặc định).
  * - hàng tiêu đề nhóm: ô bắt đầu bằng "FULL" và ô bắt đầu bằng "BASIC" đánh dấu cột đầu của mỗi nhóm.
  * - hàng có ô đầu "ad_unit": tên cột (ad_unit, id_1..id_3, placement, type, rồi cột FULL / BASIC). Mỗi hàng dưới là 1 ad
@@ -45,8 +48,14 @@ function onOpen() {
 }
 
 function showExport() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sheet) throw new Error('Không thấy tab "' + SHEET_NAME + '"');
+  // Xuất tab đang mở (mỗi bản app có thể một tab: "version 109", "version 201"...); đang mở tab khác (templates,
+  // types...) thì dùng tab "ad_config".
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  if (!isConfigSheet(sheet)) sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet || !isConfigSheet(sheet)) {
+    throw new Error('Mở tab cấu hình (tab có hàng "setting" và "ad_unit", vd. "version 109") rồi chạy lại Export JSON');
+  }
   var range = sheet.getDataRange();
   var typesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TYPES_SHEET_NAME);
   var typeFormats = typesSheet ? readTypeFormats(typesSheet.getDataRange().getDisplayValues()) : TYPE_FORMATS;
@@ -55,7 +64,14 @@ function showExport() {
   addTemplates(result, templatesSheet ? templatesSheet.getDataRange().getDisplayValues() : []);
   var html = HtmlService.createHtmlOutput(exportDialogHtml(result))
     .setWidth(900).setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Export ad config');
+  SpreadsheetApp.getUi().showModalDialog(html, 'Export ad config - tab "' + sheet.getName() + '"');
+}
+
+/** Tab cấu hình = cột A có ô "setting" và ô "ad_unit". */
+function isConfigSheet(sheet) {
+  if (!sheet) return false;
+  var col = sheet.getRange(1, 1, Math.min(sheet.getLastRow() || 1, 30), 1).getDisplayValues().map(function (r) { return String(r[0]).trim(); });
+  return col.indexOf('setting') >= 0 && col.indexOf('ad_unit') >= 0;
 }
 
 /** Phần xử lý thuần (không gọi API Google) để test được ngoài Apps Script. */

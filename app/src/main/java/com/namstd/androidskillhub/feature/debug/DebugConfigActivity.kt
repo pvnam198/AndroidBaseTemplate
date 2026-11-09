@@ -3,6 +3,7 @@ package com.namstd.androidskillhub.feature.debug
 import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.Toast
+import com.namstd.androidskillhub.BuildConfig
 import com.namstd.androidskillhub.core.config.DebugOverrides
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
@@ -24,6 +25,8 @@ class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
         ActivityDebugConfigBinding.inflate(inflater)
 
     override fun initViews() {
+        // Số build là thứ điều kiện "App build" trên Firebase so sánh - xem docs/BASE_GUIDE.md (Remote Config theo phiên bản).
+        binding.buildInfo.text = "App build ${BuildConfig.VERSION_CODE} (version ${BuildConfig.VERSION_NAME})"
         fillRows()
     }
 

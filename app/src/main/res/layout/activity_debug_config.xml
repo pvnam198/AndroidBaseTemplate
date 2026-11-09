@@ -32,6 +32,15 @@
             android:text="@string/debug_config_subtitle"
             android:textAppearance="?attr/textAppearanceCaption"
             android:textColor="@color/white" />
+
+        <TextView
+            android:id="@+id/build_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <ScrollView

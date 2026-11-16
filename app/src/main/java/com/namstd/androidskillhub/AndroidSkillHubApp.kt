@@ -11,13 +11,18 @@ import com.adjust.sdk.AdjustConfig
 import com.namstd.androidskillhub.core.ads.AdAudience
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
+import com.namstd.androidskillhub.core.ads.AppOpenAds
+import com.namstd.androidskillhub.core.ads.AdUnit
+import com.namstd.androidskillhub.core.ads.InterstitialAds
+import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.billing.Premium
 import com.namstd.androidskillhub.core.config.AdKey
-import com.namstd.androidskillhub.core.config.PlacementFormat
+import com.namstd.androidskillhub.core.config.AdType
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
+import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.feature.welcome.WelcomeBackActivity
 import java.lang.ref.WeakReference
 
@@ -49,9 +54,12 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
             currentActivity.get()?.let { activity ->
                 val preferences = AppPreferences.getInstance(this@AndroidSkillHubApp)
                 if (preferences.setupCompleted) {
-                    when (AdPolicy.format(AdKey.ON_RESUME)) {
-                        PlacementFormat.AOA -> Ads.onReturnToForeground(activity)
-                        PlacementFormat.WELCOME_BACK -> WelcomeBackActivity.launch(activity)
+                    // on_resume: aoa = App Open; native = màn Welcome Back có native; còn lại = inter (luồng theo ad_type).
+                    when (AdPolicy.adType(AdKey.ON_RESUME)) {
+                        AdType.AOA -> Ads.onReturnToForeground(activity)
+                        AdType.NATIVE -> WelcomeBackActivity.launch(activity)
+                        AdType.INTER, AdType.NATIVE_AS_INTER, AdType.INTER_THEN_NATIVE ->
+                            (activity as? BaseActivity<*>)?.showInterstitial(InterstitialPlacement.RESUME) {}
                         else -> Unit // tắt: không hiện gì khi quay lại app
                     }
                 }
@@ -60,8 +68,15 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        // Hâm nóng native cho welcome back khi app xuống nền, để sẵn lúc quay lại.
-        if (AdPolicy.format(AdKey.ON_RESUME) == PlacementFormat.WELCOME_BACK) NativeAds.preload(NativePlacement.WELCOME_BACK)
+        // App xuống nền: tải sẵn quảng cáo của on_resume cho lần quay lại.
+        if (!Ads.adsEnabled) return
+        when (AdPolicy.adType(AdKey.ON_RESUME)) {
+            AdType.AOA -> AppOpenAds.load(AdUnit.ON_RESUME)
+            AdType.NATIVE -> NativeAds.preload(NativePlacement.WELCOME_BACK)
+            AdType.INTER, AdType.INTER_THEN_NATIVE -> InterstitialAds.preload(InterstitialPlacement.RESUME)
+            AdType.NATIVE_AS_INTER -> NativeAds.preload(NativePlacement.AFTER_INTER_RESUME)
+            else -> Unit
+        }
     }
 
     override fun onActivityResumed(activity: Activity) {

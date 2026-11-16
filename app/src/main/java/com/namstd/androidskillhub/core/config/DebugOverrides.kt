@@ -17,17 +17,28 @@ object DebugOverrides {
         if (prefs == null) prefs = context.applicationContext.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
     }
 
+    /** Tăng mỗi lần override đổi - [RemoteConfig] dùng để biết khi nào parse lại cấu hình. */
+    @Volatile
+    var version: Int = 0
+        private set
+
     fun get(key: String): String? = prefs?.getString(key, null)
+
+    /** Tên các key đang có override. */
+    fun keys(): Set<String> = prefs?.all?.keys.orEmpty()
 
     fun set(key: String, value: String) {
         prefs?.edit { putString(key, value) }
+        version++
     }
 
     fun remove(key: String) {
         prefs?.edit { remove(key) }
+        version++
     }
 
     fun clear() {
         prefs?.edit { clear() }
+        version++
     }
 }

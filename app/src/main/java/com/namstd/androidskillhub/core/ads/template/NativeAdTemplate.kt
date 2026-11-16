@@ -7,7 +7,7 @@ import com.namstd.androidskillhub.core.config.PlacementConfig
 
 /**
  * Bộ template card native dùng chung cho mọi placement, chọn bằng `template` của placement đó trong
- * `ad_placements`. [key] là đúng tên mẫu trong tài liệu / Figma "Wavez - ADs" (Big1…Big9, Small1…, Tiny1, Tiny2,
+ * `profiles.<bộ>.placements`. [key] là đúng tên mẫu trong tài liệu / Figma "Wavez - ADs" (Big1…Big9, Small1…, Tiny1, Tiny2,
  * Collap1…, Full1…), không phân biệt hoa thường; màn nào cần mẫu nào thì ghi đúng tên đó.
  *
  * Mọi layout (layout/ad_tpl_*.xml) dùng chung view id, nên
@@ -67,7 +67,7 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     companion object {
         /**
          * Template mặc định khi `template` của placement bỏ trống / ghi sai, cho placement mà [BIG1] không vừa chỗ:
-         * `native_language_small` là dải nằm dưới tiêu đề nên mặc định [TINY1] (đúng như sheet).
+         * `native_language_small` là dải nằm dưới tiêu đề nên mặc định [TINY1].
          */
         private val DEFAULT_BY_KEY: Map<AdKey, NativeAdTemplate> = mapOf(
             AdKey.NATIVE_LANGUAGE_SMALL to TINY1,
@@ -78,7 +78,7 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
             fromKey(config.template, DEFAULT_BY_KEY[key] ?: BIG1)
 
         /**
-         * Mẫu + style cho placement [key]: `template` có thể là mẫu có sẵn hoặc tên mẫu tự đặt trong `ad_templates`
+         * Mẫu + style cho placement [key]: `template` có thể là mẫu có sẵn hoặc tên mẫu tự đặt trong `templates`
          * ([templates]); trống / không khớp thì mặc định của placement.
          */
         fun specFor(key: AdKey, config: PlacementConfig, templates: AdTemplatesDocument): NativeTemplateSpec =

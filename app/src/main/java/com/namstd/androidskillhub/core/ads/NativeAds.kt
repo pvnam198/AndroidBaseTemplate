@@ -29,7 +29,7 @@ import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 /**
- * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit ([unit] - ID trong `ad_ids`, `template` của placement
+ * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit ([unit] - ID trong `ad_ids.native`, `template` của placement
  * chứa unit đó). Mỗi chỗ có slot cache riêng, nên hai chỗ dùng chung một unit vẫn không giành ad của nhau.
  */
 enum class NativePlacement(val unit: AdUnit) {
@@ -38,17 +38,20 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Màn Language lần đầu cài app (luồng Splash → Language → Onboarding). */
     LANGUAGE(AdUnit.NATIVE_LANGUAGE),
 
-    /** Màn Language mở từ Cài đặt - cùng vị trí `native_language` (enable, layout), ad unit `NATIVE_LANGUAGE_2`. */
+    /** Màn Language mở từ Cài đặt - placement `native_language_2`. */
     LANGUAGE_SETTING(AdUnit.NATIVE_LANGUAGE_2),
 
     /** Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt) - vị trí `native_language_small`. */
     LANGUAGE_SMALL(AdUnit.NATIVE_LANGUAGE_SMALL),
 
-    /** Native ở chân các trang nội dung Onboarding; `pages` của `native_onboarding` liệt kê trang có native. */
-    ONBOARDING_1(AdUnit.NATIVE_ONBOARDING_1),
-    ONBOARDING_2(AdUnit.NATIVE_ONBOARDING_2),
-    ONBOARDING_3(AdUnit.NATIVE_ONBOARDING_3),
-    ONBOARDING_4(AdUnit.NATIVE_ONBOARDING_4),
+    /**
+     * Native ở chân trang nội dung Onboarding 1–4: chung placement `native_onboarding` (enable, template, cùng bộ ID),
+     * nhưng mỗi trang một slot nên là các native riêng.
+     */
+    ONBOARDING_1(AdUnit.NATIVE_ONBOARDING),
+    ONBOARDING_2(AdUnit.NATIVE_ONBOARDING),
+    ONBOARDING_3(AdUnit.NATIVE_ONBOARDING),
+    ONBOARDING_4(AdUnit.NATIVE_ONBOARDING),
 
     /** Trang native toàn màn hình trong Onboarding (`native_full_onboarding`). */
     ONBOARDING_AD(AdUnit.NATIVE_FULL_ONBOARDING),
@@ -56,32 +59,30 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Native xen trong feed màn chính (`native_home_feed`). */
     HOME_FEED(AdUnit.NATIVE_HOME_FEED),
 
-    /** Native toàn màn hình hiện sau inter của từng vị trí (`NATIVE_INTER_*`). */
+    /** Native toàn màn hình hiện sau inter của từng vị trí (ad_type inter_then_native, `ad_ids.native` của placement inter). */
     AFTER_INTER_SPLASH(AdUnit.NATIVE_INTER_SPLASH),
     AFTER_INTER_LANGUAGE(AdUnit.NATIVE_INTER_LANGUAGE),
-    AFTER_INTER_ONBOARDING(AdUnit.NATIVE_INTER_ONBOARDING),
+    AFTER_INTER_ONBOARDING(AdUnit.NATIVE_INTER_AFTER_ONBOARDING),
     AFTER_INTER_HOME(AdUnit.NATIVE_INTER_HOME),
+    AFTER_INTER_RESUME(AdUnit.NATIVE_ON_RESUME),
 
-    /** Native collapsible ở ô banner màn chính (`banner_home` format native_collapsible) - xem [NativeCollapseAd]. */
-    NATIVE_COLLAPSIBLE(AdUnit.NATIVE_COLLAP_HOME),
+    /** Native collapsible ở ô banner màn chính (`banner_home` ad_type native_as_banner_collap) - xem [NativeCollapseAd]. */
+    NATIVE_COLLAPSIBLE(AdUnit.NATIVE_HOME),
 
-    /** Native hiển thị như một slot banner thường (`banner_home` format native) - xem [BannerAds]. */
+    /** Native hiển thị như một slot banner thường (`banner_home` ad_type native_as_banner) - xem [BannerAds]. */
     BANNER_NATIVE(AdUnit.NATIVE_HOME),
 
-    /** Native trên màn welcome-back (`on_resume` format welcome_back) - xem WelcomeBackActivity. */
-    WELCOME_BACK(AdUnit.NATIVE_WELCOME_BACK);
+    /** Native trên màn Welcome Back (`on_resume` ad_type native) - xem WelcomeBackActivity. */
+    WELCOME_BACK(AdUnit.NATIVE_ON_RESUME);
 
     /**
-     * Chỗ này có bật theo cấu hình placement ([config]) không. Native Onboarding: placement bật và trang có trong
-     * `pages`; native Splash / Language / Welcome back / feed: placement bật; các chỗ còn lại do placement cha quyết
-     * định (format của inter / banner, trang native full) nên luôn được phép ở đây.
+     * Chỗ này có bật theo cấu hình placement ([config]) không. Native Splash / Language / Onboarding / Welcome back /
+     * feed: placement bật; các chỗ còn lại do placement cha quyết định (ad_type của inter / banner, trang native full)
+     * nên luôn được phép ở đây.
      */
     fun isEnabled(config: PlacementConfig): Boolean = when (this) {
-        ONBOARDING_1 -> config.enable && 1 in config.pages
-        ONBOARDING_2 -> config.enable && 2 in config.pages
-        ONBOARDING_3 -> config.enable && 3 in config.pages
-        ONBOARDING_4 -> config.enable && 4 in config.pages
-        SPLASH, LANGUAGE, LANGUAGE_SETTING, LANGUAGE_SMALL, WELCOME_BACK, HOME_FEED -> config.enable
+        SPLASH, LANGUAGE, LANGUAGE_SETTING, LANGUAGE_SMALL, ONBOARDING_1, ONBOARDING_2, ONBOARDING_3, ONBOARDING_4,
+        WELCOME_BACK, HOME_FEED -> config.enable
         else -> true
     }
 }
@@ -204,6 +205,10 @@ object NativeAds {
         startLoad(placement, slot, onReady = null, onFailed = null)
     }
 
+    /** Đã có ad mới của [placement] nằm sẵn để hiện ngay chưa (không lấy ra khỏi cache). */
+    fun isReady(placement: NativePlacement): Boolean =
+        AdPolicy.nativeAllowed && Ads.isReady && slotFor(placement).hasFresh(TTL_MS)
+
     /**
      * Có phải sẽ không có ad nào cho [placement] hay không: ads đang tắt, SDK chưa sẵn sàng (consent bị
      * từ chối), hoặc lượt load gần nhất thất bại và không có lượt mới nào đang chạy. Dành cho các view
@@ -251,10 +256,13 @@ object NativeAds {
         placement: NativePlacement,
         container: FrameLayout,
         preloadOnShow: Boolean = false,
+        /** Chạy (main thread) khi không có ad để hiện: tắt quảng cáo / SDK chưa sẵn sàng / waterfall không ra ad. */
+        onUnavailable: () -> Unit = {},
         render: (Activity, NativeAd) -> NativeAdView = { a, ad -> renderTemplate(a, ad, templateFor(placement)) },
     ): AdHandle {
         if (!AdPolicy.nativeAllowed || !Ads.isReady) {
             container.visibility = View.GONE
+            onUnavailable()
             return AdHandle {}
         }
         var currentView: NativeAdView? = null
@@ -268,6 +276,7 @@ object NativeAds {
                 shimmer?.let { it.stopShimmer(); container.removeView(it) }
                 shimmer = null
                 container.visibility = View.GONE
+                onUnavailable()
             },
         ) { ad ->
             shimmer?.let { it.stopShimmer(); container.removeView(it) }
@@ -367,7 +376,7 @@ object NativeAds {
 
     /**
      * Mẫu của [placement]: theo `template` của placement chứa unit đó - mẫu có sẵn hoặc mẫu tự đặt trong
-     * `ad_templates` (trống → mẫu mặc định), kèm style - xem [NativeAdTemplate.specFor].
+     * `templates` (trống → mẫu mặc định), kèm style - xem [NativeAdTemplate.specFor].
      */
     fun templateFor(placement: NativePlacement): NativeTemplateSpec =
         NativeAdTemplate.specFor(placement.unit.key, AdPolicy.config(placement.unit.key), RemoteConfig.templates())

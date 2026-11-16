@@ -13,7 +13,7 @@ import com.google.android.libraries.ads.mobile.sdk.rewardedinterstitial.Rewarded
 import com.namstd.androidskillhub.core.config.AdKey
 
 /**
- * Loại quảng cáo thưởng = cột `type` của placement trên sheet (không có `format`):
+ * Loại quảng cáo thưởng = `type` / `ad_type` của placement (reward / reward_inter):
  * - [REWARD]: user tự bấm xem (nút "Xem quảng cáo để nhận…"), xem hết mới nhận thưởng.
  * - [REWARD_INTER]: tự hiện lúc chuyển màn như inter, trước đó có màn đếm ngược cho user bỏ qua (bắt buộc theo
  *   chính sách rewarded interstitial của AdMob).
@@ -36,7 +36,7 @@ enum class RewardResult {
 }
 
 /**
- * Chỗ gọi quảng cáo thưởng trong app - mỗi cái một placement (`ad_placements`) + một ad unit (`ad_ids`). Base chỉ có
+ * Chỗ gọi quảng cáo thưởng trong app - mỗi cái một placement (`profiles.<bộ>.placements`, ID trong `ad_ids.reward` / `ad_ids.reward_inter`). Base chỉ có
  * hai placement mẫu; app con thêm placement theo màn của mình: thêm [AdKey], [AdUnit] (format
  * [AdFormat.REWARDED] / [AdFormat.REWARDED_INTERSTITIAL]) và một dòng ở đây.
  */

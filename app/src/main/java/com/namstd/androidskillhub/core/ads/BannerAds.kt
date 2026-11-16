@@ -21,13 +21,13 @@ import com.google.android.libraries.ads.mobile.sdk.common.AdLoadCallback
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.namstd.androidskillhub.core.config.AdKey
-import com.namstd.androidskillhub.core.config.PlacementFormat
+import com.namstd.androidskillhub.core.config.AdType
 import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
 
 /**
- * Các ô banner trong app, mỗi ô là một placement `banner_*`: [key] là key cấu hình (`format`, `refresh_ms`,
- * `open_ad_on_clicks`, `template`), [bannerUnit] là ad unit banner. Kiểu native trong ô banner (format native /
- * native_collapsible) chỉ có ở màn chính, vì chỉ `banner_home` có các unit `native_home` / `native_collap_home`.
+ * Các ô banner trong app, mỗi ô là một placement `banner_*`: [key] là key cấu hình (`ad_type`, `refresh_ms`,
+ * `open_ad_on_clicks`, `template`), [bannerUnit] là ad unit banner. Kiểu native trong ô banner (ad_type
+ * native_as_banner / native_as_banner_collap) chỉ có ở màn chính ([supportsNative]: `banner_home`).
  */
 enum class BannerPlacement(val key: AdKey, val bannerUnit: AdUnit, val supportsNative: Boolean) {
     HOME(AdKey.BANNER_HOME, AdUnit.BANNER_HOME, supportsNative = true),
@@ -36,10 +36,10 @@ enum class BannerPlacement(val key: AdKey, val bannerUnit: AdUnit, val supportsN
 
 object BannerAds {
     /**
-     * Load một banner vào [container] cho [placement]. Loại do `format` của placement quyết định: tắt = ẩn ô,
-     * banner = AdMob banner thường, banner_collapsible = AdMob collapsible, native = native thường, native_collapsible
-     * = native collapsible ([NativeCollapseAd]: 1 native ad to rồi thu nhỏ thành dải). Placement không có native
-     * ([BannerPlacement.supportsNative] = false) thì native / native_collapsible dùng banner thường. Chỉ điều hướng - load thật ở
+     * Load một banner vào [container] cho [placement]. Loại do `ad_type` của placement quyết định: tắt = ẩn ô,
+     * banner = AdMob banner thường, banner_collapsible = AdMob collapsible, native_as_banner = native thường,
+     * native_as_banner_collap = native collapsible ([NativeCollapseAd]: 1 native ad to rồi thu nhỏ thành dải). Placement
+     * không có native ([BannerPlacement.supportsNative] = false) thì 2 kiểu native dùng banner thường. Chỉ điều hướng - load thật ở
      * [loadAdMobBanner]/[NativeCollapseAd].
      *
      * [autoReload] null = theo `refresh_ms` của placement (> 0 là tự reload sau bấy nhiêu ms); màn nào tự reload
@@ -56,24 +56,24 @@ object BannerAds {
         val config = AdPolicy.config(placement.key)
         val reloadGapMs = config.refreshMs
         val reload = autoReload ?: (reloadGapMs > 0L)
-        val format = if (!config.enable) null else when (config.format) {
-            // Placement không có native thì native / native_collapsible dùng banner thường.
-            PlacementFormat.NATIVE, PlacementFormat.NATIVE_COLLAPSIBLE ->
-                if (placement.supportsNative) config.format else PlacementFormat.BANNER
-            else -> config.format
+        val format = if (!config.enable) null else when (config.adType) {
+            // Placement không có native thì 2 kiểu native dùng banner thường.
+            AdType.NATIVE_AS_BANNER, AdType.NATIVE_AS_BANNER_COLLAP ->
+                if (placement.supportsNative) config.adType else AdType.BANNER
+            else -> config.adType
         }
         return when (format) {
             null -> {
                 container.visibility = View.GONE
                 BannerSlotHandle.NONE
             }
-            PlacementFormat.NATIVE_COLLAPSIBLE -> NativeCollapseAd(
+            AdType.NATIVE_AS_BANNER_COLLAP -> NativeCollapseAd(
                 activity, container,
                 collapGate = CollapClickGate(config.openAdOnClicks),
                 autoReload = reload, reloadGapMs = reloadGapMs, onStatus = onStatus,
             ).start()
-            PlacementFormat.NATIVE -> NativeBannerSlot(activity, container as FrameLayout).start()
-            PlacementFormat.BANNER_COLLAPSIBLE ->
+            AdType.NATIVE_AS_BANNER -> NativeBannerSlot(activity, container as FrameLayout).start()
+            AdType.BANNER_COLLAPSIBLE ->
                 loadAdMobBanner(activity, container, placement.bannerUnit, collapsible = true, reload, reloadGapMs, onStatus)
             else -> loadAdMobBanner(activity, container, placement.bannerUnit, collapsible = false, reload, reloadGapMs, onStatus)
         }

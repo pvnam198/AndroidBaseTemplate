@@ -38,7 +38,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
     /**
      * Load banner của [placement] vào [container] và tự huỷ nó khi view bị huỷ. Loại banner và timer reload
-     * theo `format` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay qua
+     * theo `ad_type` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay qua
      * [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
     protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {
@@ -62,17 +62,23 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     /**
      * Load native ad cho [placement] vào [container] và tự huỷ nó khi
      * view bị huỷ. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium thì không
-     * load gì và [container] bị ẩn.
+     * load gì và [container] bị ẩn. [onUnavailable] chạy (main thread) khi không có ad để hiện.
      */
-    protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
+    protected fun loadNative(
+        container: FrameLayout,
+        placement: NativePlacement,
+        preloadOnShow: Boolean = false,
+        onUnavailable: () -> Unit = {},
+    ) {
         nativeContainer = container
         if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
+            onUnavailable()
             return
         }
         container.post {
             if (_binding != null && !isPremiumUser()) {
-                nativeHandle = NativeAds.subscribe(requireActivity(), placement, container, preloadOnShow)
+                nativeHandle = NativeAds.subscribe(requireActivity(), placement, container, preloadOnShow, onUnavailable)
             }
         }
     }

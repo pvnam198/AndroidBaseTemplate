@@ -16,8 +16,9 @@ import com.namstd.androidskillhub.databinding.ActivityWelcomeBackBinding
 import kotlin.math.ceil
 
 /**
- * Màn "Welcome back" khi quay lại app nếu `on_resume` có format `welcome_back` (thay cho App Open ad).
- * Hiện 1 native ad + đếm ngược `wait_ms` của `native_welcome_back` rồi mới cho đóng. Mở qua [launch].
+ * Màn "Welcome back" khi quay lại app nếu `on_resume` có ad_type `native` (thay cho App Open ad).
+ * Hiện 1 native ad (ID / template của `on_resume`) + đếm ngược `wait_ms` của `on_resume` rồi mới cho đóng; không có
+ * ad thì tự đóng. Mở qua [launch].
  */
 class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     private var countdown: CountDownTimer? = null
@@ -29,7 +30,7 @@ class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     override fun initViews() {
         if (!FullScreenGate.acquire(this)) { finish(); return }
         gateHeld = true
-        loadNative(binding.nativeContainer, NativePlacement.WELCOME_BACK)
+        loadNative(binding.nativeContainer, NativePlacement.WELCOME_BACK, onUnavailable = { if (!isFinishing) finish() })
         startCountdown()
     }
 
@@ -38,7 +39,7 @@ class WelcomeBackActivity : BaseActivity<ActivityWelcomeBackBinding>() {
     }
 
     private fun startCountdown() {
-        val total = AdPolicy.config(AdKey.NATIVE_WELCOME_BACK).waitMs
+        val total = AdPolicy.config(AdKey.ON_RESUME).waitMs
         if (total <= 0L) {
             binding.ivClose.isVisible = true
             return

@@ -9,10 +9,10 @@ enum class AdProfile {
     /** Không quảng cáo nào (`ads_profile = off`, hoặc user Premium). */
     OFF,
 
-    /** Bộ đầy đủ - `ad_placements.full`. */
+    /** Bộ đầy đủ - `profiles.full`. */
     FULL,
 
-    /** Bộ cơ bản - `ad_placements.basic` (chỉ placement có trong đó mới chạy). */
+    /** Bộ cơ bản - `profiles.basic`. */
     BASIC,
 }
 

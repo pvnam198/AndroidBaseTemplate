@@ -11,17 +11,21 @@ import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEv
 import com.namstd.androidskillhub.core.config.AdKey
 
 /**
- * Các điểm bung interstitial, mỗi điểm là một placement: [adKey] là key cấu hình (`format`, `step`, `wait_ms`…),
+ * Các điểm bung interstitial, mỗi điểm là một placement: [adKey] là key cấu hình (`ad_type`, `step`, `wait_ms`…),
  * [interUnit] là ad unit interstitial, [nativePlacement] là native toàn màn hình hiện sau inter. [key] khớp tên trong
- * `full_inter_gap_ignore` và giá trị của `splash_fallback`.
+ * `inter_gap_ignore` và giá trị của `splash_fallback`.
  */
 enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val nativePlacement: NativePlacement) {
     SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH),
     LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE),
-    ONBOARDING(AdKey.INTER_ONBOARDING, AdUnit.INTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING),
+    /** Khi xong Onboarding (`inter_after_onboarding`). */
+    ONBOARDING(AdKey.INTER_AFTER_ONBOARDING, AdUnit.INTER_AFTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING),
 
     /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của bộ basic mẫu. */
-    HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME);
+    HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME),
+
+    /** Inter khi quay lại app từ nền (`on_resume` ad_type inter / native_as_inter / inter_then_native) - xem App. */
+    RESUME(AdKey.ON_RESUME, AdUnit.INTER_ON_RESUME, NativePlacement.AFTER_INTER_RESUME);
 
     val key: String get() = adKey.key
 }
@@ -42,7 +46,7 @@ object InterstitialAds {
     fun isReady(unit: AdUnit): Boolean = slotFor(unit).ad != null
 
     /**
-     * Tải sẵn interstitial cho [placement] nếu `enable` của vị trí đó cần inter (1 hoặc 3) - gọi khi màn có vị
+     * Tải sẵn interstitial cho [placement] nếu `ad_type` của vị trí đó cần inter (inter / inter_then_native) - gọi khi màn có vị
      * trí này mở ra, để lúc cần hiện thì ad đã nằm sẵn (mỗi unit có ô cache riêng, không dùng chung với vị trí khác).
      */
     fun preload(placement: InterstitialPlacement) {

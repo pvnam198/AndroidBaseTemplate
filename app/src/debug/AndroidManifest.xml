@@ -6,7 +6,7 @@
             android:exported="false"
             android:theme="@style/Theme.AndroidSkillHub" />
 
-        <!-- [DEBUG] Xem trước các mẫu native + style ad_templates. Xem NativePreviewActivity.kt. -->
+        <!-- [DEBUG] Xem trước các mẫu native + style templates. Xem NativePreviewActivity.kt. -->
         <activity
             android:name=".debug.NativePreviewActivity"
             android:exported="true"

@@ -1,30 +1,109 @@
 # Remote Config (cho dev)
 
-Cấu hình quảng cáo và luồng mở app điều khiển từ xa qua **Firebase Remote Config**.
-**Đặc tả format (các trường, giá trị, mặc định): [`remote-config-v3/README.md`](remote-config-v3/README.md).**
-Sheet cho team điền + script xuất JSON: [`remote-config-v3/`](remote-config-v3/).
+Cấu hình quảng cáo và luồng mở app điều khiển từ xa qua **Firebase Remote Config**. File cấu hình xuất từ web
+"Cấu hình quảng cáo" (WaveZ Marketing → tab Tài liệu có giải thích đầy đủ từng key). App đọc **thẳng** file đó, không
+qua bước chuyển đổi nào.
 
 ## Trên Firebase
 
-4 parameter kiểu JSON, mỗi cái một việc:
+**Một parameter `ad_config`** (kiểu JSON) chứa nguyên file xuất từ web. Mẫu: [`ad_config_sample.json`](ad_config_sample.json)
+(bản giống hệt ở `app/src/test/resources/` dùng cho unit test; ID là test ID của Google).
 
-| Parameter | Nội dung |
+```json
+{
+  "config_version": "1", "version": 1,
+  "ads_profile": 1,
+  "settings": { "splash_timeout_ms": 10000, "splash_fallback": ["inter_language"], "onboarding_pages": { "2": { "next_delay_ms": 1000 } }, ... },
+  "profiles": {
+    "full":  { "settings": { "inter_gap_ms": 10000, "inter_gap_ignore": ["ads_splash"] }, "placements": { "ads_splash": {...}, ... } },
+    "basic": { "settings": { "inter_gap_ms": 90000 }, "placements": { ... } }
+  },
+  "templates": { "LanguageDisplayFirst": { "base": "Big5", "cta_bg": "#32A852" } }
+}
+```
+
+Cấu hình khác nhau theo bản app: *Conditional value* của `ad_config` theo **App build** (xem `BASE_GUIDE.md` mục 5.3).
+
+### Gốc file
+
+| Key | Ý nghĩa |
 |---|---|
-| `ad_settings` | Cấu hình chung: `ads_profile`, `splash_fallback`, nút Language / Onboarding, khoảng cách inter |
-| `ad_placements` | `{ "full": {...}, "basic": {...} }` - mỗi placement một object, chỉ ghi chỗ khác mặc định |
-| `ad_ids` | `{ ad_unit: [id_1, id_2, id_3] }` |
-| `ad_templates` | `{ tên mẫu: { base, cta_bg, ... } }` - mẫu native tự đặt / style đè lên mẫu có sẵn (xem `remote-config-v3/README.md`) |
+| `config_version`, `version` | Tên / số phiên bản cấu hình trên web — chỉ để đối chiếu (log `AdsRC` ở bản debug). |
+| `ads_profile` | Ai dùng bộ nào: `0` tắt hết · `1` mọi user full · `2` user marketing (Adjust) full, còn lại basic · `3` mọi user full trừ máy test ad (basic). Nhận cả tên (`off`, `full_for_all`, `full_for_paid_users`, `full_except_test_devices`). Premium luôn không có quảng cáo. |
+| `settings` | Thiết lập dùng chung cho cả 2 bộ (bảng dưới). |
+| `profiles.full` / `profiles.basic` | Mỗi bộ: `settings` riêng + `placements` (đã gộp sẵn trên web). **Placement không có trong bộ = tắt** — app không giữ mặc định nào. |
+| `templates` | Mẫu native tự đặt / style đè lên mẫu có sẵn (`BASE_GUIDE.md` mục 6.2). |
 
-App cũng đọc **một parameter `ad_config`** chứa cả 4 phần (`{ "ad_settings": …, "ad_placements": …, "ad_ids": …, "ad_templates": … }`, đúng file "Tải tất cả" của sheet). Parameter riêng nào có giá trị thì thắng phần tương ứng trong `ad_config`.
-Mẫu: [`app/src/test/resources/ad_config_sample.json`](../app/src/test/resources/ad_config_sample.json) (dùng luôn cho unit test).
+### `settings` gốc
+
+| Key | Mặc định | Ý nghĩa |
+|---|---|---|
+| `splash_timeout_ms` | 8000 | Splash chờ quảng cáo tối đa (giới hạn `splash_min_ms`–30000). |
+| `splash_min_ms` | 3000 | Splash chờ tối thiểu (0–10000). Không có trên web, thêm tay nếu cần. |
+| `splash_fallback` | – | Mảng tên placement inter: Splash không kịp hiện quảng cáo thì placement đầu tiên trong danh sách hiện bù 1 inter (kể cả khi đang tắt). Chỉ bộ full. |
+| `language_next_style` / `language_next_delay_ms` / `language_show_loading` | text / 0 / false | Nút xác nhận màn Language. |
+| `onboarding_swipe` | true | Cho vuốt trang Onboarding. |
+| `onboarding_next_style` | icon | `icon` = nút, `text` = chữ Next. |
+| `onboarding_show_dots` | true | Chấm tròn báo trang. |
+| `onboarding_indicator_position` | above | `above` = chấm trên nút Next, `below` = dưới. |
+| `onboarding_next_delay_ms` | 0 | Chờ trước khi hiện nút Next. |
+| `onboarding_pages` | – | Đè riêng từng trang (đếm từ 1): `{ "2": { "next_delay_ms": 3000, "next_style": "text" } }`. |
+| `onboarding_full_close_button` | next | Nút trang native full trong Onboarding: `x` / `next`. |
+
+### `profiles.<bộ>.settings`
+
+| Key | Mặc định full / basic | Ý nghĩa |
+|---|---|---|
+| `inter_gap_ms` | 0 / 90000 | Khoảng cách tối thiểu giữa 2 inter. |
+| `inter_gap_ignore` | – | Mảng placement không bị `inter_gap_ms` chặn. |
+| `open_gap_ms` | 30000 / 90000 | Giữa 2 App Open khi quay lại app. Không có trên web, thêm tay nếu cần. |
+| `open_inter_gap_ms` | 15000 / 30000 | Giữa App Open và inter, cả 2 chiều. Không có trên web, thêm tay nếu cần. |
+
+### Một placement
+
+`"ads_splash": { "type": "splash", "ad_type": "inter_then_native", "enable": true, "ad_ids": { "inter": [...], "native": [...] }, "template": "Full1", "fallback": "show_available" }`
+
+| Trường | Ý nghĩa |
+|---|---|
+| `enable` | Bật / tắt. |
+| `type` | Loại vị trí: splash, onboarding, inter, banner, resume, native, reward, reward_inter. |
+| `ad_type` | Loại quảng cáo (bảng dưới). |
+| `ad_ids` | `{ loại: [id_1, id_2, id_3] }` theo loại Ad Unit `aoa` / `inter` / `native` / `banner` / `reward` / `reward_inter`; app thử lần lượt (tối đa 3). Chưa có ID → test ID của Google. |
+| `template` | Mẫu native (Big1…, Tiny1…, Collap1…, Full1…, hoặc tên trong `templates`). Trống = mặc định của chỗ hiện. |
+| `pages` | type onboarding (`native_full_onboarding`): chèn trang native full sau các trang này. |
+| `step` | Inter: cứ `step` lần gọi mới hiện 1 lần. |
+| `wait_ms` | Đếm ngược trước khi đóng được native toàn màn (sau inter, Welcome Back, trang native Onboarding); reward_inter: màn đếm ngược trước quảng cáo. |
+| `refresh_ms` | Ô banner tự tải lại, 0 = không. |
+| `open_ad_on_clicks` | native_as_banner_collap: lần click thứ mấy trên quảng cáo thì mở trang quảng cáo. |
+| `fallback` | inter_then_native: `show_available` (mặc định) hiện cái tải được; `skip` thiếu 1 trong 2 thì bỏ cả luồng. |
+| `custom_ui` | type resume: màn Welcome Back riêng — đọc nhưng base chỉ có 1 màn Welcome Back. |
+
+| `ad_type` | Dùng ở | App làm gì |
+|---|---|---|
+| `aoa` | ads_splash, on_resume | App Open. |
+| `inter` | ads_splash, inter_\*, on_resume | Interstitial. |
+| `inter_then_native` | ads_splash, inter_\*, on_resume | Inter, đóng xong hiện native toàn màn (`ad_ids.native` của cùng placement). |
+| `native_as_inter` | inter_\*, on_resume | Chỉ native toàn màn (Splash chưa hỗ trợ → tắt). |
+| `native` | native_\*, on_resume | Native trong màn; ở `on_resume` = màn Welcome Back. |
+| `banner` / `banner_collapsible` | banner_\* | AdMob banner thường / collapsible. |
+| `native_as_banner` / `native_as_banner_collap` | banner_home | Native trong ô banner / native collapsible (ô không hỗ trợ native → banner thường). |
+| `reward` / `reward_inter` | reward_\* | Quảng cáo thưởng. |
+
+### Placement của base
+
+`ads_splash`, `native_splash`, `native_language`, `native_language_2` (màn Language mở từ Cài đặt),
+`native_language_small`, `inter_language`, `native_onboarding` (chân trang nội dung 1–4), `native_full_onboarding`,
+`inter_after_onboarding`, `on_resume` (quay lại app: aoa / native = Welcome Back / inter…), `banner_home`,
+`native_home_feed`, `inter_home`, `banner_setting`, `reward_sample`, `reward_inter_sample`. Tên trên web phải khớp
+`AdKey`; placement app không biết thì bỏ qua.
 
 ## Cơ chế
 
-1. **Seed từ cache** — khi `RemoteConfig.initialize()`, các parameter được nạp bản của lần fetch thành công gần nhất (`AppPreferences`, tiền tố `cache_v3_`).
-2. **Mặc định** — phần nào thiếu / hỏng: placement dùng `AdKey.fullDefault` (bộ full) hoặc tắt (bộ basic); setting dùng mặc định trong getter của `RemoteConfig`.
-3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true` (Splash chờ tối đa 8s). DEBUG fetch mỗi lần mở, RELEASE 3600 giây.
-4. **Chọn bộ** — `AdPolicy.profile` từ `ads_profile` (0 tắt · 1 mọi user full · 2 user marketing full · 3 máy test ad basic; nhận cả tên) + `AdAudience` (nguồn user, máy test ad) + Premium → OFF / FULL / BASIC. Code quảng cáo luôn đọc qua `AdPolicy.config(key)` / `AdPolicy.format(key)`.
-5. **Debug override** (chỉ bản debug, màn *Cài đặt → Debug config*): cả parameter (`ad_config`, `ad_settings`, `ad_placements`, `ad_ids`, `ad_templates`), một setting (vd `ads_profile`), một placement bộ full (vd `inter_home`) hoặc bộ basic (`basic.inter_home`). Giá trị placement: JSON object, `true` / `false`, hoặc tên format. Override thắng Firebase.
+1. **Seed từ cache** — `RemoteConfig.initialize()` nạp `ad_config` của lần fetch thành công gần nhất (`AppPreferences`, tiền tố `cache_v4_`).
+2. **Thiếu / hỏng** — JSON hỏng hoặc không có = mọi placement tắt; setting thiếu dùng mặc định trong getter của `RemoteConfig`.
+3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true`. DEBUG fetch mỗi lần mở, RELEASE 3600 giây.
+4. **Chọn bộ** — `AdPolicy.profile` từ `ads_profile` + `AdAudience` (nguồn user, máy test ad) + Premium → OFF / FULL / BASIC. Code quảng cáo luôn đọc qua `AdPolicy.config(key)` / `AdPolicy.adType(key)`.
+5. **Debug override** (chỉ bản debug, *Cài đặt → Debug config*): cả file (`ad_config`), `ads_profile`, một key trong `settings` gốc, `full.settings` / `basic.settings` (JSON), một placement bộ full (vd `inter_home`) hoặc basic (`basic.inter_home`): JSON object thay cả placement, `true` / `false`, hoặc tên ad_type. Override thắng Firebase.
 
 Mọi thời gian tính bằng **mili-giây**.
 
@@ -32,22 +111,22 @@ Mọi thời gian tính bằng **mili-giây**.
 
 | File | Vai trò |
 |---|---|
-| `core/config/PlacementConfig.kt` | `PlacementFormat`, `PlacementConfig` (một placement), `AdKey` (placement + mặc định bộ full), `AdSet`, `AdPlacementsDocument`, `AdIdsDocument` |
-| `core/config/RemoteConfig.kt` | Đọc 4 parameter (+ `ad_config`), cache, override debug; getter cho từng setting; `AdsProfileRule` |
+| `core/config/PlacementConfig.kt` | `AdType`, `PlacementType`, `AdFallback`, `PlacementConfig` (một placement), `AdKey` (tên placement), `AdSet`, `AdConfigDocument` (cả file) |
+| `core/config/RemoteConfig.kt` | Đọc `ad_config`, cache, override debug; getter cho từng setting; `AdsProfileRule` |
 | `core/ads/AdProfile.kt` | `AdProfile` (OFF / FULL / BASIC), `resolveAdProfile` |
-| `core/ads/AdPolicy.kt` | `config(key)` / `format(key)` cho user này, `interDelay`, `splashFallback`, `nativeEnabled(placement)` |
-| `core/ads/AdUnit.kt` | Ad unit (tên viết thường = `ad_ids` / cột `ad_unit`), `ids()` |
-| `core/ads/FullScreenAdPlan.kt` | `format` → loại full-screen (AOA / inter / inter + native / chỉ native) |
-| `core/ads/BannerAds.kt` | `format` của `banner_*` → banner / collapsible / native / native collapsible |
-| `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement` (type reward / reward_inter, không format), tải theo `ad_ids`, `BaseActivity.showReward` |
-| `core/ads/NativeAds.kt` | `NativePlacement` → `AdUnit`; bật theo `enable` / `pages`; mẫu theo `template` (`templateFor` → `NativeTemplateSpec`) |
-| `core/ads/template/NativeStyle.kt`, `NativeStyleApplier.kt` | `ad_templates`: `NativeStyle`, `AdTemplatesDocument.resolve`; áp màu / bo góc / viền / kích thước lên view native |
-| `debug/NativePreviewActivity.kt` (chỉ bản debug) | Xem trước mọi mẫu + style: `adb shell am start -n com.namstd.androidskillhub/.debug.NativePreviewActivity [--es name big5]` |
-| `core/ads/CollapClickGate.kt`, `NativeCollapseAd.kt` | Native collapsible theo bộ Collap1/2/3 (dạng lớn) → Tiny1/2 (dải), `NativeAdTemplate.collapsed`; `open_ad_on_clicks`: đếm mọi click trên native collapsible |
+| `core/ads/AdPolicy.kt` | `config(key)` / `adType(key)` cho user này, `interDelay`, `openGaps`, `splashFallback`, `nativeEnabled(placement)` |
+| `core/ads/AdUnit.kt` | Ad unit = một loại trong `ad_ids` của một placement; `ids()` |
+| `core/ads/FullScreenAdPlan.kt` | `ad_type` → loại full-screen (AOA / inter / inter + native / chỉ native) |
+| `core/ads/BannerAds.kt` | `ad_type` của `banner_*` → banner / collapsible / native / native collapsible |
+| `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement`, `BaseActivity.showReward` |
+| `core/ads/NativeAds.kt` | `NativePlacement` → `AdUnit`; bật theo `enable`; mẫu theo `template` (`templateFor` → `NativeTemplateSpec`) |
+| `core/ads/template/NativeStyle.kt`, `NativeStyleApplier.kt` | `templates`: `NativeStyle`, `AdTemplatesDocument.resolve`; áp màu / bo góc / viền / kích thước |
+| `AndroidSkillHubApp.kt` | `on_resume` theo `ad_type`: aoa → App Open, native → `WelcomeBackActivity`, inter / native_as_inter / inter_then_native → `InterstitialPlacement.RESUME` |
 
 ## Chưa làm
 
-- `onboarding_next_position = right`: chưa có giao diện "Next bên phải", hiện vẫn đặt Next dưới cụm chấm như `bottom`.
+- `custom_ui` của `on_resume`: base chỉ có 1 màn Welcome Back.
+- Native toàn màn sau inter chưa đọc `template` của placement (dùng layout `dialog_native_full.xml`).
 
 ## Lịch sử
 
@@ -61,3 +140,4 @@ Mọi thời gian tính bằng **mili-giây**.
 - **06/11/2026** — thêm parameter **`ad_templates`** (tab `templates` của sheet): đổi màu / bo góc / viền / cỡ chữ / kích thước (CTA, ảnh, icon, đệm) của mọi native từ remote, đặt mẫu tự đặt (layout gốc `base` + style) cho cột `template`; màn debug `NativePreviewActivity` xem trước mọi mẫu. Sheet: `id_1..3`, `ads_profile` 0–3, cột `type` + dropdown `format` theo type (tab `types`).
 - **09/11/2026** — thêm quảng cáo thưởng: type `reward` (user bấm xem) và `reward_inter` (rewarded interstitial, màn đếm ngược `wait_ms` có Bỏ qua), không có format; 2 placement mẫu `reward_sample`, `reward_inter_sample`; `showReward` / `preloadReward` trong lớp base; nút thử ở Debug config. Bỏ `RewardedAds` / `RewardedInterstitialAds` cũ (chỉ test ID).
 - **09/11/2026** — thêm vào `ad_settings`: `splash_min_ms` / `splash_max_ms` (Splash chờ 3 s / 8 s, dùng giá trị lần fetch trước), `full_` / `basic_open_gap_ms` (App Open ↔ App Open), `full_` / `basic_open_inter_gap_ms` (App Open ↔ inter), theo bộ như khoảng cách inter; mặc định 30 s / 90 s và 15 s / 30 s (full / basic); trước đây cố định trong code (khoảng cách App Open = 0).
+- **16/11/2026** — đọc thẳng **file JSON của web "Cấu hình quảng cáo"** trong một parameter `ad_config`: `ads_profile`, `settings`, `profiles.full/basic` (settings + placements, `ad_ids` trong từng placement), `templates`. Bỏ hẳn format sheet (`ad_settings`, `ad_placements`, `ad_ids`, `ad_templates`, mặc định `fullDefault`, thư mục `remote-config-v3/`). `format` → `ad_type` (`inter_then_native`, `native_as_inter`, `native_as_banner(_collap)`…), thêm `fallback`; `on_resume` quyết định khi quay lại app (bỏ `native_welcome_back`); `inter_onboarding` → `inter_after_onboarding`; thêm placement `native_language_2`; `native_onboarding` không còn `pages`; `splash_max_ms` → `splash_timeout_ms`; khoảng cách inter / App Open sang `profiles.<bộ>.settings`; `onboarding_indicator_position`. Trang native full Onboarding / Welcome Back không có ad thì tự bỏ qua / đóng.

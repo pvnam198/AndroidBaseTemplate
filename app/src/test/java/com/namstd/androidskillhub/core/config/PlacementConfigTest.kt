@@ -1,5 +1,6 @@
 package com.namstd.androidskillhub.core.config
 
+import com.namstd.androidskillhub.core.ads.AdUnit
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -7,87 +8,121 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Đọc 3 phần config theo file mẫu của team (`src/test/resources/ad_config_sample.json` = file "Tải tất cả" của sheet). */
+/** Đọc file cấu hình xuất từ web (`src/test/resources/ad_config_sample.json` = `docs/ad_config_sample.json`). */
 class PlacementConfigTest {
-    private val sample = JSONObject(checkNotNull(javaClass.classLoader?.getResource("ad_config_sample.json")).readText())
-    private val placements = AdPlacementsDocument(sample.getJSONObject("ad_placements").toString())
-    private val ids = AdIdsDocument(sample.getJSONObject("ad_ids").toString())
+    private val raw = checkNotNull(javaClass.classLoader?.getResource("ad_config_sample.json")).readText()
+    private val doc = AdConfigDocument(raw)
 
-    private fun full(key: AdKey) = placements.placement(AdSet.FULL, key)
-    private fun basic(key: AdKey) = placements.placement(AdSet.BASIC, key)
+    private fun full(key: AdKey) = doc.placement(AdSet.FULL, key)
+    private fun basic(key: AdKey) = doc.placement(AdSet.BASIC, key)
 
     @Test
-    fun fullOverridesOnlyTheFieldsItSets() {
+    fun rootFields() {
+        assertEquals("1", doc.configVersion)
+        assertEquals(AdsProfileRule.FULL_FOR_ALL, AdsProfileRule.fromKey(doc.adsProfile))
+        assertEquals(10000, doc.settings.getInt("splash_timeout_ms"))
+        assertEquals("inter_language", doc.settings.getJSONArray("splash_fallback").getString(0))
+        assertEquals(1000, doc.settings.getJSONObject("onboarding_pages").getJSONObject("2").getInt("next_delay_ms"))
+        assertEquals("Big5", doc.templatesJson.getJSONObject("LanguageDisplayFirst").getString("base"))
+    }
+
+    @Test
+    fun profileSettings() {
+        assertEquals(10000, doc.profileSettings(AdSet.FULL).getInt("inter_gap_ms"))
+        assertEquals("inter_after_onboarding", doc.profileSettings(AdSet.FULL).getJSONArray("inter_gap_ignore").getString(2))
+        assertEquals(90000, doc.profileSettings(AdSet.BASIC).getInt("inter_gap_ms"))
+    }
+
+    @Test
+    fun fullPlacements() {
         val splash = full(AdKey.ADS_SPLASH)
-        assertTrue(splash.enable)                       // mặc định
-        assertEquals(PlacementFormat.INTER_THEN_NATIVE_FULL, splash.format)
-        assertEquals(5000L, splash.waitMs)
-        assertEquals(1, splash.step)                    // mặc định
+        assertTrue(splash.enable)
+        assertEquals(PlacementType.SPLASH, splash.type)
+        assertEquals(AdType.INTER_THEN_NATIVE, splash.adType)
+        assertEquals(1, splash.ids("inter").size)
+        assertEquals(1, splash.ids("native").size)
+        assertEquals("Full1", splash.template)
+        assertEquals(AdFallback.SHOW_AVAILABLE, splash.fallback)
 
-        val onboarding = full(AdKey.NATIVE_ONBOARDING)
-        assertEquals(setOf(2, 4), onboarding.pages)
-        assertEquals("Big4", onboarding.template)
+        assertEquals(AdType.NATIVE, full(AdKey.ON_RESUME).adType)
+        assertEquals(PlacementType.RESUME, full(AdKey.ON_RESUME).type)
+        assertFalse(full(AdKey.ON_RESUME).customUi)
 
-        assertTrue(full(AdKey.NATIVE_SPLASH).enable)    // mặc định tắt, JSON bật
-        assertEquals(setOf(2, 4), full(AdKey.BANNER_HOME).openAdOnClicks)
-        assertEquals(PlacementFormat.WELCOME_BACK, full(AdKey.ON_RESUME).format)
+        val home = full(AdKey.BANNER_HOME)
+        assertEquals(AdType.NATIVE_AS_BANNER_COLLAP, home.adType)
+        assertEquals(30000L, home.refreshMs)
+        assertEquals(setOf(2), home.openAdOnClicks)
+        assertEquals("Collap1", home.template)
+
+        assertEquals(setOf(2), full(AdKey.NATIVE_FULL_ONBOARDING).pages)
+        assertEquals(AdType.INTER_THEN_NATIVE, full(AdKey.INTER_AFTER_ONBOARDING).adType)
+        assertEquals(AdType.BANNER_COLLAPSIBLE, full(AdKey.BANNER_SETTING).adType)
+        assertEquals(AdType.REWARD, full(AdKey.REWARD_SAMPLE).adType)
+        assertEquals(5000L, full(AdKey.REWARD_INTER_SAMPLE).waitMs)
+        assertEquals(1, full(AdKey.INTER_HOME).step)
     }
 
     @Test
-    fun placementsMissingFromFullUseDefaults() {
-        assertEquals(AdKey.INTER_HOME.fullDefault, full(AdKey.INTER_HOME))
-        assertFalse(full(AdKey.INTER_HOME).enable)
-        assertEquals(PlacementFormat.BANNER_COLLAPSIBLE, full(AdKey.BANNER_SETTING).format)
-        assertTrue(full(AdKey.NATIVE_HOME_FEED).enable)
+    fun basicPlacements() {
+        val splash = basic(AdKey.ADS_SPLASH)
+        assertTrue(splash.enable)
+        assertEquals(AdType.AOA, splash.adType)
+        assertEquals(1, splash.ids("aoa").size)
+        assertFalse(basic(AdKey.NATIVE_LANGUAGE).enable)
+        assertFalse(basic(AdKey.ON_RESUME).enable)
+        for (on in listOf(AdKey.INTER_HOME, AdKey.BANNER_SETTING, AdKey.REWARD_SAMPLE, AdKey.REWARD_INTER_SAMPLE)) {
+            assertTrue(on.key, basic(on).enable)
+        }
+        // Placement tắt vẫn giữ ID (splash_fallback có thể hiện inter của placement đang tắt).
+        assertEquals(1, basic(AdKey.INTER_LANGUAGE).ids("inter").size)
     }
 
     @Test
-    fun basicRunsOnlyThePlacementsItLists() {
-        assertEquals(PlacementFormat.AOA, basic(AdKey.ADS_SPLASH).format)
-        assertTrue(basic(AdKey.ADS_SPLASH).enable)
-        assertEquals(PlacementFormat.BANNER, basic(AdKey.BANNER_HOME).format)
-        assertEquals(PlacementFormat.INTER, basic(AdKey.INTER_HOME).format)
-        for (off in listOf(AdKey.NATIVE_SPLASH, AdKey.INTER_LANGUAGE, AdKey.NATIVE_ONBOARDING, AdKey.NATIVE_HOME_FEED)) {
-            assertFalse(off.key, basic(off).enable)
+    fun everyPlacementInTheFileIsKnownAndEveryKnownPlacementIsInTheFile() {
+        val root = JSONObject(raw).getJSONObject("profiles")
+        for (set in AdSet.entries) {
+            val keys = root.getJSONObject(set.key).getJSONObject("placements").keys().asSequence().toSet()
+            keys.forEach { assertTrue(it, AdKey.fromKey(it) != null) }
+            AdKey.entries.forEach { assertTrue("${set.key}.${it.key}", it.key in keys) }
         }
     }
 
     @Test
-    fun basicEntryCanBeSwitchedOffExplicitly() {
-        val doc = AdPlacementsDocument("""{"basic":{"inter_home":{"enable":false,"format":"inter"}}}""")
-        assertFalse(doc.placement(AdSet.BASIC, AdKey.INTER_HOME).enable)
-    }
-
-    @Test
-    fun idsAreReadByAdUnitNameIgnoringCase() {
-        assertEquals(
-            listOf(
-                "ca-app-pub-5839201746382519/8274610392",
-                "ca-app-pub-7193842056174928/3948271056",
-                "ca-app-pub-2649183750294618/6150392847",
-            ),
-            ids.ids("aoa_splash"),
+    fun everyAdUnitHasIdsInTheFullProfile() {
+        // Unit nào cũng phải có ID trong bộ full, trừ các unit chỉ dùng khi ad_type đổi sang loại khác.
+        val optional = setOf(
+            AdUnit.AOA_SPLASH, AdUnit.ON_RESUME, AdUnit.INTER_ON_RESUME, AdUnit.BANNER_HOME, AdUnit.NATIVE_INTER_HOME,
         )
-        assertEquals(ids.ids("native_home_feed"), ids.ids("NATIVE_HOME_FEED"))
-        assertTrue(ids.ids("missing").isEmpty())
-        assertEquals(listOf("a"), AdIdsDocument("""{"x":["a",""]}""").ids("x"))
-    }
-
-    @Test
-    fun brokenOrEmptyJsonMeansDefaults() {
-        for (raw in listOf("", "{broken", "[]")) {
-            assertEquals(AdKey.ADS_SPLASH.fullDefault, AdPlacementsDocument(raw).placement(AdSet.FULL, AdKey.ADS_SPLASH))
-            assertFalse(AdPlacementsDocument(raw).placement(AdSet.BASIC, AdKey.ADS_SPLASH).enable)
+        for (unit in AdUnit.entries - optional) {
+            assertTrue(unit.name, full(unit.key).ids(unit.format.idType).isNotEmpty())
         }
     }
 
     @Test
-    fun badValuesKeepTheDefault() {
-        val doc = AdPlacementsDocument("""{"full":{"ads_splash":{"format":"xyz","step":0,"wait_ms":-5}}}""")
-        val splash = doc.placement(AdSet.FULL, AdKey.ADS_SPLASH)
-        assertEquals(PlacementFormat.INTER, splash.format)
-        assertEquals(1, splash.step)
-        assertEquals(0L, splash.waitMs)
+    fun missingOrBrokenConfigTurnsEverythingOff() {
+        for (raw in listOf("", "{", "[]", """{"profiles":{}}""")) {
+            val d = AdConfigDocument(raw)
+            for (key in AdKey.entries) {
+                assertEquals(PlacementConfig.OFF, d.placement(AdSet.FULL, key))
+                assertEquals(PlacementConfig.OFF, d.placement(AdSet.BASIC, key))
+            }
+            assertNull(d.adsProfile)
+        }
+    }
+
+    @Test
+    fun invalidValuesFallBackToDefaults() {
+        val c = PlacementConfig.fromJson(
+            JSONObject("""{"enable":true,"ad_type":"xyz","step":0,"wait_ms":-5,"fallback":"?","ad_ids":{"Inter":["a","","b","c","d"]}}"""),
+        )
+        assertTrue(c.enable)
+        assertNull(c.adType)
+        assertEquals(1, c.step)
+        assertEquals(0L, c.waitMs)
+        assertEquals(AdFallback.SHOW_AVAILABLE, c.fallback)
+        assertEquals(listOf("a", "b", "c"), c.ids("inter"))
+        assertEquals(AdFallback.SKIP, PlacementConfig.fromJson(JSONObject("""{"fallback":"skip"}""")).fallback)
+        assertEquals(AdType.NATIVE_AS_BANNER_COLLAP, AdType.fromKey(" Native_As_Banner_Collap "))
     }
 
     @Test
@@ -95,20 +130,5 @@ class PlacementConfigTest {
         assertEquals(setOf(2, 4), PlacementConfig.intSet(org.json.JSONArray("[2,4]")))
         assertEquals(setOf(1, 2, 3), PlacementConfig.intSet("1, 2,3"))
         assertEquals(emptySet<Int>(), PlacementConfig.intSet(null))
-    }
-
-    @Test
-    fun keysMatchTheSheet() {
-        val sheetKeys = sample.getJSONObject("ad_placements").getJSONObject("full").keys().asSequence().toSet() +
-            sample.getJSONObject("ad_placements").getJSONObject("basic").keys().asSequence().toSet()
-        sheetKeys.forEach { assertTrue(it, AdKey.fromKey(it) != null) }
-        assertNull(AdKey.fromKey("native_get_start"))
-        assertEquals(PlacementFormat.INTER_THEN_NATIVE_FULL, PlacementFormat.fromKey("Inter_Then_Native_Full"))
-    }
-
-    @Test
-    fun everyAdUnitInTheSampleExistsInCode() {
-        val units = com.namstd.androidskillhub.core.ads.AdUnit.entries.map { it.unitName }.toSet()
-        sample.getJSONObject("ad_ids").keys().forEach { assertTrue(it, it in units) }
     }
 }

@@ -33,6 +33,7 @@ import com.namstd.androidskillhub.core.ads.RewardPlacement
 import com.namstd.androidskillhub.core.ads.RewardResult
 import com.namstd.androidskillhub.core.ads.SplashFallback
 import com.namstd.androidskillhub.core.ads.fullScreenPlan
+import com.namstd.androidskillhub.core.config.AdFallback
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment
 
@@ -52,7 +53,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
     /**
      * Load banner của [placement] vào [container] và tự huỷ nó trong [onDestroy]. Loại banner và timer
-     * reload theo `format` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay
+     * reload theo `ad_type` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay
      * (resume, đổi tab...) qua [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
      */
     protected fun loadBanner(container: ViewGroup, placement: BannerPlacement, autoReload: Boolean? = null) {
@@ -74,16 +75,26 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     /**
      * Load native ad cho [placement] vào [container] và tự huỷ nó trong
      * [onDestroy]. Xem [NativeAds.subscribe] về [preloadOnShow]. Với user premium, hoặc khi `enable` của
-     * vị trí tắt chỗ này ([AdPolicy.nativeEnabled]), thì không load gì và [container] bị ẩn.
+     * vị trí tắt chỗ này ([AdPolicy.nativeEnabled]), thì không load gì và [container] bị ẩn. [onUnavailable] chạy
+     * (main thread) khi không có ad để hiện (placement tắt, Premium, load lỗi / không có fill) - lúc đó [container]
+     * đã bị ẩn.
      */
-    protected fun loadNative(container: FrameLayout, placement: NativePlacement, preloadOnShow: Boolean = false) {
+    protected fun loadNative(
+        container: FrameLayout,
+        placement: NativePlacement,
+        preloadOnShow: Boolean = false,
+        onUnavailable: () -> Unit = {},
+    ) {
         nativeContainers += container
         if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
+            onUnavailable()
             return
         }
         container.post {
-            if (!isPremiumUser() && !isDestroyed) nativeHandles += NativeAds.subscribe(this, placement, container, preloadOnShow)
+            if (!isPremiumUser() && !isDestroyed) {
+                nativeHandles += NativeAds.subscribe(this, placement, container, preloadOnShow, onUnavailable)
+            }
         }
     }
 
@@ -137,6 +148,14 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
             FullScreenAdPlan.INTER_PLUS_NATIVE -> {
                 if (!Ads.adsEnabled || FullScreenGate.isBusy()) { onComplete(); return }
                 NativeAds.preload(placement.nativePlacement)
+                // fallback = skip: thiếu 1 trong 2 quảng cáo thì bỏ cả luồng (vẫn tải sẵn cho lần sau).
+                if (AdPolicy.config(placement.adKey).fallback == AdFallback.SKIP &&
+                    (!InterstitialAds.isReady(placement.interUnit) || !NativeAds.isReady(placement.nativePlacement))
+                ) {
+                    InterstitialAds.load(placement.interUnit)
+                    onComplete()
+                    return
+                }
                 val afterInterstitial = { runNativeAdBreak(placement, onComplete) }
                 if (!InterstitialAds.show(this, placement, onComplete = afterInterstitial)) afterInterstitial()
             }

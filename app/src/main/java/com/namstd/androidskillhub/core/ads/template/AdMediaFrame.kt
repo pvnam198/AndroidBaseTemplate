@@ -22,7 +22,7 @@ class AdMediaFrame @JvmOverloads constructor(
     private var ratio = 0f
     private var cornerRadius = 0f
 
-    /** Chiều cao cố định (px) thay cho [ratio] - `media_height_dp` của `ad_templates`; 0 = theo ratio. */
+    /** Chiều cao cố định (px) thay cho [ratio] - `media_height_dp` của `templates`; 0 = theo ratio. */
     var fixedHeight = 0
         set(value) {
             field = value

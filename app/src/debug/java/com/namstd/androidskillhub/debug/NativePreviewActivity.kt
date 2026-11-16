@@ -25,8 +25,8 @@ import com.namstd.androidskillhub.core.ads.template.NativeTemplateSpec
 import com.namstd.androidskillhub.core.config.RemoteConfig
 
 /**
- * [DEBUG] Xem trước từng mẫu native với style của `ad_templates` (Firebase hoặc override ở Debug Config), dùng một
- * native test ad, bấm ◀ ▶ để chuyển. Thứ tự: các mẫu tự đặt trong `ad_templates`, rồi các mẫu có sẵn; ngay sau mỗi
+ * [DEBUG] Xem trước từng mẫu native với style của `templates` (Firebase hoặc override ở Debug Config), dùng một
+ * native test ad, bấm ◀ ▶ để chuyển. Thứ tự: các mẫu tự đặt trong `templates`, rồi các mẫu có sẵn; ngay sau mỗi
  * mẫu Collap* là dải thu gọn của bộ đó (Tiny1 / Tiny2).
  *
  * ```

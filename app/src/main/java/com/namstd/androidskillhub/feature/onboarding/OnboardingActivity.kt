@@ -105,10 +105,20 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
         }
     }
 
-    /** Sang trang onboarding kế tiếp, hoặc kết thúc setup ở trang cuối. Public để [OnboardingAdFragment] gọi từ control riêng của nó. */
+    /**
+     * Sang trang onboarding kế tiếp, hoặc kết thúc setup ở trang cuối. Trang native full kế tiếp mà đã biết không có
+     * ad ([OnboardingAdFragment.adUnavailable]) thì nhảy qua luôn. Public để [OnboardingAdFragment] gọi từ control
+     * riêng của nó (và khi chính nó không có ad).
+     */
     fun advanceOnboarding() {
-        if (binding.onboardingPager.currentItem < pages.lastIndex) binding.onboardingPager.currentItem += 1 else finishSetup()
+        var next = binding.onboardingPager.currentItem + 1
+        if (next <= pages.lastIndex && pages[next] == AD_PAGE && adPageAt(next)?.adUnavailable == true) next++
+        if (next <= pages.lastIndex) binding.onboardingPager.currentItem = next else finishSetup()
     }
+
+    /** Fragment trang native full ở vị trí [position] nếu đã tạo (FragmentStateAdapter gắn tag "f" + itemId). */
+    private fun adPageAt(position: Int): OnboardingAdFragment? =
+        supportFragmentManager.findFragmentByTag("f$position") as? OnboardingAdFragment
 
     private fun finishSetup() {
         prefs.setupCompleted = true

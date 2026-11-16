@@ -272,8 +272,8 @@ internal class NativeCollapseAd(
     }
 
     /**
-     * Bộ mẫu của placement: `template` là Collap1 / Collap2 / Collap3 (kèm style `ad_templates`); trống hoặc mẫu khác
-     * (vd. mẫu dành cho format native thường của cùng placement) thì dùng Collap1.
+     * Bộ mẫu của placement: `template` là Collap1 / Collap2 / Collap3 (kèm style `templates`); trống hoặc mẫu khác
+     * (vd. mẫu dành cho ad_type native_as_banner của cùng placement) thì dùng Collap1.
      */
     private fun collapSet(): Pair<NativeTemplateSpec, NativeTemplateSpec> {
         val spec = NativeAds.templateFor(placement)

@@ -4,7 +4,7 @@ import com.namstd.androidskillhub.core.config.parseObject
 import org.json.JSONObject
 
 /**
- * Màu / hình dạng / kích thước đè lên một mẫu native (parameter `ad_templates`). Trường null = giữ như mẫu gốc. Áp được cho mọi
+ * Màu / hình dạng / kích thước đè lên một mẫu native (`templates` gốc file cấu hình). Trường null = giữ như mẫu gốc. Áp được cho mọi
  * mẫu vì các layout native dùng chung view id (`ad_call_to_action`, `ad_headline`, `ad_body`...). Màu dạng `#RRGGBB`
  * hoặc `#AARRGGBB`, ghi sai thì bỏ qua. Không có trường nào ẩn / che được nhãn "Ad", ảnh hay nút - các phần bắt buộc
  * theo chính sách native của AdMob luôn giữ nguyên.
@@ -32,7 +32,7 @@ data class NativeStyle(
     companion object {
         val EMPTY = NativeStyle()
 
-        /** Các trường `ad_templates` đọc được (để gợi ý ở Debug Config / tài liệu). */
+        /** Các trường của `templates` đọc được (để gợi ý ở Debug Config / tài liệu). */
         val FIELDS = listOf(
             "cta_bg", "cta_text", "cta_corner_dp", "card_bg", "card_corner_dp", "card_stroke", "card_stroke_dp",
             "title_color", "body_color", "cta_height_dp", "cta_text_sp", "title_text_sp", "body_text_sp",
@@ -84,7 +84,7 @@ data class NativeStyle(
 data class NativeTemplateSpec(val template: NativeAdTemplate, val style: NativeStyle = NativeStyle.EMPTY)
 
 /**
- * Parameter `ad_templates`: `{ tên mẫu: { "base": "Big5", "cta_bg": "#7B2FA6", ... } }`.
+ * `templates` gốc file cấu hình: `{ tên mẫu: { "base": "Big5", "cta_bg": "#7B2FA6", ... } }`.
  * - Tên mới (vd `cta_top_purple`): mẫu tự đặt, vẽ bằng layout `base` + style. Cột `template` của placement ghi tên này.
  * - Tên trùng mẫu có sẵn (vd `Big5`): đè style lên mẫu đó ở mọi placement dùng nó; `base` bỏ qua.
  * Tên không phân biệt hoa thường. JSON hỏng = không có mẫu tuỳ biến nào.

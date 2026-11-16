@@ -3,7 +3,7 @@
 Base app Android (Kotlin, ViewBinding, một module `app`) chạy đủ luồng Splash → Language → Onboarding → Main → Settings,
 có sẵn AdMob Next-Gen, Firebase Remote Config, Adjust, Google Play Billing. App mới copy base rồi chỉ sửa / thêm màn.
 
-**Đọc `docs/BASE_GUIDE.md` trước khi làm task.** Chi tiết config: `docs/remote-config-v3/README.md`; billing: `docs/billing.md`.
+**Đọc `docs/BASE_GUIDE.md` trước khi làm task.** Chi tiết config: `docs/remote-config.md`; billing: `docs/billing.md`.
 
 ## Quy tắc bắt buộc
 
@@ -11,16 +11,16 @@ có sẵn AdMob Next-Gen, Firebase Remote Config, Adjust, Google Play Billing. A
 - Base chỉ chứa màn chung. Không thêm màn / placement theo tính năng riêng của một app vào base.
 - Màn mới kế thừa `BaseActivity` / `BaseFragment` / `BaseDialogFragment`; quảng cáo chỉ qua helper `loadNative`,
   `loadBanner`, `showInterstitial`, `showReward`; cấu hình quảng cáo chỉ đọc qua `AdPolicy`. Không gọi SDK AdMob trực tiếp trong màn.
-- Remote Config: app luôn đọc cùng các key `ad_settings`, `ad_placements`, `ad_ids`, `ad_templates` (+ `ad_config` gộp).
+- Remote Config: app luôn đọc **một** parameter `ad_config` = nguyên file JSON xuất từ web "Cấu hình quảng cáo"
+  (`ads_profile`, `settings`, `profiles.full/basic`, `templates`); đổi format thì viết lại parser, không thêm lớp chuyển đổi.
   **Không** tạo key theo version, **không** thêm `app_version` để chọn config — tách theo bản bằng Firebase Condition
   "App build ≥ N"; `versionCode` tăng mỗi bản.
-- Native template: placement chọn mẫu ở trường `template` (không phải `format`). Dòng mẫu có sẵn trong `ad_templates`
-  chỉ đè style, `base` bị bỏ qua. Bố cục mới = thêm `ad_tpl_*.xml` + enum `NativeAdTemplate` + danh sách mẫu của sheet /
-  script export. Giữ đúng view id chung; không vi phạm chính sách native AdMob (nhãn Ad, ảnh ≥ 120dp, CTA bấm được).
+- Native template: placement chọn mẫu ở trường `template` (không phải `ad_type`). Dòng mẫu có sẵn trong `templates`
+  chỉ đè style, `base` bị bỏ qua. Bố cục mới = thêm `ad_tpl_*.xml` + enum `NativeAdTemplate`. Giữ đúng view id chung; không vi phạm chính sách native AdMob (nhãn Ad, ảnh ≥ 120dp, CTA bấm được).
   Không hiện giá ("FREE").
-- Thêm placement: `AdKey` + `AdUnit` + `NativePlacement`/`InterstitialPlacement`/`BannerPlacement` (+ `isEnabled`), sheet,
-  bảng mặc định trong README — theo `docs/BASE_GUIDE.md` mục 4.2.
-- Đổi config / placement / template thì cập nhật cùng lúc: code, sheet mẫu + `export_ad_config.gs`, JSON mẫu, docs.
+- Thêm placement: `AdKey` + `AdUnit` + `NativePlacement`/`InterstitialPlacement`/`BannerPlacement` (+ `isEnabled`), thêm vào
+  `docs/ad_config_sample.json` — theo `docs/BASE_GUIDE.md` mục 4.2.
+- Đổi config / placement / template thì cập nhật cùng lúc: code, JSON mẫu (`docs/` + `app/src/test/resources/`), docs.
 - Quảng cáo lỗi / thiếu config / không fill → app vẫn đi tiếp, không treo, không crash.
 - Code chỉ cho phát triển đặt trong `app/src/debug/`.
 - Không commit `.idea/`. Chỉ commit / push khi người dùng yêu cầu.

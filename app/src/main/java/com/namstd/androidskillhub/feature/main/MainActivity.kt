@@ -16,7 +16,7 @@ import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.config.AdKey
-import com.namstd.androidskillhub.core.config.PlacementFormat
+import com.namstd.androidskillhub.core.config.AdType
 import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.databinding.ActivityMainBinding
 import com.namstd.androidskillhub.feature.settings.SettingsActivity
@@ -34,8 +34,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initViews() {
-        // Chỉ hâm nóng App Open ad khi việc quay lại app có thể hiện nó (on_resume format aoa).
-        if (AdPolicy.format(AdKey.ON_RESUME) == PlacementFormat.AOA) AppOpenAds.load(AdUnit.ON_RESUME)
+        // Chỉ hâm nóng App Open ad khi việc quay lại app có thể hiện nó (`on_resume` ad_type aoa).
+        if (AdPolicy.adType(AdKey.ON_RESUME) == AdType.AOA) AppOpenAds.load(AdUnit.ON_RESUME)
         InterstitialAds.preload(InterstitialPlacement.HOME)
         // Main tự reload slot banner - khi resume và khi đổi tab - thay vì theo bộ hẹn giờ.
         loadBanner(binding.bannerContainer, BannerPlacement.HOME, autoReload = false)

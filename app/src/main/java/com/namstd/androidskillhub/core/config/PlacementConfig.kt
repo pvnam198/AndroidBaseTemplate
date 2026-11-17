@@ -212,6 +212,10 @@ class AdConfigDocument(raw: String) {
 
     private fun profile(set: AdSet): JSONObject = profiles.optJSONObject(set.key) ?: JSONObject()
 
+    /** Tên mọi placement có trong `profiles.<bộ>.placements` (kể cả tên app không dùng). */
+    fun placementNames(set: AdSet): Set<String> =
+        profile(set).optJSONObject("placements")?.keys()?.asSequence()?.toSet().orEmpty()
+
     /** `profiles.<bộ>.settings`. */
     fun profileSettings(set: AdSet): JSONObject = profile(set).optJSONObject("settings") ?: JSONObject()
 

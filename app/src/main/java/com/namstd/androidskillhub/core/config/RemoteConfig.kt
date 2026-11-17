@@ -168,12 +168,7 @@ object RemoteConfig {
             // Cache giá trị thô của Firebase - không qua getter, vì getter đã tính cả override debug.
             prefs.putCachedString(CACHE_PREFIX + PARAM_CONFIG, remoteConfig.getString(PARAM_CONFIG))
             _isReady.value = true
-            if (BuildConfig.DEBUG) {
-                val doc = document()
-                android.util.Log.d("AdsRC", "fetch ok=${it.isSuccessful} config=${doc.configVersion} profile=$adsProfileRule " +
-                    "full.ids=${AdKey.entries.count { k -> doc.placement(AdSet.FULL, k).adIds.isNotEmpty() }} " +
-                    "basic.ids=${AdKey.entries.count { k -> doc.placement(AdSet.BASIC, k).adIds.isNotEmpty() }}")
-            }
+            if (BuildConfig.DEBUG) logConfig(fetchOk = it.isSuccessful)
         }
     }
 
@@ -314,6 +309,62 @@ object RemoteConfig {
         "onboarding_full_close_button" to "x / next",
     )
 
+    /**
+     * [DEBUG] In ra logcat mọi giá trị app đọc được từ cấu hình: nguồn, gốc file, `settings` (thô + giá trị app hiểu),
+     * từng bộ (settings + mọi placement app dùng, kèm placement có trong file mà app không biết), `templates`.
+     * Xem: `adb logcat -s AdsRC`.
+     */
+    private fun logConfig(fetchOk: Boolean) {
+        fun log(message: String) = android.util.Log.d(LOG_TAG, message)
+        val raw = remoteRaw()
+        val doc = document()
+        log("===== Remote Config: fetch ok=$fetchOk · nguồn: ${if (debugOverride(PARAM_CONFIG) != null) "override Debug config" else "Firebase $PARAM_CONFIG (${remoteConfig.getValue(PARAM_CONFIG).sourceName()})"} · ${raw.length} ký tự")
+        if (raw.isBlank()) {
+            log("cấu hình trống → mọi placement tắt")
+            return
+        }
+        log("config_version=${doc.configVersion} · ads_profile=${doc.adsProfile} → $adsProfileRule")
+        doc.settings.keys().asSequence().sorted().forEach { log("settings.$it = ${doc.settings.opt(it)}") }
+        log("→ splashFallback=$splashFallback · onboardingSwipe=$onboardingSwipe · onboardingFullCloseWithX=$onboardingFullCloseWithX")
+        log("→ languageSetup=$languageSetup · languageDelayMillis=$languageDelayMillis")
+        (1..4).forEach { log("→ onboardingSetup($it) = ${onboardingSetup(it)}") }
+        DebugOverrides.keys().takeIf { it.isNotEmpty() }?.let { log("override Debug config đang bật: ${it.sorted()}") }
+        log("(placement chưa có ID: khi load dùng test ID của Google)")
+        for (set in AdSet.entries) {
+            log("----- ${set.key}: settings=${doc.profileSettings(set)} → ${interDelay(set)} · ${openGaps(set)}")
+            AdKey.entries.forEach { key ->
+                val c = doc.placement(set, key)
+                log("${set.key}.${key.key}: " + if (c == PlacementConfig.OFF) "không có trong file (tắt)" else describe(c))
+            }
+            (doc.placementNames(set) - AdKey.entries.map { it.key }.toSet()).sorted().forEach {
+                log("${set.key}.$it: có trong file nhưng app không dùng")
+            }
+        }
+        log("templates: ${doc.templatesJson}")
+        log("===== hết Remote Config")
+    }
+
+    private fun describe(c: PlacementConfig): String = buildList {
+        add(if (c.enable) "BẬT" else "tắt")
+        add("type=${c.type?.key}")
+        add("ad_type=${c.adType?.key}")
+        c.adIds.forEach { (type, ids) -> add("$type=$ids") }
+        if (c.template.isNotEmpty()) add("template=${c.template}")
+        if (c.pages.isNotEmpty()) add("pages=${c.pages}")
+        if (c.step != 1) add("step=${c.step}")
+        if (c.waitMs > 0) add("wait_ms=${c.waitMs}")
+        if (c.refreshMs > 0) add("refresh_ms=${c.refreshMs}")
+        if (c.openAdOnClicks.isNotEmpty()) add("open_ad_on_clicks=${c.openAdOnClicks}")
+        if (c.adType == AdType.INTER_THEN_NATIVE) add("fallback=${c.fallback.key}")
+        if (c.customUi) add("custom_ui")
+    }.joinToString(" ")
+
+    private fun com.google.firebase.remoteconfig.FirebaseRemoteConfigValue.sourceName(): String = when (source) {
+        com.google.firebase.remoteconfig.FirebaseRemoteConfig.VALUE_SOURCE_REMOTE -> "remote"
+        com.google.firebase.remoteconfig.FirebaseRemoteConfig.VALUE_SOURCE_DEFAULT -> "cache lần fetch trước"
+        else -> "không có giá trị"
+    }
+
     private fun long(name: String, default: Long): Long = document().settings.longOrNull(name) ?: default
 
     private fun bool(name: String, default: Boolean): Boolean = setting(name)?.let(::parseBoolean) ?: default
@@ -344,5 +395,6 @@ object RemoteConfig {
 
     /** Tiền tố cache trong [AppPreferences] - khác `cache_v3_` (format sheet cũ) để không đọc nhầm format cũ đã lưu. */
     private const val CACHE_PREFIX = "cache_v4_"
+    private const val LOG_TAG = "AdsRC"
     private val TRUE_VALUES = setOf("true", "1", "t", "yes", "y", "on")
 }

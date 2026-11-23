@@ -100,6 +100,8 @@ object NativeAds {
 
     /** Tải sẵn một ad cho [placement] (cất vào pool theo ID) nếu chưa có ad rảnh / lượt load nào cho chuỗi ID đó. */
     fun preload(placement: NativePlacement) {
+        // SDK / config chưa có (mạng lỗi lúc mở app, đang thử lại): tải khi có.
+        if (!AdsAvailability.usable) return AdsAvailability.runWhenUsable("native:$placement") { preload(placement) }
         if (!AdPolicy.nativeAllowed || !Ads.isReady) return
         val chain = chain(placement)
         if (chain.isEmpty() || !pool.needsLoad(chain, preload = true)) return

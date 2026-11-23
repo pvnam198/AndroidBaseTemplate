@@ -111,6 +111,8 @@ object RewardAds {
 
     /** Tải trước để lúc user bấm là có ngay. Gọi lại nhiều lần không sao. */
     fun preload(placement: RewardPlacement) {
+        // SDK / config chưa có (mạng lỗi lúc mở app, đang thử lại): tải khi có.
+        if (!AdsAvailability.usable) return AdsAvailability.runWhenUsable("reward:$placement") { preload(placement) }
         if (!isEnabled(placement)) return
         load(placement.unit)
     }

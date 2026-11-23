@@ -31,7 +31,7 @@ Settings → Language (mở lại, không inter) · Premium · Privacy (khi UMP 
 | Màn | File | Làm gì / quảng cáo |
 |---|---|---|
 | App | `AndroidSkillHubApp.kt` | Khởi tạo theo thứ tự: Adjust → `AdAudience`, `AdPolicy` → locale → `Ads.adsEnabled = !premium` → `Premium.initialize` → `RemoteConfig.initialize`. Theo dõi app ra / vào nền để chạy `on_resume` (App Open / Welcome back), xuống nền thì tải sẵn quảng cáo cho lần quay lại. |
-| Splash | `feature/splash/SplashActivity.kt` | Chờ `splash_min_ms`–`splash_timeout_ms` (mặc định 3–8 s) sau consent (UMP), chờ Remote Config. Native `native_splash`, quảng cáo cuối Splash theo `ads_splash` (AOA / inter / inter + native full). Quá `splash_timeout_ms` chưa có ad → bật `splash_fallback`. Đã setup → Main, chưa → Language. |
+| Splash | `feature/splash/SplashActivity.kt` | Chờ `splash_min_ms`–`splash_timeout_ms` (mặc định 3–8 s) sau consent (UMP), chờ Remote Config. Mạng lỗi thì không chặn: consent / Remote Config thử lại ngầm (mục 4.4). Native `native_splash`, quảng cáo cuối Splash theo `ads_splash` (AOA / inter / inter + native full). Quá `splash_timeout_ms` chưa có ad → bật `splash_fallback`. Đã setup → Main, chưa → Language. |
 | Language | `feature/language/LanguageActivity.kt` | Native `native_language` (lần đầu) / `native_language_2` (mở từ Settings), dải `native_language_small`. Lần đầu: nút đi tiếp (icon ✓ / nút chữ theo `language_next_style`) ẩn tới khi user chọn ngôn ngữ, rồi hiện sau `language_next_delay_ms` (vòng loading nếu `language_show_loading`; 0 = hiện ngay). Bấm → `inter_language` đã sẵn thì dialog loading nhỏ (`dialog_simple_loading.xml`) ~1 s rồi mới hiện inter → đổi locale → Onboarding. |
 | Onboarding | `feature/onboarding/` | 4 trang nội dung (`OnboardingPageFragment`), chân trang N có native `native_onboarding_N` (1–4, mỗi trang enable / ID / template riêng); trang native toàn màn (`OnboardingAdFragment`) chèn sau các trang trong `native_full_onboarding.pages`, không có ad thì tự bỏ qua (cả khi vuốt lùi). Vuốt (`onboarding_swipe`) chỉ được khi nút đi tiếp của trang đang xem đã hiện (hết `next_delay_ms`, trang native full đã hiện X / Next). Next kiểu `text`: chấm trái, Next phải trên cùng một hàng. Xong → `setup_completed = true` → `inter_after_onboarding` → Main. |
 | Main (Home) | `feature/main/` | 3 tab feed (`MainFeedPageFragment`), native trong list `native_home_feed`, ô banner `banner_home`. Nút Settings → `inter_home`. **Màn tính năng của app con đặt từ đây.** |
@@ -128,8 +128,34 @@ placement chỉ quyết định bật/tắt, template và thứ tự ID (waterfa
 - Hạn ad: native / inter / reward **1 giờ**, App Open **4 giờ** (quá hạn thì huỷ, tải lại).
 - Banner không cache (gắn với từng ô).
 - Bản debug vẫn khoá cache theo ID thật, chỉ gửi request bằng test ID của Google (`AdUnit.requestId`).
-- Log debug: `adb logcat -s AdsNative AdsInter AdsAppOpen AdsReward AdsGap` (`AdsGap`: quảng cáo quay lại app hiện / bị chặn vì
-  `open_gap_ms` / `open_inter_gap_ms`).
+- Log debug: `adb logcat -s AdsNative AdsInter AdsAppOpen AdsReward AdsGap AdsInit` (`AdsGap`: quảng cáo quay lại app
+  hiện / bị chặn vì `open_gap_ms` / `open_inter_gap_ms`; `AdsInit`: các mốc khởi động quảng cáo, mục 4.4).
+
+### 4.4 Mạng lỗi / chập chờn lúc mở app
+
+Hai bước cần mạng lúc mở app được **thử lại ngầm**, Splash không bị chặn chờ:
+
+- **Xin đồng ý (UMP)** — `Ads.initialize`. Lỗi mà máy đã có trạng thái đồng ý từ trước (`canRequestAds()` = true) thì
+  khởi tạo SDK như bình thường. Chưa có (cài mới / xoá dữ liệu): lần lỗi đầu báo `false` cho Splash đi tiếp (không
+  quảng cáo), rồi thử lại sau **2 s / 4 s / 8 s**; hết lượt thì chờ **mạng có lại** (`NetworkRegain`: mạng mặc định
+  được hệ thống xác nhận ra internet) và chạy lại lịch từ đầu. Lần thử lại cần Activity: dùng màn đang hiện, không có
+  thì chờ màn kế tiếp `onResume`. Không bao giờ bỏ qua bước đồng ý (user EU vẫn thấy form); dừng khi SDK đã sẵn sàng,
+  quảng cáo bị tắt (Premium) hoặc user từ chối.
+- **Remote Config** — fetch lỗi thì `isReady` vẫn lật `true` ngay (Splash dùng cache / mặc định), rồi thử lại cùng lịch
+  2 s / 4 s / 8 s + chờ mạng có lại. Fetch được mà file cấu hình đổi → báo `AdsAvailability`. **Không có config mặc
+  định nhúng trong app**: lần cài đầu chỉ có quảng cáo khi fetch được.
+
+`core/ads/AdsAvailability.kt`: quảng cáo **dùng được** = SDK sẵn sàng **và** `RemoteConfig.hasAdConfig()` (có file cấu
+hình, kể cả cache lần trước hoặc override ở Debug config). Khi chưa dùng được:
+
+- `NativeAds.preload` / `InterstitialAds.preload` / `RewardAds.preload` được hoãn (gộp theo placement, chạy một lần khi
+  dùng được).
+- `loadNative` / `loadBanner` của `BaseActivity` / `BaseFragment` (user không Premium): container bị ẩn, `onUnavailable`
+  chạy ngay (màn đi tiếp như không có ad), lời gọi được nhớ theo container; khi dùng được mà màn đang ở trạng thái
+  STARTED thì gọi lại đúng lời gọi đó (trả container về độ hiện cũ) — màn đang mở có quảng cáo mà không phải mở lại.
+  Fragment bỏ các lời gọi chờ khi view bị huỷ.
+- `adb logcat -s AdsInit`: `ump lỗi lần N…`, `rc fetch lỗi lần N…`, `…: chờ mạng có lại`, `sdk sẵn sàng`,
+  `quảng cáo dùng được`.
 
 ---
 

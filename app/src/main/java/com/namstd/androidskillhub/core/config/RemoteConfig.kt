@@ -1,11 +1,17 @@
 package com.namstd.androidskillhub.core.config
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.namstd.androidskillhub.BuildConfig
+import com.namstd.androidskillhub.core.ads.AdsAvailability
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
+import com.namstd.androidskillhub.core.ads.NetworkRegain
+import com.namstd.androidskillhub.core.ads.logInit
+import com.namstd.androidskillhub.core.ads.retryDelay
 import com.namstd.androidskillhub.core.ads.template.AdTemplatesDocument
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -156,7 +162,7 @@ object RemoteConfig {
 
     private val _isReady = MutableStateFlow(false)
 
-    /** Là true sau khi [fetchAndActivate] hoàn tất (thành công hay thất bại). */
+    /** Là true sau lần fetch đầu tiên hoàn tất (thành công hay thất bại) - lỗi thì vẫn thử lại ngầm, xem [fetch]. */
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     /**
@@ -172,6 +178,24 @@ object RemoteConfig {
             },
         )
         remoteConfig.setDefaultsAsync(mapOf(VERSION_KEY to prefs.getCachedString(CACHE_PREFIX + VERSION_KEY, "")))
+        fetch(context.applicationContext, attempt = 0)
+    }
+
+    /**
+     * Đã có cấu hình quảng cáo chưa (fetch được, có cache lần trước, hoặc override cả file ở màn Debug config) - khác
+     * với có config nhưng placement tắt. Không có config mặc định nhúng trong app.
+     */
+    fun hasAdConfig(): Boolean = remoteRaw().isNotBlank()
+
+    private val main = Handler(Looper.getMainLooper())
+
+    /**
+     * Fetch + activate. Lỗi (mạng chập chờn) thì vẫn báo [isReady] để Splash không chờ, rồi thử lại sau 2s / 4s / 8s và
+     * khi mạng có lại ([NetworkRegain]) - không có config mặc định nhúng trong app, nên lần cài đầu chỉ có quảng cáo khi
+     * fetch được. Fetch thành công mà file cấu hình đổi thì báo [AdsAvailability] để màn đang mở load quảng cáo.
+     */
+    private fun fetch(context: Context, attempt: Int) {
+        val before = remoteRaw()
         remoteConfig.fetchAndActivate().addOnCompleteListener {
             // Cache giá trị thô của Firebase - không qua getter, vì getter đã tính cả override debug.
             prefs.putCachedString(CACHE_PREFIX + VERSION_KEY, remoteConfig.getString(VERSION_KEY))
@@ -180,6 +204,16 @@ object RemoteConfig {
                 it.exception?.let { e -> android.util.Log.w(LOG_TAG, "fetch lỗi: $e", e) }
                 logConfig(fetchOk = it.isSuccessful)
             }
+            if (it.isSuccessful) {
+                if (attempt > 0) logInit("rc ok sau ${attempt + 1} lần, có config quảng cáo: ${hasAdConfig()}")
+                if (remoteRaw() != before) AdsAvailability.notifyChanged()
+                return@addOnCompleteListener
+            }
+            val delay = retryDelay(attempt)
+            logInit("rc fetch lỗi lần ${attempt + 1}" + if (delay != null) ", thử lại sau ${delay}ms" else ", hết lượt")
+            if (delay != null) main.postDelayed({ fetch(context, attempt + 1) }, delay)
+            // Hết lượt: chờ mạng có lại rồi chạy lại lịch thử.
+            else NetworkRegain.awaitOnce(context, "rc") { fetch(context, attempt = 1) }
         }
     }
 

@@ -7,9 +7,14 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewbinding.ViewBinding
 import com.namstd.androidskillhub.core.ads.AdHandle
 import com.namstd.androidskillhub.core.ads.AdPolicy
+import com.namstd.androidskillhub.core.ads.Ads
+import com.namstd.androidskillhub.core.ads.AdsAvailability
 import com.namstd.androidskillhub.core.ads.BannerAds
 import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
@@ -20,6 +25,7 @@ import com.namstd.androidskillhub.core.ads.RewardResult
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
 import com.namstd.androidskillhub.core.preferences.AppPreferences
+import kotlinx.coroutines.launch
 
 abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
@@ -37,6 +43,29 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     protected val prefs: AppPreferences get() = AppPreferences.getInstance(requireContext())
 
     /**
+     * Slot quảng cáo được gọi lúc SDK / cấu hình quảng cáo chưa có (mạng lỗi lúc mở app, [Ads] / RemoteConfig đang thử
+     * lại): ẩn tạm, và khi [AdsAvailability] báo dùng được thì gọi lại đúng lời gọi đó (trả container về độ hiện cũ) -
+     * màn đang mở có quảng cáo mà không phải mở lại. Theo container: gọi lại cùng container thì thay lời gọi cũ.
+     */
+    private val pendingAdSlots = LinkedHashMap<View, () -> Unit>()
+    private val pendingVisibility = HashMap<View, Int>()
+
+    private fun deferAdSlot(container: View, load: () -> Unit) {
+        // Gọi lại khi đang chờ: giữ độ hiện trước lần ẩn đầu, không lấy trạng thái đã bị ẩn tạm.
+        val visibility = pendingVisibility.getOrPut(container) { container.visibility }
+        pendingAdSlots[container] = { container.visibility = visibility; load() }
+        container.isVisible = false
+    }
+
+    private fun replayPendingAdSlots() {
+        if (pendingAdSlots.isEmpty() || !AdsAvailability.usable || isPremiumUser() || _binding == null) return
+        val slots = pendingAdSlots.values.toList()
+        pendingAdSlots.clear()
+        pendingVisibility.clear()
+        slots.forEach { it() }
+    }
+
+    /**
      * Load banner của [placement] vào [container] và tự huỷ nó khi view bị huỷ. Loại banner và timer reload
      * theo `ad_type` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay qua
      * [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
@@ -45,6 +74,10 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         bannerContainer = container
         if (isPremiumUser()) {
             container.isVisible = false
+            return
+        }
+        if (!AdsAvailability.usable) {
+            deferAdSlot(container) { loadBanner(container, placement, autoReload) }
             return
         }
         container.post {
@@ -70,6 +103,11 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         preloadOnShow: Boolean = false,
         onUnavailable: () -> Unit = {},
     ) {
+        if (!isPremiumUser() && !AdsAvailability.usable) {
+            deferAdSlot(container) { loadNative(container, placement, preloadOnShow, onUnavailable) }
+            onUnavailable()
+            return
+        }
         nativeContainer = container
         if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
@@ -139,6 +177,11 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
     final override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                AdsAvailability.version.collect { replayPendingAdSlots() }
+            }
+        }
         initConfig(savedInstanceState)
         initViews()
         initListeners()
@@ -154,6 +197,8 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
         try {
             releaseResources()
         } finally {
+            pendingAdSlots.clear()
+            pendingVisibility.clear()
             bannerHandle?.destroy()
             bannerHandle = null
             nativeHandle?.destroy()

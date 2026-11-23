@@ -50,6 +50,8 @@ object InterstitialAds {
      * màn có vị trí này mở ra, để lúc cần hiện thì ad đã nằm sẵn (cache theo ID: vị trí khác cùng ID cũng dùng được).
      */
     fun preload(placement: InterstitialPlacement) {
+        // SDK / config chưa có (mạng lỗi lúc mở app, đang thử lại): tải khi có.
+        if (!AdsAvailability.usable) return AdsAvailability.runWhenUsable("inter:$placement") { preload(placement) }
         val plan = fullScreenPlan(placement)
         if (plan == FullScreenAdPlan.INTERSTITIAL || plan == FullScreenAdPlan.INTER_PLUS_NATIVE) load(placement.interUnit)
     }

@@ -12,12 +12,16 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.AdHandle
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
+import com.namstd.androidskillhub.core.ads.AdsAvailability
 import com.namstd.androidskillhub.core.ads.BannerAds
 import com.namstd.androidskillhub.core.ads.BannerPlacement
 import com.namstd.androidskillhub.core.ads.BannerSlotHandle
@@ -36,6 +40,7 @@ import com.namstd.androidskillhub.core.ads.fullScreenPlan
 import com.namstd.androidskillhub.core.config.AdFallback
 import com.namstd.androidskillhub.core.preferences.AppPreferences
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdDialogFragment
+import kotlinx.coroutines.launch
 
 abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
@@ -52,6 +57,29 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     private val nativeContainers = mutableListOf<FrameLayout>()
 
     /**
+     * Slot quảng cáo được gọi lúc SDK / cấu hình quảng cáo chưa có (mạng lỗi lúc mở app, [Ads] / RemoteConfig đang thử
+     * lại): ẩn tạm, và khi [AdsAvailability] báo dùng được thì gọi lại đúng lời gọi đó (trả container về độ hiện cũ) -
+     * màn đang mở có quảng cáo mà không phải mở lại. Theo container: gọi lại cùng container thì thay lời gọi cũ.
+     */
+    private val pendingAdSlots = LinkedHashMap<View, () -> Unit>()
+    private val pendingVisibility = HashMap<View, Int>()
+
+    private fun deferAdSlot(container: View, load: () -> Unit) {
+        // Gọi lại khi đang chờ: giữ độ hiện trước lần ẩn đầu, không lấy trạng thái đã bị ẩn tạm.
+        val visibility = pendingVisibility.getOrPut(container) { container.visibility }
+        pendingAdSlots[container] = { container.visibility = visibility; load() }
+        container.isVisible = false
+    }
+
+    private fun replayPendingAdSlots() {
+        if (pendingAdSlots.isEmpty() || !AdsAvailability.usable || isPremiumUser()) return
+        val slots = pendingAdSlots.values.toList()
+        pendingAdSlots.clear()
+        pendingVisibility.clear()
+        slots.forEach { it() }
+    }
+
+    /**
      * Load banner của [placement] vào [container] và tự huỷ nó trong [onDestroy]. Loại banner và timer
      * reload theo `ad_type` / `refresh_ms` của placement đó; [autoReload] = false cho màn tự reload bằng tay
      * (resume, đổi tab...) qua [reloadBanner]. Với user premium thì không load gì và [container] bị ẩn.
@@ -60,6 +88,10 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         bannerContainer = container
         if (isPremiumUser()) {
             container.isVisible = false
+            return
+        }
+        if (!AdsAvailability.usable) {
+            deferAdSlot(container) { loadBanner(container, placement, autoReload) }
             return
         }
         container.post {
@@ -85,6 +117,11 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         preloadOnShow: Boolean = false,
         onUnavailable: () -> Unit = {},
     ) {
+        if (!isPremiumUser() && !AdsAvailability.usable) {
+            deferAdSlot(container) { loadNative(container, placement, preloadOnShow, onUnavailable) }
+            onUnavailable()
+            return
+        }
         nativeContainers += container
         if (isPremiumUser() || !AdPolicy.nativeEnabled(placement)) {
             container.isVisible = false
@@ -270,6 +307,9 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         binding = inflateBinding(layoutInflater)
         setContentView(binding.root)
         applySystemBarPadding(binding.root)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { AdsAvailability.version.collect { replayPendingAdSlots() } }
+        }
         initConfig(savedInstanceState)
         initViews()
         initListeners()
@@ -305,6 +345,8 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
             destroyNatives()
             bannerContainer = null
             nativeContainers.clear()
+            pendingAdSlots.clear()
+            pendingVisibility.clear()
             super.onDestroy()
         }
     }

@@ -106,7 +106,7 @@ quảng cáo theo ad_type), `native_welcome_back` (native chân màn Welcome Bac
 
 1. **Seed từ cache** — `RemoteConfig.initialize()` nạp giá trị thô của `VERSION_KEY` ở lần fetch thành công gần nhất (`AppPreferences`, key `cache_v4_` + tên key, vd `cache_v4_ad_ver10`).
 2. **Thiếu / hỏng** — JSON hỏng hoặc không có = mọi placement tắt; setting thiếu dùng mặc định trong getter của `RemoteConfig`.
-3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true`. DEBUG fetch mỗi lần mở (lỗi fetch in ra log `AdsRC`), RELEASE 3600 giây.
+3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true` (cả khi lỗi). Lỗi thì thử lại sau 2 s / 4 s / 8 s, hết lượt thì chờ mạng có lại; fetch được mà file đổi thì quảng cáo chạy ngay từ lúc đó (`BASE_GUIDE.md` mục 4.4). Không có config mặc định nhúng trong app. DEBUG fetch mỗi lần mở (lỗi fetch in ra log `AdsRC`, mốc thử lại ở `AdsInit`), RELEASE 3600 giây.
 4. **Chọn bộ** — `AdPolicy.profile` từ `ads_profile` + `AdAudience` (nguồn user, máy test ad) + Premium → OFF / FULL / BASIC. Code quảng cáo luôn đọc qua `AdPolicy.config(key)` / `AdPolicy.adType(key)`.
 5. **Debug override** (chỉ bản debug, *Cài đặt → Debug config*): cả file (dòng `ad_ver…`), `ads_profile`, một key trong `settings` gốc, `full.settings` / `basic.settings` (JSON), một placement bộ full (vd `inter_home`) hoặc basic (`basic.inter_home`): JSON object thay cả placement, `true` / `false`, hoặc tên ad_type. Override thắng Firebase.
 
@@ -118,6 +118,7 @@ Mọi thời gian tính bằng **mili-giây**.
 |---|---|
 | `core/config/PlacementConfig.kt` | `AdType`, `PlacementType`, `AdFallback`, `PlacementConfig` (một placement), `AdKey` (tên placement), `AdSet`, `AdConfigDocument` (cả file) |
 | `core/config/RemoteConfig.kt` | `VERSION_KEY`, đọc file cấu hình, cache theo key, override debug; getter cho từng setting; `AdsProfileRule` |
+| `core/ads/AdsAvailability.kt`, `AdsRetry.kt` | Quảng cáo dùng được chưa (SDK + config), hoãn preload / slot; lịch thử lại 2 s / 4 s / 8 s, `NetworkRegain` |
 | `core/ads/AdProfile.kt` | `AdProfile` (OFF / FULL / BASIC), `resolveAdProfile` |
 | `core/ads/AdPolicy.kt` | `config(key)` / `adType(key)` cho user này, `interDelay`, `openGaps`, `splashFallback`, `nativeEnabled(placement)` |
 | `core/ads/AdUnit.kt` | Ad unit = một loại trong `ad_ids` của một placement; `configIds()` (ID thật), `ids()` / `requestId()` (bản debug: test ID) |
@@ -160,3 +161,7 @@ Mọi thời gian tính bằng **mili-giây**.
   vuốt lùi bỏ qua trang native full không có ad; Next kiểu `text` cùng hàng với chấm. Language lần đầu: nút đi tiếp hiện
   sau khi chọn ngôn ngữ (`language_next_delay_ms`, `language_show_loading`); có `inter_language` sẵn thì dialog
   loading nhỏ ~1 s trước inter.
+- **23/11/2026** — mạng lỗi / chập chờn lúc mở app: fetch Remote Config và xin đồng ý UMP **thử lại** sau 2 s / 4 s /
+  8 s rồi chờ mạng có lại (Splash không bị chặn; không bỏ qua bước đồng ý, không thêm config mặc định).
+  `RemoteConfig.hasAdConfig()` + `AdsAvailability`: preload và `loadNative` / `loadBanner` gọi lúc chưa có SDK / config
+  được hoãn, có lúc nào thì chạy lúc đó. Log `AdsInit`.

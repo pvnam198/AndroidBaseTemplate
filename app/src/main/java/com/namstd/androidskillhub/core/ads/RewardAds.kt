@@ -50,8 +50,8 @@ enum class RewardPlacement(val adKey: AdKey, val unit: AdUnit) {
 }
 
 /**
- * Tải / hiện quảng cáo thưởng, mỗi ad unit giữ một ad. Màn hình gọi qua `BaseActivity.showReward` (lo luôn màn đếm
- * ngược của reward_inter), không gọi trực tiếp object này.
+ * Tải / hiện quảng cáo thưởng, cache theo ID dùng chung giữa các placement. Màn hình gọi qua `BaseActivity.showReward`
+ * (lo luôn màn đếm ngược của reward_inter), không gọi trực tiếp object này.
  */
 object RewardAds {
     /** Một ad đã tải - rewarded hoặc rewarded interstitial, hai SDK class không có chung kiểu. */
@@ -88,21 +88,26 @@ object RewardAds {
         }
     }
 
-    private class Slot {
-        var ad: Loaded? = null
-        var loading = false
+    /** Cache theo ID dùng chung ([FullScreenAdCache]); unit reward_inter tải rewarded interstitial, còn lại rewarded. */
+    private val cache = FullScreenAdCache<Loaded>("AdsReward", TTL_MS, destroy = Loaded::destroy) { unit, id, loaded, failed ->
+        if (unit.format == AdFormat.REWARDED_INTERSTITIAL) {
+            RewardedInterstitialAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<RewardedInterstitialAd> {
+                override fun onAdLoaded(ad: RewardedInterstitialAd) = loaded(Loaded.RewardedInter(ad))
+                override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
+            })
+        } else {
+            RewardedAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<RewardedAd> {
+                override fun onAdLoaded(ad: RewardedAd) = loaded(Loaded.Rewarded(ad))
+                override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
+            })
+        }
     }
-
-    private val slots = mutableMapOf<AdUnit, Slot>()
-
-    @Synchronized
-    private fun slotFor(unit: AdUnit) = slots.getOrPut(unit) { Slot() }
 
     /** Placement có được chạy không: quảng cáo bật (không Premium, profile khác OFF) và `enable` của placement. */
     fun isEnabled(placement: RewardPlacement): Boolean =
         Ads.adsEnabled && AdPolicy.profile != AdProfile.OFF && AdPolicy.config(placement.adKey).enable
 
-    fun isReady(placement: RewardPlacement): Boolean = slotFor(placement.unit).ad != null
+    fun isReady(placement: RewardPlacement): Boolean = cache.isReady(placement.unit)
 
     /** Tải trước để lúc user bấm là có ngay. Gọi lại nhiều lần không sao. */
     fun preload(placement: RewardPlacement) {
@@ -111,34 +116,8 @@ object RewardAds {
     }
 
     private fun load(unit: AdUnit) {
-        val slot = slotFor(unit)
-        if (!Ads.isReady || slot.loading || slot.ad != null) return
-        slot.loading = true
-        val onLoaded = { ad: Loaded -> slot.loading = false; slot.ad = ad }
-        val onFailed = { _: String -> slot.loading = false }
-        if (unit.format == AdFormat.REWARDED_INTERSTITIAL) {
-            WaterfallLoader<RewardedInterstitialAd>(unit.ids()).load(
-                attempt = { id, loaded, failed ->
-                    RewardedInterstitialAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<RewardedInterstitialAd> {
-                        override fun onAdLoaded(ad: RewardedInterstitialAd) = loaded(ad)
-                        override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
-                    })
-                },
-                onLoaded = { ad, _ -> onLoaded(Loaded.RewardedInter(ad)) },
-                onFailed = onFailed,
-            )
-        } else {
-            WaterfallLoader<RewardedAd>(unit.ids()).load(
-                attempt = { id, loaded, failed ->
-                    RewardedAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<RewardedAd> {
-                        override fun onAdLoaded(ad: RewardedAd) = loaded(ad)
-                        override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
-                    })
-                },
-                onLoaded = { ad, _ -> onLoaded(Loaded.Rewarded(ad)) },
-                onFailed = onFailed,
-            )
-        }
+        if (!Ads.isReady) return
+        cache.load(unit)
     }
 
     /**
@@ -146,14 +125,14 @@ object RewardAds {
      * [onResult] chạy đúng một lần, sau khi quảng cáo đóng. Xong thì tải sẵn ad kế tiếp.
      */
     fun show(activity: Activity, placement: RewardPlacement, onResult: (RewardResult) -> Unit) {
-        val slot = slotFor(placement.unit)
-        val current = slot.ad
-        if (!isEnabled(placement) || current == null || !FullScreenGate.acquire(current)) {
-            if (current == null) preload(placement)
+        val ready = cache.isReady(placement.unit)
+        // Kiểm tra trước khi lấy ad ra khỏi cache, để ad không bị mất khi đang có mục full-screen khác.
+        val current = if (isEnabled(placement) && ready && !FullScreenGate.isBusy()) cache.take(placement.unit) else null
+        if (current == null || !FullScreenGate.acquire(current)) {
+            if (!ready) preload(placement)
             onResult(RewardResult.UNAVAILABLE)
             return
         }
-        slot.ad = null
         var earned = false
         var done = false
         current.show(
@@ -171,7 +150,8 @@ object RewardAds {
         )
     }
 
-    fun clear() {
-        slots.values.forEach { it.ad?.destroy(); it.ad = null; it.loading = false }
-    }
+    fun clear() = cache.clear()
+
+    /** Theo khuyến nghị của AdMob: ad tải quá 1 giờ thì bỏ. */
+    private const val TTL_MS = 60L * 60 * 1000
 }

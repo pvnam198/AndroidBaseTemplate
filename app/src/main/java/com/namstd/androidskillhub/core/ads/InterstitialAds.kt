@@ -30,24 +30,21 @@ enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val na
     val key: String get() = adKey.key
 }
 
-/** Interstitial, cache một ad cho mỗi ad unit (vì mỗi unit có ID riêng). */
+/** Interstitial, cache theo ID dùng chung giữa các placement ([FullScreenAdCache]). */
 object InterstitialAds {
-    private class Slot {
-        var ad: InterstitialAd? = null
-        var loading = false
+    private val cache = FullScreenAdCache<InterstitialAd>("AdsInter", TTL_MS, destroy = InterstitialAd::destroy) { _, id, loaded, failed ->
+        InterstitialAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<InterstitialAd> {
+            override fun onAdLoaded(ad: InterstitialAd) = loaded(ad)
+            override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
+        })
     }
 
-    private val slots = mutableMapOf<AdUnit, Slot>()
-
-    @Synchronized
-    private fun slotFor(unit: AdUnit) = slots.getOrPut(unit) { Slot() }
-
-    /** Đã có ad của [unit] nằm sẵn để hiện ngay chưa. */
-    fun isReady(unit: AdUnit): Boolean = slotFor(unit).ad != null
+    /** Đã có ad (của một ID bất kỳ trong `ad_ids.inter` của [unit]) nằm sẵn để hiện ngay chưa. */
+    fun isReady(unit: AdUnit): Boolean = cache.isReady(unit)
 
     /**
-     * Tải sẵn interstitial cho [placement] nếu `ad_type` của vị trí đó cần inter (inter / inter_then_native) - gọi khi màn có vị
-     * trí này mở ra, để lúc cần hiện thì ad đã nằm sẵn (mỗi unit có ô cache riêng, không dùng chung với vị trí khác).
+     * Tải sẵn interstitial cho [placement] nếu `ad_type` của vị trí đó cần inter (inter / inter_then_native) - gọi khi
+     * màn có vị trí này mở ra, để lúc cần hiện thì ad đã nằm sẵn (cache theo ID: vị trí khác cùng ID cũng dùng được).
      */
     fun preload(placement: InterstitialPlacement) {
         val plan = fullScreenPlan(placement)
@@ -55,26 +52,8 @@ object InterstitialAds {
     }
 
     fun load(unit: AdUnit, onStatus: (String) -> Unit = {}) {
-        val slot = slotFor(unit)
-        if (!Ads.isReady || !Ads.adsEnabled || slot.loading || slot.ad != null) return
-        slot.loading = true
-        WaterfallLoader<InterstitialAd>(unit.ids()).load(
-            attempt = { id, loaded, failed ->
-                InterstitialAd.load(AdRequest.Builder(id).build(), object : AdLoadCallback<InterstitialAd> {
-                    override fun onAdLoaded(ad: InterstitialAd) = loaded(ad)
-                    override fun onAdFailedToLoad(adError: LoadAdError) = failed(adError.message)
-                })
-            },
-            onLoaded = { loadedAd, _ ->
-                slot.loading = false
-                slot.ad = loadedAd
-                onStatus("Interstitial ${unit.name}: ready")
-            },
-            onFailed = {
-                slot.loading = false
-                onStatus("Interstitial ${unit.name}: $it")
-            },
-        )
+        if (!Ads.isReady || !Ads.adsEnabled) return
+        cache.load(unit, onStatus)
     }
 
     fun show(
@@ -96,10 +75,11 @@ object InterstitialAds {
             return false
         }
         val unit = placement.interUnit
-        val slot = slotFor(unit)
-        val current = slot.ad ?: run { onStatus("Interstitial: not ready"); load(unit, onStatus); return false }
+        if (!cache.isReady(unit)) { onStatus("Interstitial: not ready"); load(unit, onStatus); return false }
+        // Kiểm tra trước khi lấy ad ra khỏi cache, để ad không bị mất khi đang có mục full-screen khác.
+        if (FullScreenGate.isBusy()) { onStatus("Another full-screen item is showing"); return false }
+        val current = cache.take(unit) ?: return false
         if (!FullScreenGate.acquire(current)) { onStatus("Another full-screen item is showing"); return false }
-        slot.ad = null
         current.adEventCallback = object : InterstitialAdEventCallback {
             override fun onAdDismissedFullScreenContent() =
                 runOnMainThread { finish(unit, current, onStatus, onComplete = onComplete) }
@@ -126,7 +106,8 @@ object InterstitialAds {
         load(unit, status)
     }
 
-    fun clear() {
-        slots.values.forEach { it.ad?.destroy(); it.ad = null; it.loading = false }
-    }
+    fun clear() = cache.clear()
+
+    /** Theo khuyến nghị của AdMob: ad tải quá 1 giờ thì bỏ. */
+    private const val TTL_MS = 60L * 60 * 1000
 }

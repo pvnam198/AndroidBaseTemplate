@@ -112,6 +112,23 @@ Ví dụ native ở màn mới "Detail" (app con):
 
 Màn Debug config tự có dòng cho placement mới.
 
+### 4.3 Cache quảng cáo
+
+Native, inter, App Open và reward cache theo **ID thật trong `ad_ids`** (`core/ads/AdIdPool.kt`; full-screen qua
+`FullScreenAdCache.kt`), dùng chung giữa các placement: ad tải cho chỗ này mà chưa dùng thì chỗ khác có cùng ID lấy được;
+placement chỉ quyết định bật/tắt, template và thứ tự ID (waterfall).
+
+- Mỗi ID giữ tối đa **1 ad chờ**; hai ad cùng ID thì giữ ad mới hơn (sống lâu hơn), huỷ ad cũ.
+- Lấy ad: ID đầu tiên trong chuỗi đang có ad chờ (có sẵn ID sau thì dùng luôn, không chờ ID đầu).
+- Preload không tải thêm khi đã có ad chờ hoặc đang có lượt tải chạm tới một ID của chuỗi — đợi lượt đó.
+- Native có **hàng người chờ** (màn đang shimmer), FIFO: ad tải xong của ID X giao cho người chờ cũ nhất có X trong
+  chuỗi (kể cả placement khác); không ai chờ thì cất vào pool. Mỗi người chờ có lượt tải riêng nên hai màn cùng ID hiện
+  cùng lúc không giành ad của nhau.
+- Hạn ad: native / inter / reward **1 giờ**, App Open **4 giờ** (quá hạn thì huỷ, tải lại).
+- Banner không cache (gắn với từng ô).
+- Bản debug vẫn khoá cache theo ID thật, chỉ gửi request bằng test ID của Google (`AdUnit.requestId`).
+- Log debug: `adb logcat -s AdsNative AdsInter AdsAppOpen AdsReward`.
+
 ---
 
 ## 5. Remote Config

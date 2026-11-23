@@ -117,6 +117,7 @@ Mọi thời gian tính bằng **mili-giây**.
 | `core/ads/AdProfile.kt` | `AdProfile` (OFF / FULL / BASIC), `resolveAdProfile` |
 | `core/ads/AdPolicy.kt` | `config(key)` / `adType(key)` cho user này, `interDelay`, `openGaps`, `splashFallback`, `nativeEnabled(placement)` |
 | `core/ads/AdUnit.kt` | Ad unit = một loại trong `ad_ids` của một placement; `configIds()` (ID thật), `ids()` / `requestId()` (bản debug: test ID) |
+| `core/ads/AdIdPool.kt`, `FullScreenAdCache.kt` | Cache quảng cáo theo ID thật trong `ad_ids`, dùng chung giữa placement (`BASE_GUIDE.md` mục 4.3) |
 | `core/ads/FullScreenAdPlan.kt` | `ad_type` → loại full-screen (AOA / inter / inter + native / chỉ native) |
 | `core/ads/BannerAds.kt` | `ad_type` của `banner_*` → banner / collapsible / native / native collapsible |
 | `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement`, `BaseActivity.showReward` |
@@ -145,3 +146,5 @@ Mọi thời gian tính bằng **mili-giây**.
 - **23/11/2026** — mỗi bản release đọc **key riêng** `VERSION_KEY` (`ad_ver` + chữ số versionName, base: `ad_ver10`) thay cho
   `ad_config` + Conditions "App build"; cache theo tên key. Placement không có ID = không có quảng cáo (bỏ test ID dự
   phòng); bản debug luôn gửi request bằng test ID của Google thay ID đã cấu hình.
+- **23/11/2026** — cache native / inter / App Open / reward theo **ID** trong `ad_ids` (dùng chung giữa placement, mỗi
+  ID 1 ad chờ, hàng người chờ FIFO cho native) thay cho cache theo placement / ad unit.

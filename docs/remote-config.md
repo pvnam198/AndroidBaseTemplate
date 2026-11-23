@@ -6,7 +6,8 @@ qua bước chuyển đổi nào.
 
 ## Trên Firebase
 
-**Một parameter `ad_config`** (kiểu JSON) chứa nguyên file xuất từ web. Mẫu: [`ad_config_sample.json`](ad_config_sample.json)
+**Một parameter theo bản app** (kiểu JSON) chứa nguyên file xuất từ web: `VERSION_KEY` trong
+`core/config/RemoteConfig.kt` = `ad_ver` + chữ số versionName (hiện `ad_ver10`). Mẫu: [`ad_config_sample.json`](ad_config_sample.json)
 (bản giống hệt ở `app/src/test/resources/` dùng cho unit test; ID là test ID của Google).
 
 ```json
@@ -22,7 +23,7 @@ qua bước chuyển đổi nào.
 }
 ```
 
-Cấu hình khác nhau theo bản app: *Conditional value* của `ad_config` theo **App build** (xem `BASE_GUIDE.md` mục 5.3).
+Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem `BASE_GUIDE.md` mục 5.3). Không có key = mọi placement tắt.
 
 ### Gốc file
 
@@ -68,7 +69,7 @@ Cấu hình khác nhau theo bản app: *Conditional value* của `ad_config` the
 | `enable` | Bật / tắt. |
 | `type` | Loại vị trí: splash, onboarding, inter, banner, resume, native, reward, reward_inter. |
 | `ad_type` | Loại quảng cáo (bảng dưới). |
-| `ad_ids` | `{ loại: [id_1, id_2, id_3] }` theo loại Ad Unit `aoa` / `inter` / `native` / `banner` / `reward` / `reward_inter`; app thử lần lượt (tối đa 3). Chưa có ID → test ID của Google. |
+| `ad_ids` | `{ loại: [id_1, id_2, id_3] }` theo loại Ad Unit `aoa` / `inter` / `native` / `banner` / `reward` / `reward_inter`; app thử lần lượt (tối đa 3). Không có ID → không có quảng cáo. Bản debug gửi request bằng test ID của Google thay mọi ID đã cấu hình; release không bao giờ dùng test ID. |
 | `template` | Mẫu native (Big1…, Tiny1…, Collap1…, Full1…, hoặc tên trong `templates`). Trống = mặc định của chỗ hiện. |
 | `pages` | type onboarding (`native_full_onboarding`): chèn trang native full sau các trang này. |
 | `step` | Inter: cứ `step` lần gọi mới hiện 1 lần. |
@@ -99,11 +100,11 @@ Cấu hình khác nhau theo bản app: *Conditional value* của `ad_config` the
 
 ## Cơ chế
 
-1. **Seed từ cache** — `RemoteConfig.initialize()` nạp `ad_config` của lần fetch thành công gần nhất (`AppPreferences`, tiền tố `cache_v4_`).
+1. **Seed từ cache** — `RemoteConfig.initialize()` nạp giá trị thô của `VERSION_KEY` ở lần fetch thành công gần nhất (`AppPreferences`, key `cache_v4_` + tên key, vd `cache_v4_ad_ver10`).
 2. **Thiếu / hỏng** — JSON hỏng hoặc không có = mọi placement tắt; setting thiếu dùng mặc định trong getter của `RemoteConfig`.
-3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true`. DEBUG fetch mỗi lần mở, RELEASE 3600 giây.
+3. **Fetch + activate** — xong thì lưu cache; `RemoteConfig.isReady` lật `true`. DEBUG fetch mỗi lần mở (lỗi fetch in ra log `AdsRC`), RELEASE 3600 giây.
 4. **Chọn bộ** — `AdPolicy.profile` từ `ads_profile` + `AdAudience` (nguồn user, máy test ad) + Premium → OFF / FULL / BASIC. Code quảng cáo luôn đọc qua `AdPolicy.config(key)` / `AdPolicy.adType(key)`.
-5. **Debug override** (chỉ bản debug, *Cài đặt → Debug config*): cả file (`ad_config`), `ads_profile`, một key trong `settings` gốc, `full.settings` / `basic.settings` (JSON), một placement bộ full (vd `inter_home`) hoặc basic (`basic.inter_home`): JSON object thay cả placement, `true` / `false`, hoặc tên ad_type. Override thắng Firebase.
+5. **Debug override** (chỉ bản debug, *Cài đặt → Debug config*): cả file (dòng `ad_ver…`), `ads_profile`, một key trong `settings` gốc, `full.settings` / `basic.settings` (JSON), một placement bộ full (vd `inter_home`) hoặc basic (`basic.inter_home`): JSON object thay cả placement, `true` / `false`, hoặc tên ad_type. Override thắng Firebase.
 
 Mọi thời gian tính bằng **mili-giây**.
 
@@ -112,10 +113,10 @@ Mọi thời gian tính bằng **mili-giây**.
 | File | Vai trò |
 |---|---|
 | `core/config/PlacementConfig.kt` | `AdType`, `PlacementType`, `AdFallback`, `PlacementConfig` (một placement), `AdKey` (tên placement), `AdSet`, `AdConfigDocument` (cả file) |
-| `core/config/RemoteConfig.kt` | Đọc `ad_config`, cache, override debug; getter cho từng setting; `AdsProfileRule` |
+| `core/config/RemoteConfig.kt` | `VERSION_KEY`, đọc file cấu hình, cache theo key, override debug; getter cho từng setting; `AdsProfileRule` |
 | `core/ads/AdProfile.kt` | `AdProfile` (OFF / FULL / BASIC), `resolveAdProfile` |
 | `core/ads/AdPolicy.kt` | `config(key)` / `adType(key)` cho user này, `interDelay`, `openGaps`, `splashFallback`, `nativeEnabled(placement)` |
-| `core/ads/AdUnit.kt` | Ad unit = một loại trong `ad_ids` của một placement; `ids()` |
+| `core/ads/AdUnit.kt` | Ad unit = một loại trong `ad_ids` của một placement; `configIds()` (ID thật), `ids()` / `requestId()` (bản debug: test ID) |
 | `core/ads/FullScreenAdPlan.kt` | `ad_type` → loại full-screen (AOA / inter / inter + native / chỉ native) |
 | `core/ads/BannerAds.kt` | `ad_type` của `banner_*` → banner / collapsible / native / native collapsible |
 | `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement`, `BaseActivity.showReward` |
@@ -141,3 +142,6 @@ Mọi thời gian tính bằng **mili-giây**.
 - **09/11/2026** — thêm quảng cáo thưởng: type `reward` (user bấm xem) và `reward_inter` (rewarded interstitial, màn đếm ngược `wait_ms` có Bỏ qua), không có format; 2 placement mẫu `reward_sample`, `reward_inter_sample`; `showReward` / `preloadReward` trong lớp base; nút thử ở Debug config. Bỏ `RewardedAds` / `RewardedInterstitialAds` cũ (chỉ test ID).
 - **09/11/2026** — thêm vào `ad_settings`: `splash_min_ms` / `splash_max_ms` (Splash chờ 3 s / 8 s, dùng giá trị lần fetch trước), `full_` / `basic_open_gap_ms` (App Open ↔ App Open), `full_` / `basic_open_inter_gap_ms` (App Open ↔ inter), theo bộ như khoảng cách inter; mặc định 30 s / 90 s và 15 s / 30 s (full / basic); trước đây cố định trong code (khoảng cách App Open = 0).
 - **16/11/2026** — đọc thẳng **file JSON của web "Cấu hình quảng cáo"** trong một parameter `ad_config`: `ads_profile`, `settings`, `profiles.full/basic` (settings + placements, `ad_ids` trong từng placement), `templates`. Bỏ hẳn format sheet (`ad_settings`, `ad_placements`, `ad_ids`, `ad_templates`, mặc định `fullDefault`, thư mục `remote-config-v3/`). `format` → `ad_type` (`inter_then_native`, `native_as_inter`, `native_as_banner(_collap)`…), thêm `fallback`; `on_resume` quyết định khi quay lại app (bỏ `native_welcome_back`); `inter_onboarding` → `inter_after_onboarding`; thêm placement `native_language_2`; `native_onboarding` không còn `pages`; `splash_max_ms` → `splash_timeout_ms`; khoảng cách inter / App Open sang `profiles.<bộ>.settings`; `onboarding_indicator_position`. Trang native full Onboarding / Welcome Back không có ad thì tự bỏ qua / đóng.
+- **23/11/2026** — mỗi bản release đọc **key riêng** `VERSION_KEY` (`ad_ver` + chữ số versionName, base: `ad_ver10`) thay cho
+  `ad_config` + Conditions "App build"; cache theo tên key. Placement không có ID = không có quảng cáo (bỏ test ID dự
+  phòng); bản debug luôn gửi request bằng test ID của Google thay ID đã cấu hình.

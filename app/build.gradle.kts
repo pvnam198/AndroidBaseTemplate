@@ -13,9 +13,8 @@ android {
         applicationId = "com.namstd.androidskillhub"
         minSdk = 24
         targetSdk = 37
-        // versionCode tăng mỗi bản phát hành (vd. 2.0.1 → 201). Remote Config tách cấu hình theo bản bằng điều kiện
-        // "App build" trên Firebase dựa vào số này - app luôn đọc cùng các key, không tạo key theo version.
-        // Xem docs/BASE_GUIDE.md.
+        // versionCode tăng mỗi bản phát hành (vd. 2.0.1 → 201). Đổi versionName thì đổi luôn VERSION_KEY trong
+        // core/config/RemoteConfig.kt (1.0 → ad_ver10) và thêm key đó trên Firebase. Xem docs/BASE_GUIDE.md mục 5.3.
         versionCode = 1
         versionName = "1.0"
 

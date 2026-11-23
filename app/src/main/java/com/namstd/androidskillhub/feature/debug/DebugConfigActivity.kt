@@ -12,9 +12,9 @@ import com.namstd.androidskillhub.databinding.ActivityDebugConfigBinding
 import com.namstd.androidskillhub.databinding.ItemDebugConfigBinding
 
 /**
- * [DEBUG] Màn chỉnh cấu hình ngay trên máy: cả khối `ad_config`, từng giá trị trong `settings`, hoặc từng vị trí
- * quảng cáo. Giá trị đặt ở đây (lưu qua [DebugOverrides]) thắng Firebase, áp dụng ở lần đọc kế tiếp. Chỉ lưu dòng nào
- * đã sửa, để các dòng còn lại vẫn theo `ad_config`. Chỉ vào được từ Settings ở bản DEBUG.
+ * [DEBUG] Màn chỉnh cấu hình ngay trên máy: cả file cấu hình (key `ad_ver…` của bản này), từng giá trị trong
+ * `settings`, hoặc từng vị trí quảng cáo. Giá trị đặt ở đây (lưu qua [DebugOverrides]) thắng Firebase, áp dụng ở lần đọc kế tiếp. Chỉ lưu dòng nào
+ * đã sửa, để các dòng còn lại vẫn theo file trên Firebase. Chỉ vào được từ Settings ở bản DEBUG.
  */
 class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
     private val fields = linkedMapOf<String, EditText>()
@@ -26,7 +26,7 @@ class DebugConfigActivity : BaseActivity<ActivityDebugConfigBinding>() {
         ActivityDebugConfigBinding.inflate(inflater)
 
     override fun initViews() {
-        // Số build là thứ điều kiện "App build" trên Firebase so sánh - xem docs/BASE_GUIDE.md (Remote Config theo phiên bản).
+        // Bản app đọc key `ad_ver…` theo versionName - xem docs/BASE_GUIDE.md mục 5.3.
         binding.buildInfo.text = "App build ${BuildConfig.VERSION_CODE} (version ${BuildConfig.VERSION_NAME})"
         fillRows()
         RewardPlacement.entries.forEach { preloadReward(it) }

@@ -55,13 +55,13 @@ enum class AdsProfileRule(val code: Int, val key: String) {
 data class DebugConfigEntry(val key: String, val value: String, val hint: String)
 
 /**
- * Cấu hình quảng cáo và luồng mở app: nguyên file JSON xuất từ web "Cấu hình quảng cáo" (xem [AdConfigDocument]),
- * nằm trong **một** parameter Remote Config [PARAM_CONFIG] (`ad_config`):
+ * Cấu hình quảng cáo và luồng mở app: nguyên file JSON xuất từ web "Cấu hình quảng cáo" (xem [AdConfigDocument]):
  * `ads_profile`, `settings` (dùng chung), `profiles.full` / `profiles.basic` (settings + placements, `ad_ids` nằm trong
- * từng placement), `templates` (template native riêng). Cấu hình khác nhau theo bản app: dùng Conditions trên Firebase
- * (xem `docs/BASE_GUIDE.md` mục 5.3). Thiếu / hỏng = mọi placement tắt. Thời gian tính bằng ms.
+ * từng placement), `templates` (template native riêng). File nằm trong parameter Remote Config của đúng bản này -
+ * [VERSION_KEY], vd `ad_ver10` (xem `docs/BASE_GUIDE.md` mục 5.3). Không có key đó trên Firebase / hỏng = mọi placement
+ * tắt. Thời gian tính bằng ms.
  *
- * Bản debug cho override ở màn Debug Config (thắng Firebase, xem [debugEntries]): cả file (`ad_config`), `ads_profile`,
+ * Bản debug cho override ở màn Debug Config (thắng Firebase, xem [debugEntries]): cả file ([VERSION_KEY]), `ads_profile`,
  * một key trong `settings` gốc (vd `splash_timeout_ms`), `settings` của một bộ (`full.settings` / `basic.settings`),
  * một placement bộ full (tên placement, vd `inter_home`) hoặc bộ basic (`basic.inter_home`). Giá trị placement: JSON
  * object (thay cả placement), `true` / `false` (= enable), hoặc tên ad_type.
@@ -74,8 +74,15 @@ object RemoteConfig {
     private fun debugOverride(key: String): String? =
         if (BuildConfig.DEBUG) DebugOverrides.get(key)?.takeIf { it.isNotBlank() } else null
 
-    /** Giá trị thô của parameter [PARAM_CONFIG] trên Firebase (hoặc override cả file ở bản debug). */
-    private fun remoteRaw(): String = debugOverride(PARAM_CONFIG) ?: remoteConfig.getString(PARAM_CONFIG)
+    /**
+     * Key Remote Config chứa file cấu hình của bản này: `ad_ver` + các chữ số của versionName (1.0 → `ad_ver10`,
+     * 1.1.2 → `ad_ver112`). **Mỗi bản release đổi key này** (và thêm key đó trên Firebase). Cache theo tên key nên bản
+     * mới không dùng cache của bản trước.
+     */
+    private const val VERSION_KEY = "ad_ver10"
+
+    /** Giá trị thô của parameter [VERSION_KEY] trên Firebase (hoặc override cả file ở bản debug). */
+    private fun remoteRaw(): String = debugOverride(VERSION_KEY) ?: remoteConfig.getString(VERSION_KEY)
 
     // Parse lại chỉ khi chuỗi thô (hoặc override debug) đổi.
     private var documentCache: Pair<String, AdConfigDocument> = "" to AdConfigDocument("")
@@ -93,7 +100,8 @@ object RemoteConfig {
 
     /** [DEBUG] Áp các override từng phần lên file cấu hình [raw]. */
     private fun withDebugOverrides(raw: String): String {
-        val keys = DebugOverrides.keys() - PARAM_CONFIG
+        // Bỏ override cả file của mọi bản (`ad_ver*`), kể cả key của bản trước còn sót lại sau khi đổi VERSION_KEY.
+        val keys = DebugOverrides.keys().filterNot { it.startsWith(VERSION_KEY_PREFIX) }
         if (keys.isEmpty()) return raw
         val root = parseObject(raw)
         fun child(parent: JSONObject, name: String): JSONObject =
@@ -163,12 +171,15 @@ object RemoteConfig {
                 minimumFetchIntervalInSeconds = if (BuildConfig.DEBUG) 0 else 3600
             },
         )
-        remoteConfig.setDefaultsAsync(mapOf(PARAM_CONFIG to prefs.getCachedString(CACHE_PREFIX + PARAM_CONFIG, "")))
+        remoteConfig.setDefaultsAsync(mapOf(VERSION_KEY to prefs.getCachedString(CACHE_PREFIX + VERSION_KEY, "")))
         remoteConfig.fetchAndActivate().addOnCompleteListener {
             // Cache giá trị thô của Firebase - không qua getter, vì getter đã tính cả override debug.
-            prefs.putCachedString(CACHE_PREFIX + PARAM_CONFIG, remoteConfig.getString(PARAM_CONFIG))
+            prefs.putCachedString(CACHE_PREFIX + VERSION_KEY, remoteConfig.getString(VERSION_KEY))
             _isReady.value = true
-            if (BuildConfig.DEBUG) logConfig(fetchOk = it.isSuccessful)
+            if (BuildConfig.DEBUG) {
+                it.exception?.let { e -> android.util.Log.w(LOG_TAG, "fetch lỗi: $e", e) }
+                logConfig(fetchOk = it.isSuccessful)
+            }
         }
     }
 
@@ -271,7 +282,7 @@ object RemoteConfig {
     fun debugEntries(): List<DebugConfigEntry> {
         val doc = document()
         return listOf(
-            DebugConfigEntry(PARAM_CONFIG, remoteRaw(), "Cả file JSON xuất từ web (thay parameter ad_config). Các dòng bên dưới đè lên file này."),
+            DebugConfigEntry(VERSION_KEY, remoteRaw(), "Cả file JSON xuất từ web (thay parameter $VERSION_KEY). Các dòng bên dưới đè lên file này."),
             DebugConfigEntry("ads_profile", doc.adsProfile.orEmpty(), ADS_PROFILE_HINT),
         ) + SETTING_HINTS.map { (name, hint) -> DebugConfigEntry(name, setting(name).orEmpty(), hint) } +
             AdSet.entries.map { set ->
@@ -318,7 +329,7 @@ object RemoteConfig {
         fun log(message: String) = android.util.Log.d(LOG_TAG, message)
         val raw = remoteRaw()
         val doc = document()
-        log("===== Remote Config: fetch ok=$fetchOk · nguồn: ${if (debugOverride(PARAM_CONFIG) != null) "override Debug config" else "Firebase $PARAM_CONFIG (${remoteConfig.getValue(PARAM_CONFIG).sourceName()})"} · ${raw.length} ký tự")
+        log("===== Remote Config: fetch ok=$fetchOk · nguồn: ${if (debugOverride(VERSION_KEY) != null) "override Debug config" else "Firebase $VERSION_KEY (${remoteConfig.getValue(VERSION_KEY).sourceName()})"} · ${raw.length} ký tự")
         if (raw.isBlank()) {
             log("cấu hình trống → mọi placement tắt")
             return
@@ -329,7 +340,7 @@ object RemoteConfig {
         log("→ languageSetup=$languageSetup · languageDelayMillis=$languageDelayMillis")
         (1..4).forEach { log("→ onboardingSetup($it) = ${onboardingSetup(it)}") }
         DebugOverrides.keys().takeIf { it.isNotEmpty() }?.let { log("override Debug config đang bật: ${it.sorted()}") }
-        log("(placement chưa có ID: khi load dùng test ID của Google)")
+        log("(placement không có ID: không có quảng cáo · bản debug: unit có ID sẽ dùng test ID của Google thay cho ID dưới đây)")
         for (set in AdSet.entries) {
             log("----- ${set.key}: settings=${doc.profileSettings(set)} → ${interDelay(set)} · ${openGaps(set)}")
             AdKey.entries.forEach { key ->
@@ -390,8 +401,7 @@ object RemoteConfig {
 
     private fun parseBoolean(value: String): Boolean = value.trim().lowercase() in TRUE_VALUES
 
-    /** Parameter Remote Config chứa nguyên file cấu hình (JSON). */
-    private const val PARAM_CONFIG = "ad_config"
+    private const val VERSION_KEY_PREFIX = "ad_ver"
 
     /** Tiền tố cache trong [AppPreferences] - khác `cache_v3_` (format sheet cũ) để không đọc nhầm format cũ đã lưu. */
     private const val CACHE_PREFIX = "cache_v4_"

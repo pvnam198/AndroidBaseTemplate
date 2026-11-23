@@ -11,10 +11,12 @@ có sẵn AdMob Next-Gen, Firebase Remote Config, Adjust, Google Play Billing. A
 - Base chỉ chứa màn chung. Không thêm màn / placement theo tính năng riêng của một app vào base.
 - Màn mới kế thừa `BaseActivity` / `BaseFragment` / `BaseDialogFragment`; quảng cáo chỉ qua helper `loadNative`,
   `loadBanner`, `showInterstitial`, `showReward`; cấu hình quảng cáo chỉ đọc qua `AdPolicy`. Không gọi SDK AdMob trực tiếp trong màn.
-- Remote Config: app luôn đọc **một** parameter `ad_config` = nguyên file JSON xuất từ web "Cấu hình quảng cáo"
-  (`ads_profile`, `settings`, `profiles.full/basic`, `templates`); đổi format thì viết lại parser, không thêm lớp chuyển đổi.
-  **Không** tạo key theo version, **không** thêm `app_version` để chọn config — tách theo bản bằng Firebase Condition
-  "App build ≥ N"; `versionCode` tăng mỗi bản.
+- Remote Config: mỗi bản release đọc **key riêng của bản đó** — `VERSION_KEY` trong `core/config/RemoteConfig.kt`
+  (`ad_ver` + chữ số versionName, vd 1.0.0 → `ad_ver100`) = nguyên file JSON xuất từ web "Cấu hình quảng cáo"
+  (`ads_profile`, `settings`, `profiles.full/basic`, `templates`). **Mỗi bản release đổi `VERSION_KEY`** và thêm key đó
+  trên Firebase. Đổi format thì viết lại parser, không thêm lớp chuyển đổi.
+- ID quảng cáo chỉ lấy từ `ad_ids`: placement không có ID = không có quảng cáo (không có ID dự phòng). Bản debug gửi
+  request bằng test ID của Google thay cho mọi ID đã cấu hình; bản release không bao giờ dùng test ID.
 - Native template: placement chọn mẫu ở trường `template` (không phải `ad_type`). Dòng mẫu có sẵn trong `templates`
   chỉ đè style, `base` bị bỏ qua. Bố cục mới = thêm `ad_tpl_*.xml` + enum `NativeAdTemplate`. Giữ đúng view id chung; không vi phạm chính sách native AdMob (nhãn Ad, ảnh ≥ 120dp, CTA bấm được).
   Không hiện giá ("FREE").

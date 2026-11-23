@@ -86,7 +86,7 @@ Quảng cáo thưởng (`core/ads/RewardAds.kt`) có 2 type (`type` / `ad_type` 
 | Khái niệm | Là gì | Ở đâu |
 |---|---|---|
 | **Placement** (`AdKey`) | Một vị trí quảng cáo trong app, đơn vị cấu hình (vd. `inter_home`). Không có trong bộ = tắt (không có mặc định trong app). | `core/config/PlacementConfig.kt` |
-| **Ad unit** (`AdUnit`) | Một loại ID trong `ad_ids` của placement (vd. `INTER_SPLASH` = `ads_splash.ad_ids.inter`). Chưa có ID → test ID. | `core/ads/AdUnit.kt` |
+| **Ad unit** (`AdUnit`) | Một loại ID trong `ad_ids` của placement (vd. `INTER_SPLASH` = `ads_splash.ad_ids.inter`). Không có ID → không có quảng cáo (app không giữ ID dự phòng). Bản debug gửi request bằng test ID của Google thay mọi ID đã cấu hình (`ids()` / `requestId()`); release không bao giờ dùng test ID. | `core/ads/AdUnit.kt` |
 | **NativePlacement** / **InterstitialPlacement** / **BannerPlacement** | Cách màn gọi quảng cáo, mỗi cái trỏ tới AdUnit / AdKey. | `NativeAds.kt`, `InterstitialAds.kt`, `BannerAds.kt` |
 | **Ad type** | Loại quảng cáo của placement (`ad_type`): `aoa`, `inter`, `inter_then_native`, `native_as_inter`, `native`, `banner`, `banner_collapsible`, `native_as_banner`, `native_as_banner_collap`, `reward`, `reward_inter`. | `AdType` |
 | **Template** | Mẫu vẽ native (Big1…Full5 hoặc mẫu tự đặt). | `core/ads/template/` |
@@ -118,7 +118,8 @@ Màn Debug config tự có dòng cho placement mới.
 
 ### 5.1 Parameter
 
-**Một parameter `ad_config`** (kiểu JSON) = nguyên file xuất từ web "Cấu hình quảng cáo":
+**Một parameter theo bản app** — `VERSION_KEY` trong `core/config/RemoteConfig.kt`, hiện là `ad_ver10` (versionName
+1.0) — kiểu JSON = nguyên file xuất từ web "Cấu hình quảng cáo" (mục 5.3):
 
 | Phần | Nội dung |
 |---|---|
@@ -128,30 +129,27 @@ Màn Debug config tự có dòng cho placement mới.
 | `templates` | Mẫu native tự đặt / style đè lên mẫu có sẵn (mục 6). |
 
 - JSON hỏng / thiếu → mọi placement tắt, setting dùng mặc định trong code; trường lạ → bỏ qua. Thời gian luôn là mili-giây.
-- Lần fetch thành công gần nhất được cache (`cache_v4_ad_config`) để lần mở sau dùng ngay.
+- Lần fetch thành công gần nhất được cache theo tên key (`cache_v4_ad_ver10`) để lần mở sau dùng ngay; bản mới đổi key
+  nên không dùng cache của bản trước.
 - Chi tiết từng key, mặc định, bản đồ code: `docs/remote-config.md`. Mẫu: `docs/ad_config_sample.json`.
 
 ### 5.2 Web → Firebase
 
 1. Trên web "Cấu hình quảng cáo" chỉnh cấu hình của bản app, tải file JSON.
-2. Dán nguyên file vào parameter `ad_config` trên Firebase (kiểu JSON) → Publish.
+2. Dán nguyên file vào parameter của bản đó (vd. `ad_ver10`) trên Firebase (kiểu JSON) → Publish.
 
 ### 5.3 Cấu hình khác nhau theo bản app — QUY TẮC
 
-- **App luôn đọc cùng một key** (`ad_config`). **Không tạo key theo version** (`ad_config_109`, `ad_config_201`…),
-  **không** thêm `app_version` vào setting để chọn cấu hình.
-- Tách theo bản bằng **Conditions trên Firebase**:
-  1. Remote Config → Conditions → tạo điều kiện, vd. `build_201_plus`: App = app Android **AND** **App build ≥ 201**.
-  2. Parameter `ad_config` → *Add new → Conditional value* → chọn điều kiện → dán file JSON của bản mới. Giá trị mặc
-     định giữ cho bản cũ.
-  3. Nhiều điều kiện: bản mới nhất đặt **trên cùng** (Firebase xét từ trên xuống).
-  4. Bản cũ gần hết user → chép giá trị điều kiện vào mặc định, xoá điều kiện.
-- Vì vậy **`versionCode` phải tăng mỗi bản phát hành** (vd. 2.0.1 → 201) — điều kiện "App build" so với số này.
-  Màn Debug config hiện "App build …" để kiểm tra máy test đang khớp điều kiện nào.
+- **Mỗi bản release đọc key riêng**: `VERSION_KEY` trong `core/config/RemoteConfig.kt` = `ad_ver` + các chữ số của
+  versionName (1.0 → `ad_ver10`, 1.0.0 → `ad_ver100`, 1.1.2 → `ad_ver112`). Là hằng chuỗi dev tự đổi.
+- **Mỗi lần ra bản**: đổi `versionName` (+ tăng `versionCode`) → đổi `VERSION_KEY` → trên Firebase thêm parameter
+  `ad_ver…` mới với file JSON của bản đó **trước khi** phát hành. Key của bản cũ giữ nguyên cho user chưa cập nhật.
+- Không có key của bản trên Firebase = không có cấu hình (mọi placement tắt) — quên thêm key là bản mới không có quảng cáo.
+- Cache lần fetch trước lưu theo tên key, nên bản mới không đọc nhầm cấu hình của bản cũ.
 
 ### 5.4 Debug override (bản debug)
 
-Settings → **Debug config**: sửa cả file (`ad_config`), `ads_profile`, một key trong `settings` (vd. `splash_timeout_ms`),
+Settings → **Debug config**: sửa cả file (dòng `ad_ver…`), `ads_profile`, một key trong `settings` (vd. `splash_timeout_ms`),
 `full.settings` / `basic.settings` (JSON), một placement bộ full (`inter_home`) hoặc basic (`basic.inter_home`). Giá trị
 placement: JSON object (thay cả placement), `true` / `false` / `off`, hoặc tên ad_type. Override thắng Firebase, lưu
 trong prefs `debug_overrides`; nút Reset xoá hết. Bản release bỏ qua override.
@@ -225,7 +223,7 @@ không được ẩn / che các phần này. Kiểm tra bằng popup "AdMob nati
 
 | Công cụ | Dùng | Cách mở |
 |---|---|---|
-| Debug config | Override Remote Config trên máy, xem App build, nút thử reward / reward_inter | Settings → Debug config (bản debug) |
+| Debug config | Override Remote Config trên máy, xem version, nút thử reward / reward_inter | Settings → Debug config (bản debug) |
 | Native preview | Xem từng mẫu native + style `templates`, mẫu Collap kèm dải thu gọn | `adb shell am start -n com.namstd.androidskillhub/.debug.NativePreviewActivity [--es name big5]` (đổi applicationId thì thay phần trước `/`) |
 | AdbDriver | Chạm / vuốt / gõ / back qua adb trên máy chặn `adb shell input` (MIUI) | `adb shell am broadcast -a com.namstd.androidskillhub.debug.TAP --ei x 540 --ei y 1200` (cũng `SWIPE`, `TYPE`, `BACK`; tên action cố định trong `AdbDriver.kt`) |
 | Premium giả | Bật / tắt Premium không cần mua | Màn Premium (bản debug) |
@@ -241,7 +239,7 @@ Công cụ chỉ dùng khi phát triển đặt trong `app/src/debug/` (không l
 3. AdMob: `admob_app_id` trong `res/values/strings.xml` (hiện là test ID của Google); ID từng ad unit đưa qua `ad_ids` của placement (web cấu hình).
 4. Adjust: `ADJUST_APP_TOKEN`, `ADJUST_IAP_EVENT_TOKEN` (`app/build.gradle.kts`).
 5. Billing: product ID trong `PremiumProducts.kt`.
-6. `versionCode` / `versionName` theo quy ước mục 5.3.
+6. `versionCode` / `versionName` + `VERSION_KEY` (`RemoteConfig.kt`) theo quy ước mục 5.3.
 7. Nội dung: ngôn ngữ (`core/language/AppLanguage.kt` + `res/values-<code>/strings.xml`), nội dung Onboarding
    (`OnboardingPageFragment`), màn tính năng từ Main.
 8. Placement riêng của app: mục 4.2. Web cấu hình: tạo cấu hình cho app mới.

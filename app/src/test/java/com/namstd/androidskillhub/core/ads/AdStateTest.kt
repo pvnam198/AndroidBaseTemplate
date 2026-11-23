@@ -14,7 +14,7 @@ class AdStateTest {
     }
 
     @Test
-    fun everySheetAdUnitBelongsToAPlacementAndHasAGoogleTestId() {
+    fun everyAdUnitBelongsToAPlacementAndFormatHasAGoogleTestId() {
         assertTrue(AdFormat.entries.all { it.testId.startsWith("ca-app-pub-3940256099942544/") })
         assertEquals(AdUnit.entries.size, AdUnit.entries.map { it.name }.toSet().size)
         assertTrue(NativePlacement.entries.all { it.unit.format == AdFormat.NATIVE })

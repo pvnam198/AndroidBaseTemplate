@@ -18,13 +18,24 @@ import kotlinx.coroutines.launch
 /**
  * Trang onboarding riêng mà toàn bộ nội dung là một native ad (`native_full_onboarding`), bố cục giống native sau inter.
  * Nút đi tiếp là X hoặc Next (`onboarding_full_close_button`); có `wait_ms` thì trước đó góc trên phải hiện số giây đếm
- * ngược (5000 → 5,4,3,2,1), hết giờ mới hiện nút. Không có ad (tắt / lỗi / không fill) thì trang tự bỏ
- * qua: đang hiện thì sang trang kế, chưa hiện thì [OnboardingActivity.advanceOnboarding] nhảy qua nó.
+ * ngược (5000 → 5,4,3,2,1), hết giờ mới hiện nút; trước đó không vuốt qua được trang ([canGoNext]). Không có ad (tắt /
+ * lỗi / không fill) thì trang tự bỏ qua: đang hiện thì sang trang kế (vuốt lùi thì về trang trước), chưa hiện thì
+ * [OnboardingActivity.advanceOnboarding] nhảy qua nó.
  */
 class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
     /** Đã biết chắc trang này không có ad để hiện. */
     var adUnavailable = false
         private set
+
+    /** Nút đi tiếp (X / Next) đã hiện - trước đó không vuốt qua được trang này ([OnboardingActivity.refreshSwipe]). */
+    var canGoNext = false
+        private set
+
+    private fun showControl(control: View) {
+        control.isVisible = true
+        canGoNext = true
+        (activity as? OnboardingActivity)?.refreshSwipe()
+    }
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup?) =
         FragmentOnboardingAdBinding.inflate(inflater, container, false)
@@ -45,10 +56,10 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
                 viewLifecycleOwner.lifecycle.withResumed {}
                 runAdCountdown(waitMs) { binding.adCountdown.text = it.toString() }
                 binding.adCountdown.isVisible = false
-                control.isVisible = true
+                showControl(control)
             }
         } else {
-            control.isVisible = true
+            showControl(control)
         }
     }
 
@@ -59,7 +70,7 @@ class OnboardingAdFragment : BaseFragment<FragmentOnboardingAdBinding>() {
     }
 
     private fun skipPage() {
-        (activity as? OnboardingActivity)?.advanceOnboarding()
+        (activity as? OnboardingActivity)?.skipCurrentAdPage()
     }
 
     override fun initListeners() {

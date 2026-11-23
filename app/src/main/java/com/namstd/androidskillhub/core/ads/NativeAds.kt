@@ -48,14 +48,11 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Dải native nhỏ ngay dưới tiêu đề màn Language (cả lần đầu lẫn mở từ Cài đặt) - vị trí `native_language_small`. */
     LANGUAGE_SMALL(AdUnit.NATIVE_LANGUAGE_SMALL),
 
-    /**
-     * Native ở chân trang nội dung Onboarding 1–4: chung placement `native_onboarding` (enable, template, cùng bộ ID),
-     * nhưng mỗi trang hiện một native riêng.
-     */
-    ONBOARDING_1(AdUnit.NATIVE_ONBOARDING),
-    ONBOARDING_2(AdUnit.NATIVE_ONBOARDING),
-    ONBOARDING_3(AdUnit.NATIVE_ONBOARDING),
-    ONBOARDING_4(AdUnit.NATIVE_ONBOARDING),
+    /** Native ở chân trang nội dung Onboarding 1–4: mỗi trang một placement `native_onboarding_1..4` (enable / ID / template riêng). */
+    ONBOARDING_1(AdUnit.NATIVE_ONBOARDING_1),
+    ONBOARDING_2(AdUnit.NATIVE_ONBOARDING_2),
+    ONBOARDING_3(AdUnit.NATIVE_ONBOARDING_3),
+    ONBOARDING_4(AdUnit.NATIVE_ONBOARDING_4),
 
     /** Trang native toàn màn hình trong Onboarding (`native_full_onboarding`). */
     ONBOARDING_AD(AdUnit.NATIVE_FULL_ONBOARDING),

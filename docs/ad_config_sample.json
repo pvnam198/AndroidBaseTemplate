@@ -107,10 +107,43 @@
           "template": "Full1",
           "fallback": "show_available"
         },
-        "native_onboarding": {
+        "native_onboarding_1": {
           "type": "native",
           "ad_type": "native",
           "enable": true,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1"
+        },
+        "native_onboarding_2": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": true,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big4"
+        },
+        "native_onboarding_3": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": true,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1"
+        },
+        "native_onboarding_4": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": false,
           "ad_ids": {
             "native": [
               "ca-app-pub-3940256099942544/2247696110"
@@ -318,7 +351,40 @@
           "template": "Full1",
           "fallback": "show_available"
         },
-        "native_onboarding": {
+        "native_onboarding_1": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": false,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1"
+        },
+        "native_onboarding_2": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": false,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1"
+        },
+        "native_onboarding_3": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": false,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1"
+        },
+        "native_onboarding_4": {
           "type": "native",
           "ad_type": "native",
           "enable": false,

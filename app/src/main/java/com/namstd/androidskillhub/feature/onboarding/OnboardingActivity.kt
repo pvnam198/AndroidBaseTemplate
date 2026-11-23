@@ -2,7 +2,11 @@ package com.namstd.androidskillhub.feature.onboarding
 
 import android.content.Intent
 import android.view.LayoutInflater
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -29,6 +33,20 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     private lateinit var pages: List<Int>
     private var revealJob: Job? = null
 
+    /** Trang nội dung đã hiện nút Next (hết `next_delay_ms`) - quay lại trang đó thì Next hiện ngay, không chờ lại. */
+    private val revealedPages = mutableSetOf<Int>()
+
+    /** Nút Next của trang nội dung đang xem đã hiện chưa. */
+    private var nextReady = false
+
+    /** Cách sắp xếp cụm điều khiển đang áp (kiểu Next, vị trí chấm) - chỉ dựng lại khi đổi. */
+    private var arrangement: Pair<Boolean, Int>? = null
+
+    private var previousPosition = 0
+
+    /** User vừa vuốt lùi - gặp trang native full không có ad thì bỏ qua về trang trước. */
+    private var movingBack = false
+
     override fun inflateBinding(inflater: LayoutInflater): ActivityOnboardingBinding =
         ActivityOnboardingBinding.inflate(inflater)
 
@@ -40,8 +58,6 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
             override fun createFragment(position: Int) =
                 if (pages[position] == AD_PAGE) OnboardingAdFragment() else OnboardingPageFragment.newInstance(pages[position])
         }
-        binding.onboardingPager.isUserInputEnabled = RemoteConfig.onboardingSwipe
-        binding.pageIndicator.isVisible = false
         // Mỗi trang nội dung một chấm - trang native full-screen không có chấm. Chấm chỉ báo tiến độ nên không bấm được.
         repeat(OnboardingPageFragment.CONTENT_PAGE_COUNT) {
             binding.pageDots.addTab(binding.pageDots.newTab().also { tab -> tab.view.isClickable = false })
@@ -54,6 +70,8 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
     override fun initListeners() {
         binding.onboardingPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
+                movingBack = position < previousPosition
+                previousPosition = position
                 val label = if (position == pages.lastIndex) R.string.get_started else R.string.next
                 binding.nextButton.setText(label)
                 binding.nextText.setText(label)
@@ -64,6 +82,8 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
                     binding.nextButton.isVisible = false
                     binding.nextText.isVisible = false
                     if (binding.pageDots.isVisible) binding.pageDots.visibility = View.INVISIBLE
+                    refreshSwipe()
+                    if (adPageAt(position)?.adUnavailable == true) skipCurrentAdPage()
                 } else {
                     binding.pageDots.getTabAt(pages[position])?.select()
                     applySetup(RemoteConfig.onboardingSetup(pages[position] + 1))
@@ -83,26 +103,86 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 
         // Chấm tròn báo trang.
         binding.pageDots.isVisible = setup.showDots
-
-        // indicatorPosition: 0 = cụm chấm xuống dưới nút Next, 1 = phía trên.
-        val root = binding.root
-        val indicatorBelow = root.indexOfChild(binding.indicatorContainer) > root.indexOfChild(binding.nextContainer)
-        if (indicatorBelow != (setup.indicatorPosition == 0)) {
-            root.removeView(binding.indicatorContainer)
-            val nextIndex = root.indexOfChild(binding.nextContainer)
-            root.addView(binding.indicatorContainer, if (setup.indicatorPosition == 0) nextIndex + 1 else nextIndex)
-        }
+        arrangeControls(useText, setup.indicatorPosition)
 
         revealJob?.cancel()
-        if (setup.delayMs <= 0L) {
-            nextControl.isVisible = true
+        val page = pages[binding.onboardingPager.currentItem]
+        if (setup.delayMs <= 0L || page in revealedPages) {
+            revealNext(nextControl, page)
         } else {
             nextControl.isVisible = false
+            nextReady = false
             revealJob = lifecycleScope.launch {
                 delay(setup.delayMs)
-                nextControl.isVisible = true
+                revealNext(nextControl, page)
             }
         }
+        refreshSwipe()
+    }
+
+    private fun revealNext(nextControl: View, page: Int) {
+        nextControl.isVisible = true
+        revealedPages += page
+        nextReady = true
+        refreshSwipe()
+    }
+
+    /**
+     * Sắp xếp chấm + Next trong `controls_area`: text = một hàng (chấm trái, Next phải - chấm tắt thì khung chấm vẫn
+     * chiếm phần trái nên Next vẫn bên phải); icon = cột, chấm giữa, trên ([indicatorPosition] 1) hoặc dưới (0) nút.
+     */
+    private fun arrangeControls(useText: Boolean, indicatorPosition: Int) {
+        val key = useText to indicatorPosition
+        if (arrangement == key) return
+        arrangement = key
+        val area = binding.controlsArea
+        val dots = binding.indicatorContainer
+        val next = binding.nextContainer
+        val gap = (8 * resources.displayMetrics.density).toInt()
+        area.removeAllViews()
+        if (useText) {
+            area.orientation = LinearLayout.HORIZONTAL
+            area.gravity = Gravity.CENTER_VERTICAL or Gravity.END
+            area.addView(dots, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            area.addView(next, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            (binding.pageDots.layoutParams as FrameLayout.LayoutParams).gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        } else {
+            area.orientation = LinearLayout.VERTICAL
+            area.gravity = Gravity.CENTER_HORIZONTAL
+            val dotsLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            val nextLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            (binding.pageDots.layoutParams as FrameLayout.LayoutParams).gravity = Gravity.CENTER
+            if (indicatorPosition == 0) {
+                dotsLp.topMargin = gap
+                area.addView(next, nextLp)
+                area.addView(dots, dotsLp)
+            } else {
+                dotsLp.bottomMargin = gap
+                area.addView(dots, dotsLp)
+                area.addView(next, nextLp)
+            }
+        }
+    }
+
+    /**
+     * Vuốt chuyển trang: bật khi `onboarding_swipe` và nút đi tiếp của trang đang xem đã hiện (hết `next_delay_ms`;
+     * trang native full: đã hiện X / Next) - vuốt không bỏ qua được thời gian chờ. Trang native full gọi lại khi nút
+     * của nó hiện.
+     */
+    internal fun refreshSwipe() {
+        val position = binding.onboardingPager.currentItem
+        val canGoNext = if (pages[position] == AD_PAGE) adPageAt(position)?.canGoNext == true else nextReady
+        binding.onboardingPager.isUserInputEnabled = RemoteConfig.onboardingSwipe && canGoNext
+    }
+
+    /**
+     * Trang native full đang hiện mà không có ad: bỏ qua theo hướng user đang đi (vuốt lùi thì về trang trước), không
+     * để user thấy trang trống. Trang native full không bao giờ là trang đầu / cuối.
+     */
+    internal fun skipCurrentAdPage() {
+        val position = binding.onboardingPager.currentItem
+        if (pages[position] != AD_PAGE) return
+        if (movingBack) binding.onboardingPager.setCurrentItem(position - 1, false) else advanceOnboarding()
     }
 
     /**

@@ -12,62 +12,62 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <FrameLayout
-        android:id="@+id/indicator_container"
+    <!-- Cụm điều khiển dưới pager, sắp xếp lại trong code theo `onboarding_next_style`:
+         icon = nút rộng hết màn, chấm ở giữa trên / dưới nút (`onboarding_indicator_position`);
+         text = một hàng: chấm bên trái, chữ Next bên phải (tắt chấm thì Next vẫn bên phải). -->
+    <LinearLayout
+        android:id="@+id/controls_area"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="4dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/page_indicator"
+        <FrameLayout
+            android:id="@+id/indicator_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="1 / 4"
-            android:textAppearance="?attr/textAppearanceCaption"
-            android:textColor="@color/app_text_secondary" />
+            android:layout_height="wrap_content">
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/page_dots"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@android:color/transparent"
-            android:visibility="gone"
-            app:tabBackground="@drawable/tab_dot"
-            app:tabGravity="center"
-            app:tabIndicatorHeight="0dp"
-            app:tabMinWidth="0dp"
-            app:tabPaddingEnd="6dp"
-            app:tabPaddingStart="6dp" />
-    </FrameLayout>
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/page_dots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:visibility="gone"
+                app:tabBackground="@drawable/tab_dot"
+                app:tabGravity="center"
+                app:tabIndicatorHeight="0dp"
+                app:tabMinWidth="0dp"
+                app:tabPaddingEnd="6dp"
+                app:tabPaddingStart="6dp" />
+        </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/next_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/next_button"
+        <FrameLayout
+            android:id="@+id/next_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/next" />
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/next_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="?attr/selectableItemBackground"
-            android:minHeight="48dp"
-            android:gravity="center"
-            android:paddingHorizontal="24dp"
-            android:text="@string/next"
-            android:textAppearance="?attr/textAppearanceButton"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="16sp"
-            android:visibility="gone" />
-    </FrameLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/next_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/next" />
+
+            <TextView
+                android:id="@+id/next_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:background="?attr/selectableItemBackground"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:text="@string/next"
+                android:textAppearance="?attr/textAppearanceButton"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="16sp"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
 
 </LinearLayout>

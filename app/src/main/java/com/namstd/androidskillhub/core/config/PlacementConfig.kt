@@ -155,8 +155,11 @@ enum class AdKey(val key: String) {
     NATIVE_LANGUAGE_2("native_language_2"),
     NATIVE_LANGUAGE_SMALL("native_language_small"),
     INTER_LANGUAGE("inter_language"),
-    /** Native ở chân các trang nội dung Onboarding. */
-    NATIVE_ONBOARDING("native_onboarding"),
+    // Native ở chân trang nội dung Onboarding 1–4: mỗi trang một placement riêng (enable / ID / template).
+    NATIVE_ONBOARDING_1("native_onboarding_1"),
+    NATIVE_ONBOARDING_2("native_onboarding_2"),
+    NATIVE_ONBOARDING_3("native_onboarding_3"),
+    NATIVE_ONBOARDING_4("native_onboarding_4"),
     /** Trang native toàn màn hình chèn sau các trang `pages` của Onboarding. */
     NATIVE_FULL_ONBOARDING("native_full_onboarding"),
     /** Khi xong Onboarding (thường inter_then_native). */

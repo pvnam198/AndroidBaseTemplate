@@ -42,11 +42,13 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 | `splash_timeout_ms` | 8000 | Splash chờ quảng cáo tối đa (giới hạn `splash_min_ms`–30000). |
 | `splash_min_ms` | 3000 | Splash chờ tối thiểu (0–10000). Không có trên web, thêm tay nếu cần. |
 | `splash_fallback` | – | Mảng tên placement inter: Splash không kịp hiện quảng cáo thì placement đầu tiên trong danh sách hiện bù 1 inter (kể cả khi đang tắt). Chỉ bộ full. |
-| `language_next_style` / `language_next_delay_ms` / `language_show_loading` | text / 0 / false | Nút xác nhận màn Language. |
-| `onboarding_swipe` | true | Cho vuốt trang Onboarding. |
-| `onboarding_next_style` | icon | `icon` = nút, `text` = chữ Next. |
+| `language_next_style` | text | Nút đi tiếp màn Language: `icon` = dấu ✓ trên thanh tiêu đề, `text` = nút chữ. Lần đầu: ẩn tới khi user chọn ngôn ngữ. |
+| `language_next_delay_ms` | 0 | Chờ trước khi hiện nút đi tiếp (lần đầu: tính từ lúc chọn ngôn ngữ). 0 = hiện ngay, không loading. |
+| `language_show_loading` | false | Trong lúc chờ `language_next_delay_ms` hiện vòng loading ở chỗ nút. |
+| `onboarding_swipe` | true | Cho vuốt trang Onboarding — chỉ khi nút đi tiếp của trang đang xem đã hiện (hết `next_delay_ms`; trang native full: đã hiện X / Next). |
+| `onboarding_next_style` | icon | `icon` = nút rộng hết màn; `text` = chữ Next, cùng hàng với chấm (chấm trái, Next phải; tắt chấm thì Next vẫn bên phải). |
 | `onboarding_show_dots` | true | Chấm tròn báo trang. |
-| `onboarding_indicator_position` | above | `above` = chấm trên nút Next, `below` = dưới. |
+| `onboarding_indicator_position` | above | Kiểu `icon`: `above` = chấm trên nút Next, `below` = dưới. |
 | `onboarding_next_delay_ms` | 0 | Chờ trước khi hiện nút Next. |
 | `onboarding_pages` | – | Đè riêng từng trang (đếm từ 1): `{ "2": { "next_delay_ms": 3000, "next_style": "text" } }`. |
 | `onboarding_full_close_button` | next | Nút trang native full trong Onboarding: `x` / `next`. |
@@ -93,7 +95,8 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 ### Placement của base
 
 `ads_splash`, `native_splash`, `native_language`, `native_language_2` (màn Language mở từ Cài đặt),
-`native_language_small`, `inter_language`, `native_onboarding` (chân trang nội dung 1–4), `native_full_onboarding`,
+`native_language_small`, `inter_language`, `native_onboarding_1`…`native_onboarding_4` (chân trang nội dung 1–4, mỗi
+trang một placement), `native_full_onboarding`,
 `inter_after_onboarding`, `on_resume` (quay lại app: aoa = App Open; ad_type khác = màn Welcome Back, Tiếp tục chạy
 quảng cáo theo ad_type), `native_welcome_back` (native chân màn Welcome Back, `wait_ms` = đếm ngược nút Tiếp tục), `banner_home`,
 `native_home_feed`, `inter_home`, `banner_setting`, `reward_sample`, `reward_inter_sample`. Tên trên web phải khớp
@@ -152,3 +155,8 @@ Mọi thời gian tính bằng **mili-giây**.
   ad_type (`inter` · `native` / `native_as_inter` = native toàn màn · `inter_then_native`). Thêm placement
   **`native_welcome_back`** (native chân màn Welcome Back, `wait_ms` = đếm ngược nút Tiếp tục). Welcome Back chịu
   `open_gap_ms` / `open_inter_gap_ms` như App Open (log `AdsGap`).
+- **23/11/2026** — tách `native_onboarding` thành **`native_onboarding_1`…`native_onboarding_4`** (mỗi trang nội dung
+  Onboarding enable / ID / template riêng; bỏ key cũ). Onboarding: chỉ vuốt được khi nút đi tiếp của trang đã hiện,
+  vuốt lùi bỏ qua trang native full không có ad; Next kiểu `text` cùng hàng với chấm. Language lần đầu: nút đi tiếp hiện
+  sau khi chọn ngôn ngữ (`language_next_delay_ms`, `language_show_loading`); có `inter_language` sẵn thì dialog
+  loading nhỏ ~1 s trước inter.

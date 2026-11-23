@@ -63,6 +63,11 @@ class PlacementConfigTest {
         assertEquals(setOf(2), home.openAdOnClicks)
         assertEquals("Collap1", home.template)
 
+        // Mỗi trang Onboarding một placement riêng (mẫu: trang 2 Big4, tắt trang 4).
+        assertTrue(full(AdKey.NATIVE_ONBOARDING_1).enable)
+        assertEquals("Big4", full(AdKey.NATIVE_ONBOARDING_2).template)
+        assertEquals(1, full(AdKey.NATIVE_ONBOARDING_3).ids("native").size)
+        assertFalse(full(AdKey.NATIVE_ONBOARDING_4).enable)
         assertEquals(setOf(2), full(AdKey.NATIVE_FULL_ONBOARDING).pages)
         assertEquals(AdType.INTER_THEN_NATIVE, full(AdKey.INTER_AFTER_ONBOARDING).adType)
         assertEquals(AdType.BANNER_COLLAPSIBLE, full(AdKey.BANNER_SETTING).adType)

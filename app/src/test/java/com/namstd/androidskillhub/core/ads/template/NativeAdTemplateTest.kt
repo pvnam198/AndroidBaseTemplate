@@ -13,7 +13,7 @@ class NativeAdTemplateTest {
     fun everyPlacementUsesItsTemplateByDocName() {
         assertEquals(NativeAdTemplate.BIG5, template(AdKey.NATIVE_SPLASH, "Big5"))
         assertEquals(NativeAdTemplate.BIG5, template(AdKey.NATIVE_LANGUAGE, "big5"))   // layout 2 của Language
-        assertEquals(NativeAdTemplate.BIG4, template(AdKey.NATIVE_ONBOARDING, "Big4"))
+        assertEquals(NativeAdTemplate.BIG4, template(AdKey.NATIVE_ONBOARDING_2, "Big4"))
     }
 
     @Test

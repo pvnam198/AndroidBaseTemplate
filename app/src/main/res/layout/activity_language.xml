@@ -76,6 +76,15 @@
             android:layout_height="wrap_content"
             android:text="@string/apply_label"
             android:visibility="invisible" />
+
+        <!-- Vòng chờ ở chỗ nút chữ trước khi nút hiện (`language_next_delay_ms`, `language_show_loading`). -->
+        <ProgressBar
+            android:id="@+id/apply_button_loading"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/brand_primary"
+            android:visibility="invisible" />
     </FrameLayout>
 
     <!-- Native rộng hết màn (không lề hai bên), cách nút trên ad_slot_margin. -->

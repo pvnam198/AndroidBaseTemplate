@@ -197,6 +197,11 @@ trong prefs `debug_overrides`; nút Reset xoá hết. Bản release bỏ qua ove
   Next / thu gọn; `template/AdChoicesCorner.kt` chừa góc cho icon ở mẫu card có padding (áp cả cho shimmer).
 - Ô native **rộng hết màn / dialog** (không lề / padding hai bên), cách nội dung trên / dưới `@dimen/ad_slot_margin`
   (12dp). Native trong khung có padding `ad_slot_margin` thì dùng `ad_slot_bleed` + `clipToPadding="false"` để tràn sát mép.
+- **Native toàn màn** sau inter (`inter_then_native` / `native_as_inter`, `feature/ads/PostInterstitialNativeAdDialogFragment.kt`
+  + `dialog_native_full.xml`) và trang native của Onboarding (`OnboardingAdFragment`) vẽ theo `template` của placement chứa
+  native (vd. `ads_splash` → Full1) vào `native_container`, phủ cả status bar. Góc trên phải (cách mép `ad_card_padding`,
+  nút tròn 32dp `bg_ad_action`) hiện **số giây đếm ngược** theo `wait_ms` của placement đó (5000 → 5,4,3,2,1;
+  `core/ads/AdCountdown.kt`), hết giờ mới hiện X / Next; `wait_ms` = 0 → nút hiện ngay.
 
 ### 6.2 `templates` (gốc file cấu hình)
 
@@ -290,9 +295,8 @@ Công cụ chỉ dùng khi phát triển đặt trong `app/src/debug/` (không l
 
 ## 12. Còn thiếu / đã biết
 
-- Màn native toàn màn hình (sau inter, trang native của Onboarding, Welcome back) **chưa dùng nút X / Next của mẫu Full**:
-  sau inter dùng layout riêng `dialog_native_full.xml`; Onboarding / Welcome back vẽ theo `template` (mặc định Big1) với
-  nút + đếm ngược của màn.
+- Welcome back vẽ native theo `template` (mặc định Big1) với nút X + đếm ngược riêng trên tiêu đề màn, chưa dùng
+  khung chung của native full (sau inter / trang native Onboarding).
 - `custom_ui` của `on_resume` chưa có tác dụng (base chỉ có 1 màn Welcome back).
 - Quảng cáo thưởng mới có 2 placement mẫu, chưa màn nào của base gọi (app con gọi `showReward`).
 - `docs/ads-config.html`, `docs/remote-config-testcases.*` viết cho format cũ (`ad_config` với `name1`, `id1..3`, Intro…)

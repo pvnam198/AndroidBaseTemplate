@@ -1,234 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!-- Native toàn màn hình sau inter (inter_then_native / native_as_inter). Card vẽ theo `template` của placement
+     (Full1…Full5) vào native_container; nút đếm ngược / Next / X đè lên góc trên phải, đúng chỗ nút đóng của các mẫu Full. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/adView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/ad_card_bg">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
+        android:id="@+id/native_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:layout_height="match_parent" />
 
-        <!-- ====================================================== -->
-        <!-- Được tài trợ -->
-        <!-- ====================================================== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:gravity="end"
+        android:orientation="vertical"
+        android:padding="@dimen/ad_card_padding">
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tvSponsored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_ad_badge"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/ad_label"
-            android:textColor="@color/ad_badge_text"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp">
 
-
-        <!-- ====================================================== -->
-        <!-- AdChoices của Google -->
-        <!-- ====================================================== -->
-
-        <com.google.android.libraries.ads.mobile.sdk.common.AdChoicesView
-            android:id="@+id/adChoicesView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-
-        <!-- ====================================================== -->
-        <!-- Thanh tiến trình native 1 -->
-        <!-- ====================================================== -->
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardAction"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="10dp"
-            app:cardCornerRadius="15dp"
-            app:cardElevation="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSponsored">
-
-            <FrameLayout
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivNext"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ad_action"
+                android:padding="6dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_next_2"
+                android:visibility="gone" />
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/ivNext"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#6C6C6C"
-                    android:padding="6dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_next_2"
-                    android:visibility="gone" />
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvCountdown"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ad_action"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="5" />
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/tvCountdown"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#6C6C6C"
-                    android:gravity="center"
-                    android:padding="6dp"
-                    android:scaleType="fitCenter"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    tools:text="5" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivClose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ad_action"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_ad_close"
+                android:visibility="gone" />
+        </FrameLayout>
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/ivClose"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#6C6C6C"
-                    android:padding="6dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_close_2"
-                    android:visibility="gone" />
-
-            </FrameLayout>
-
-        </androidx.cardview.widget.CardView>
-
+        <!-- Chỉ dùng khi một break có nhiều native liên tiếp. -->
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="5dp"
-            android:layout_marginStart="15dp"
             android:layout_marginTop="4dp"
-            android:layout_marginEnd="15dp"
             android:max="100"
             android:progress="0"
             android:progressDrawable="@drawable/progress_horizontal_custom"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cardAction" />
-
-
-        <!-- ====================================================== -->
-        <!-- Bỏ qua / Đếm ngược / Đóng -->
-        <!-- ====================================================== -->
-
-        <!-- ====================================================== -->
-        <!-- Creative chính của Google -->
-        <!-- ====================================================== -->
-
-        <com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
-            android:id="@+id/mediaView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="4dp"
-            android:background="@android:color/white"
-            app:layout_constraintBottom_toTopOf="@id/layoutBottom"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/progressBar" />
-
-
-        <!-- ====================================================== -->
-        <!-- Thông tin native phía dưới -->
-        <!-- ====================================================== -->
-
-        <LinearLayout
-            android:id="@+id/layoutBottom"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:background="@color/ad_card_bg"
-            android:orientation="vertical"
-            android:paddingStart="11dp"
-            android:paddingTop="9dp"
-            android:paddingEnd="11dp"
-            android:paddingBottom="10dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-
-            <!-- Icon + tiêu đề + mô tả -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/ivIcon"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:adjustViewBounds="true"
-                    android:scaleType="centerCrop"
-                    tools:src="@mipmap/ic_launcher" />
-
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical">
-
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tvHeadline"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/ad_title"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        tools:text="PDF Reader – PDF Viewer" />
-
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tvBody"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
-                        android:ellipsize="end"
-                        android:maxLines="2"
-                        android:textColor="@color/ad_body"
-                        android:textSize="9sp"
-                        tools:text="PDF Reader is the light weight Office app that you can use to read all documents, read PDF files stored locally..." />
-
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-
-            <!-- CTA -->
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/btnCta"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="9dp"
-                android:background="@drawable/bg_ad_cta"
-                android:gravity="center"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                tools:text="MỞ" />
-
-        </LinearLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView>
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

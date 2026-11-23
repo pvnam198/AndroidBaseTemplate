@@ -1,44 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Trang native toàn màn trong Onboarding (`native_full_onboarding`). Bố cục giống native sau inter (dialog_native_full):
+     card mẫu Full tràn hết trang; nút X / Next / ô đếm ngược `wait_ms` (số giây) 32dp ở góc trên phải, cách mép @dimen/ad_card_padding -
+     đúng chỗ nút đóng của các mẫu Full. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/ad_card_bg">
 
     <FrameLayout
         android:id="@+id/native_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:padding="16dp" />
+        android:layout_height="match_parent" />
 
     <ImageView
         android:id="@+id/ad_next"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_gravity="top|end"
-        android:layout_margin="12dp"
+        android:layout_margin="@dimen/ad_card_padding"
+        android:background="@drawable/bg_ad_action"
         android:contentDescription="@string/next"
-        android:background="@drawable/bg_ad_control"
-        android:padding="8dp"
+        android:padding="6dp"
+        android:scaleType="fitCenter"
         android:src="@drawable/icon_next_2"
         android:visibility="gone" />
 
     <ImageView
         android:id="@+id/ad_close"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_gravity="top|end"
-        android:layout_margin="12dp"
-        android:contentDescription="@string/next"
-        android:background="@drawable/bg_ad_control"
-        android:padding="10dp"
-        android:src="@drawable/ic_close_2"
-        android:visibility="gone" />
-
-    <ProgressBar
-        android:id="@+id/ad_loading"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="top|end"
-        android:layout_margin="16dp"
+        android:layout_margin="@dimen/ad_card_padding"
+        android:background="@drawable/bg_ad_action"
+        android:contentDescription="@string/next"
+        android:padding="7dp"
+        android:src="@drawable/ic_ad_close"
         android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/ad_countdown"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="@dimen/ad_card_padding"
+        android:background="@drawable/bg_ad_action"
+        android:gravity="center"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="5" />
 </FrameLayout>

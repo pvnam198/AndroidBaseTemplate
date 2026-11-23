@@ -2,12 +2,16 @@ package com.namstd.androidskillhub.feature.ads
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Build
 import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -21,13 +25,15 @@ import com.namstd.androidskillhub.core.ads.FullScreenGate
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.countdownSteps
+import com.namstd.androidskillhub.core.ads.runAdCountdown
 import com.namstd.androidskillhub.core.ui.base.BaseDialogFragment
 import com.namstd.androidskillhub.databinding.DialogNativeFullBinding
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdViewModel.UiState.AwaitingClose
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdViewModel.UiState.AwaitingNext
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdViewModel.UiState.Countdown
 import com.namstd.androidskillhub.feature.ads.PostInterstitialNativeAdViewModel.UiState.Progress
-import kotlin.math.ceil
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -49,10 +55,12 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
 
     /** Sheet có một native sau mỗi inter (`NATIVE_INTER_*`), nên break chỉ có một stage. */
     private val totalStages: Int = 1
-    private val durationMs: Long by lazy { AdPolicy.config(placement.adKey).waitMs }
+    // wait_ms của placement chứa native (placement inter có ad_type inter_then_native).
+    private val durationMs: Long by lazy { AdPolicy.config(placement.nativePlacement.unit.key).waitMs }
 
     private var currentAd: NativeAd? = null
     private var countdownTimer: CountDownTimer? = null
+    private var countdownJob: Job? = null
     private var gateHeld = false
     private var currentStage = 0
 
@@ -77,10 +85,33 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
     override fun onStart() {
         super.onStart()
         dialog?.setCanceledOnTouchOutside(false)
-        dialog?.window?.setLayout(
+        val window = dialog?.window ?: return
+        window.setLayout(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
+        coverSystemBars(window)
+    }
+
+    /**
+     * Phủ cả vùng status bar như quảng cáo interstitial: theme app tắt edge-to-edge nên cửa sổ dialog mặc định chừa
+     * vùng status bar (lộ màn bên dưới). Cho cửa sổ tràn viền (kể cả vùng tai thỏ), ẩn status bar - vuốt từ mép trên
+     * thì hiện tạm. Nội dung vẫn tránh tai thỏ / thanh điều hướng nhờ [applySystemBarPadding].
+     */
+    private fun coverSystemBars(window: android.view.Window) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        @Suppress("DEPRECATION")
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            isAppearanceLightStatusBars = true
+            hide(WindowInsetsCompat.Type.statusBars())
+        }
     }
 
     override fun inflateBinding(
@@ -139,7 +170,8 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
         val initialPadding =
             Rect(root.paddingLeft, root.paddingTop, root.paddingRight, root.paddingBottom)
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Status bar đã ẩn (inset = 0); vẫn chừa tai thỏ và thanh điều hướng.
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             view.updatePadding(
                 left = initialPadding.left + bars.left,
                 top = initialPadding.top + bars.top,
@@ -170,13 +202,16 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
     private fun onStageLoaded(stageNumber: Int, ad: NativeAd) {
         currentStage = stageNumber
         currentAd = ad
-        bindNativeAd(ad, binding)
+        // Vẽ theo `template` của placement chứa native (vd ads_splash → Full1), giống mọi native khác.
+        binding.nativeContainer.removeAllViews()
+        binding.nativeContainer.addView(
+            NativeAds.renderTemplate(requireActivity(), ad, NativeAds.templateFor(placement.nativePlacement)),
+        )
         if (stageNumber < totalStages) {
             // NativeAds.poll() ở trên đã kích hoạt reload cho stage kế tiếp - nó sẽ sẵn sàng khi user bấm đi tiếp.
             startProgressTimer()
         } else {
-            viewModel.onCountdownStarted((durationMs / 1_000L).toInt())
-            startCountdownTimer()
+            startCountdown()
         }
     }
 
@@ -194,23 +229,19 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
         }.start()
     }
 
-    private fun startCountdownTimer() {
-        countdownTimer?.cancel()
-        countdownTimer = object : CountDownTimer(durationMs, TICK_MS) {
-            override fun onTick(millisUntilFinished: Long) {
-                val secondsLeft = ceil(millisUntilFinished / 1_000.0).toInt()
-                    .coerceIn(1, (durationMs / 1_000L).toInt())
-                viewModel.onCountdownTick(secondsLeft)
-            }
-
-            override fun onFinish() {
-                viewModel.onCountdownFinished()
-            }
-        }.start()
+    /** Trang cuối: hiện số giây còn lại (vd wait_ms 5000 → 5,4,3,2,1) rồi mới hiện nút X; wait_ms = 0 thì X ngay. */
+    private fun startCountdown() {
+        countdownJob?.cancel()
+        viewModel.onCountdownStarted(countdownSteps(durationMs).firstOrNull()?.first ?: 0)
+        countdownJob = viewLifecycleOwner.lifecycleScope.launch {
+            runAdCountdown(durationMs) { viewModel.onCountdownTick(it) }
+            viewModel.onCountdownFinished()
+        }
     }
 
     private fun releaseCurrentAd() {
         countdownTimer?.cancel(); countdownTimer = null
+        countdownJob?.cancel(); countdownJob = null
         currentAd?.destroy(); currentAd = null
     }
 
@@ -225,22 +256,4 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
             FullScreenGate.release(this); gateHeld = false
         }
     }
-}
-
-private fun bindNativeAd(ad: NativeAd, binding: DialogNativeFullBinding) {
-    val view = binding.adView
-    view.headlineView = binding.tvHeadline
-    view.bodyView = binding.tvBody
-    view.iconView = binding.ivIcon
-    view.callToActionView = binding.btnCta
-    view.adChoicesView = binding.adChoicesView
-
-    binding.tvHeadline.text = ad.headline
-    binding.tvBody.text = ad.body
-    binding.tvBody.visibility = if (ad.body == null) View.GONE else View.VISIBLE
-    binding.btnCta.text = ad.callToAction
-    binding.ivIcon.setImageDrawable(ad.icon?.drawable)
-    binding.ivIcon.visibility = if (ad.icon == null) View.GONE else View.VISIBLE
-
-    view.registerNativeAd(ad, binding.mediaView)
 }

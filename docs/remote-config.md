@@ -57,8 +57,8 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 |---|---|---|
 | `inter_gap_ms` | 0 / 90000 | Khoảng cách tối thiểu giữa 2 inter. |
 | `inter_gap_ignore` | – | Mảng placement không bị `inter_gap_ms` chặn. |
-| `open_gap_ms` | 30000 / 90000 | Giữa 2 App Open khi quay lại app. Không có trên web, thêm tay nếu cần. |
-| `open_inter_gap_ms` | 15000 / 30000 | Giữa App Open và inter, cả 2 chiều. Không có trên web, thêm tay nếu cần. |
+| `open_gap_ms` | 30000 / 90000 | Giữa 2 lần quảng cáo quay lại app (App Open hoặc màn Welcome Back). Không có trên web, thêm tay nếu cần. |
+| `open_inter_gap_ms` | 15000 / 30000 | Giữa quảng cáo quay lại app (App Open / Welcome Back) và inter, cả 2 chiều. Không có trên web, thêm tay nếu cần. Log debug: `adb logcat -s AdsGap`. |
 
 ### Một placement
 
@@ -73,19 +73,19 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 | `template` | Mẫu native (Big1…, Tiny1…, Collap1…, Full1…, hoặc tên trong `templates`). Trống = mặc định của chỗ hiện. |
 | `pages` | type onboarding (`native_full_onboarding`): chèn trang native full sau các trang này. |
 | `step` | Inter: cứ `step` lần gọi mới hiện 1 lần. |
-| `wait_ms` | Đếm ngược trước khi đóng được native toàn màn (sau inter, Welcome Back, trang native Onboarding); reward_inter: màn đếm ngược trước quảng cáo. |
+| `wait_ms` | Đếm ngược trước khi đóng được native toàn màn (sau inter, trang native Onboarding); `native_welcome_back`: trước khi bấm được Tiếp tục; reward_inter: màn đếm ngược trước quảng cáo. |
 | `refresh_ms` | Ô banner tự tải lại, 0 = không. |
 | `open_ad_on_clicks` | native_as_banner_collap: lần click thứ mấy trên quảng cáo thì mở trang quảng cáo. |
 | `fallback` | inter_then_native: `show_available` (mặc định) hiện cái tải được; `skip` thiếu 1 trong 2 thì bỏ cả luồng. |
-| `custom_ui` | type resume: màn Welcome Back riêng — đọc nhưng base chỉ có 1 màn Welcome Back. |
+| `custom_ui` | type resume: màn Welcome Back riêng — đọc nhưng base chỉ có 1 màn Welcome Back (cả 2 giá trị đều dùng nó). |
 
 | `ad_type` | Dùng ở | App làm gì |
 |---|---|---|
-| `aoa` | ads_splash, on_resume | App Open. |
-| `inter` | ads_splash, inter_\*, on_resume | Interstitial. |
+| `aoa` | ads_splash, on_resume | App Open (on_resume: hiện ngay khi quay lại app). |
+| `inter` | ads_splash, inter_\*, on_resume | Interstitial (on_resume: sau khi bấm Tiếp tục ở Welcome Back, như mọi ad_type khác aoa). |
 | `inter_then_native` | ads_splash, inter_\*, on_resume | Inter, đóng xong hiện native toàn màn (`ad_ids.native` của cùng placement). |
 | `native_as_inter` | inter_\*, on_resume | Chỉ native toàn màn (Splash chưa hỗ trợ → tắt). |
-| `native` | native_\*, on_resume | Native trong màn; ở `on_resume` = màn Welcome Back. |
+| `native` | native_\*, on_resume | Native trong màn; ở `on_resume` = Tiếp tục ở Welcome Back hiện native toàn màn (`ad_ids.native`). |
 | `banner` / `banner_collapsible` | banner_\* | AdMob banner thường / collapsible. |
 | `native_as_banner` / `native_as_banner_collap` | banner_home | Native trong ô banner / native collapsible (ô không hỗ trợ native → banner thường). |
 | `reward` / `reward_inter` | reward_\* | Quảng cáo thưởng. |
@@ -94,7 +94,8 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 
 `ads_splash`, `native_splash`, `native_language`, `native_language_2` (màn Language mở từ Cài đặt),
 `native_language_small`, `inter_language`, `native_onboarding` (chân trang nội dung 1–4), `native_full_onboarding`,
-`inter_after_onboarding`, `on_resume` (quay lại app: aoa / native = Welcome Back / inter…), `banner_home`,
+`inter_after_onboarding`, `on_resume` (quay lại app: aoa = App Open; ad_type khác = màn Welcome Back, Tiếp tục chạy
+quảng cáo theo ad_type), `native_welcome_back` (native chân màn Welcome Back, `wait_ms` = đếm ngược nút Tiếp tục), `banner_home`,
 `native_home_feed`, `inter_home`, `banner_setting`, `reward_sample`, `reward_inter_sample`. Tên trên web phải khớp
 `AdKey`; placement app không biết thì bỏ qua.
 
@@ -123,12 +124,11 @@ Mọi thời gian tính bằng **mili-giây**.
 | `core/ads/RewardAds.kt` | Quảng cáo thưởng: `RewardPlacement`, `BaseActivity.showReward` |
 | `core/ads/NativeAds.kt` | `NativePlacement` → `AdUnit`; bật theo `enable`; mẫu theo `template` (`templateFor` → `NativeTemplateSpec`) |
 | `core/ads/template/NativeStyle.kt`, `NativeStyleApplier.kt` | `templates`: `NativeStyle`, `AdTemplatesDocument.resolve`; áp màu / bo góc / viền / kích thước |
-| `AndroidSkillHubApp.kt` | `on_resume` theo `ad_type`: aoa → App Open, native → `WelcomeBackActivity`, inter / native_as_inter / inter_then_native → `InterstitialPlacement.RESUME` |
+| `AndroidSkillHubApp.kt`, `feature/welcome/WelcomeBackActivity.kt` | `on_resume` theo `ad_type`: aoa → App Open; khác → `WelcomeBackActivity` (native `native_welcome_back`), Tiếp tục → `showInterstitial(InterstitialPlacement.RESUME, ignoreGap = true)` (inter / native toàn màn / inter + native). Welcome Back chịu `open_gap_ms` / `open_inter_gap_ms` (`AdGapGate`). |
 
 ## Chưa làm
 
 - `custom_ui` của `on_resume`: base chỉ có 1 màn Welcome Back.
-- Native toàn màn sau inter chưa đọc `template` của placement (dùng layout `dialog_native_full.xml`).
 
 ## Lịch sử
 
@@ -148,3 +148,7 @@ Mọi thời gian tính bằng **mili-giây**.
   phòng); bản debug luôn gửi request bằng test ID của Google thay ID đã cấu hình.
 - **23/11/2026** — cache native / inter / App Open / reward theo **ID** trong `ad_ids` (dùng chung giữa placement, mỗi
   ID 1 ad chờ, hàng người chờ FIFO cho native) thay cho cache theo placement / ad unit.
+- **23/11/2026** — `on_resume`: `aoa` = App Open, ad_type khác = màn Welcome Back; nút Tiếp tục chạy quảng cáo theo
+  ad_type (`inter` · `native` / `native_as_inter` = native toàn màn · `inter_then_native`). Thêm placement
+  **`native_welcome_back`** (native chân màn Welcome Back, `wait_ms` = đếm ngược nút Tiếp tục). Welcome Back chịu
+  `open_gap_ms` / `open_inter_gap_ms` như App Open (log `AdsGap`).

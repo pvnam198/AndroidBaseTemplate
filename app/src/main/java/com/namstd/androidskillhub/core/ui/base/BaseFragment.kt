@@ -106,7 +106,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
     /** Uỷ quyền cho [BaseActivity] đang chứa fragment - chỉ một implementation cho toàn app, xem ở đó. */
     protected fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
-        (requireActivity() as BaseActivity<*>).showInterstitial(placement, onComplete)
+        (requireActivity() as BaseActivity<*>).showInterstitial(placement, onComplete = onComplete)
     }
 
     /** Uỷ quyền cho [BaseActivity.showReward] - xem ở đó. */

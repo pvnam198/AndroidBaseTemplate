@@ -24,6 +24,14 @@ class FullScreenAdPlanTest {
     }
 
     @Test
+    fun resumeNativeIsAFullScreenNative() {
+        // on_resume ad_type native: bấm Tiếp tục ở Welcome Back hiện native toàn màn.
+        assertEquals(FullScreenAdPlan.NATIVE_ONLY, resolveFullScreenPlan(InterstitialPlacement.RESUME, AdType.NATIVE))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.HOME, AdType.NATIVE))
+        assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.RESUME, AdType.AOA))
+    }
+
+    @Test
     fun formatsThatDoNotFitThePlacementAreOff() {
         assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.SPLASH, AdType.NATIVE_AS_INTER))
         assertEquals(FullScreenAdPlan.OFF, resolveFullScreenPlan(InterstitialPlacement.LANGUAGE, AdType.AOA))

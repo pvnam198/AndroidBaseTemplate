@@ -1,6 +1,9 @@
 package com.namstd.androidskillhub.core.ads
 
-/** Thời gian chờ toàn app giữa các lần hiện full-screen ad (Interstitial / App Open). */
+/**
+ * Thời gian chờ toàn app giữa các lần hiện full-screen ad. "App Open" ở đây là quảng cáo quay lại app (App Open hoặc màn
+ * Welcome Back) - cùng chịu `open_gap_ms` / `open_inter_gap_ms`.
+ */
 object AdGapGate {
     private var lastInterstitialShownAt = 0L
     private var lastAppOpenShownAt = 0L

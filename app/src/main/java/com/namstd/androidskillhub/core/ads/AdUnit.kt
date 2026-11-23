@@ -38,9 +38,12 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     INTER_AFTER_ONBOARDING(AdKey.INTER_AFTER_ONBOARDING, AdFormat.INTERSTITIAL),
     NATIVE_INTER_AFTER_ONBOARDING(AdKey.INTER_AFTER_ONBOARDING, AdFormat.NATIVE),
     ON_RESUME(AdKey.ON_RESUME, AdFormat.APP_OPEN),
-    /** Native của `on_resume`: màn Welcome Back (ad_type native) hoặc native full sau inter (inter_then_native / native_as_inter). */
-    NATIVE_ON_RESUME(AdKey.ON_RESUME, AdFormat.NATIVE),
+    /** Inter khi bấm Tiếp tục ở Welcome Back (`on_resume` ad_type inter / inter_then_native). */
     INTER_ON_RESUME(AdKey.ON_RESUME, AdFormat.INTERSTITIAL),
+    /** Native toàn màn sau khi bấm Tiếp tục ở Welcome Back (`on_resume` ad_type native / native_as_inter / inter_then_native). */
+    NATIVE_ON_RESUME(AdKey.ON_RESUME, AdFormat.NATIVE),
+    /** Native chân màn Welcome Back (`native_welcome_back`). */
+    NATIVE_WELCOME_BACK(AdKey.NATIVE_WELCOME_BACK, AdFormat.NATIVE),
     BANNER_HOME(AdKey.BANNER_HOME, AdFormat.BANNER),
     NATIVE_HOME(AdKey.BANNER_HOME, AdFormat.NATIVE),
     NATIVE_HOME_FEED(AdKey.NATIVE_HOME_FEED, AdFormat.NATIVE),

@@ -149,6 +149,22 @@
         },
         "on_resume": {
           "type": "resume",
+          "ad_type": "inter_then_native",
+          "enable": true,
+          "ad_ids": {
+            "inter": [
+              "ca-app-pub-3940256099942544/1033173712"
+            ],
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Full1",
+          "fallback": "show_available",
+          "custom_ui": false
+        },
+        "native_welcome_back": {
+          "type": "native",
           "ad_type": "native",
           "enable": true,
           "ad_ids": {
@@ -156,7 +172,8 @@
               "ca-app-pub-3940256099942544/2247696110"
             ]
           },
-          "custom_ui": false
+          "template": "Big1",
+          "wait_ms": 3000
         },
         "banner_home": {
           "type": "banner",
@@ -351,6 +368,18 @@
             ]
           },
           "custom_ui": false
+        },
+        "native_welcome_back": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": false,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          },
+          "template": "Big1",
+          "wait_ms": 3000
         },
         "banner_home": {
           "type": "banner",

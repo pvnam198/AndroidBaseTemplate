@@ -51,7 +51,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
             lifecycleScope.launch {
                 delay(minDelay)
                 waitForRemoteConfig()
-                showInterstitial(InterstitialPlacement.SPLASH, ::navigateToMain)
+                showInterstitial(InterstitialPlacement.SPLASH, onComplete = ::navigateToMain)
             }
             return
         }
@@ -102,7 +102,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
         }
         waitForRemoteConfig(waitedMs)
         if (!InterstitialAds.isReady(AdUnit.INTER_SPLASH)) SplashFallback.arm()
-        showInterstitial(InterstitialPlacement.SPLASH, ::navigateToMain)
+        showInterstitial(InterstitialPlacement.SPLASH, onComplete = ::navigateToMain)
     }
 
     /** Luồng App Open ở Splash (ads_splash = 1): chờ AOA trong giới hạn thời gian, hiện nó, rồi chuyển màn. */

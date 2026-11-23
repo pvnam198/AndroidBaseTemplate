@@ -24,19 +24,19 @@ các file khác trong `docs/` là chi tiết của từng phần (bảng ở cu�
 ```
 SplashActivity ──(lần đầu)──▶ LanguageActivity ──▶ OnboardingActivity ──▶ MainActivity ──▶ SettingsActivity
        └──(đã setup)──────────────────────────────────────────────────────▶ MainActivity
-Quay lại app (on_resume theo ad_type): App Open ad · WelcomeBackActivity (native) · inter
+Quay lại app (on_resume theo ad_type): aoa → App Open ad · ad_type khác → WelcomeBackActivity (Tiếp tục → quảng cáo theo ad_type)
 Settings → Language (mở lại, không inter) · Premium · Privacy (khi UMP yêu cầu) · Reset onboarding · Debug config (debug)
 ```
 
 | Màn | File | Làm gì / quảng cáo |
 |---|---|---|
-| App | `AndroidSkillHubApp.kt` | Khởi tạo theo thứ tự: Adjust → `AdAudience`, `AdPolicy` → locale → `Ads.adsEnabled = !premium` → `Premium.initialize` → `RemoteConfig.initialize`. Theo dõi app ra / vào nền để chạy `on_resume` (App Open / Welcome back / inter). |
+| App | `AndroidSkillHubApp.kt` | Khởi tạo theo thứ tự: Adjust → `AdAudience`, `AdPolicy` → locale → `Ads.adsEnabled = !premium` → `Premium.initialize` → `RemoteConfig.initialize`. Theo dõi app ra / vào nền để chạy `on_resume` (App Open / Welcome back), xuống nền thì tải sẵn quảng cáo cho lần quay lại. |
 | Splash | `feature/splash/SplashActivity.kt` | Chờ `splash_min_ms`–`splash_timeout_ms` (mặc định 3–8 s) sau consent (UMP), chờ Remote Config. Native `native_splash`, quảng cáo cuối Splash theo `ads_splash` (AOA / inter / inter + native full). Quá `splash_timeout_ms` chưa có ad → bật `splash_fallback`. Đã setup → Main, chưa → Language. |
 | Language | `feature/language/LanguageActivity.kt` | Native `native_language` (lần đầu) / `native_language_2` (mở từ Settings), dải `native_language_small`. Lần đầu: bấm xác nhận → `inter_language` → Onboarding. |
 | Onboarding | `feature/onboarding/` | 4 trang nội dung (`OnboardingPageFragment`), native `native_onboarding` ở chân mỗi trang; trang native toàn màn (`OnboardingAdFragment`) chèn sau các trang trong `native_full_onboarding.pages`, không có ad thì tự bỏ qua. Xong → `setup_completed = true` → `inter_after_onboarding` → Main. |
 | Main (Home) | `feature/main/` | 3 tab feed (`MainFeedPageFragment`), native trong list `native_home_feed`, ô banner `banner_home`. Nút Settings → `inter_home`. **Màn tính năng của app con đặt từ đây.** |
 | Settings | `feature/settings/SettingsActivity.kt` | Mục chung + banner `banner_setting`. |
-| Welcome back | `feature/welcome/WelcomeBackActivity.kt` | `on_resume` ad_type `native`: native (ID / template / `wait_ms` của `on_resume`) + đếm ngược; không có ad thì tự đóng. |
+| Welcome back | `feature/welcome/WelcomeBackActivity.kt` | `on_resume` ad_type khác `aoa`. Native chân màn `native_welcome_back` (tối đa 60% chiều cao, `AdFitFrame` không để native đẩy nút ra khỏi màn). Nút Tiếp tục đếm ngược `wait_ms` của `native_welcome_back` rồi bấm được → quảng cáo theo `ad_type` của `on_resume`: `inter` · `native` / `native_as_inter` (native toàn màn, `ad_ids.native` của `on_resume`) · `inter_then_native` → đóng màn. Không có native lẫn quảng cáo cho Tiếp tục thì không mở. Chịu `open_gap_ms` / `open_inter_gap_ms` như App Open. |
 | Premium | `feature/premium/PremiumActivity.kt` | Danh sách gói, mua, khôi phục; công tắc Premium giả (debug). |
 
 - Cờ "đã qua lần đầu": `AppPreferences.setupCompleted` (key `setup_completed`).
@@ -61,6 +61,7 @@ Helper quảng cáo (gọi trong `initViews` / khi bấm):
 loadNative(binding.nativeContainer, NativePlacement.X)        // container là FrameLayout; tự ẩn khi tắt / Premium
 loadBanner(binding.bannerContainer, BannerPlacement.HOME)     // banner / collapsible / native trong ô banner theo config
 showInterstitial(InterstitialPlacement.HOME) { openNext() }   // luôn đi qua hàm này: step, khoảng cách, inter + native…
+                                                              // ignoreGap = true: bỏ qua inter_gap_ms / open_inter_gap_ms
 preloadReward(RewardPlacement.X)                              // tải sẵn khi mở màn có nút "Xem quảng cáo để nhận…"
 showReward(RewardPlacement.X) { result -> … }                 // REWARDED: cho thưởng · SKIPPED: không · UNAVAILABLE: app tự quyết
 ```
@@ -127,7 +128,8 @@ placement chỉ quyết định bật/tắt, template và thứ tự ID (waterfa
 - Hạn ad: native / inter / reward **1 giờ**, App Open **4 giờ** (quá hạn thì huỷ, tải lại).
 - Banner không cache (gắn với từng ô).
 - Bản debug vẫn khoá cache theo ID thật, chỉ gửi request bằng test ID của Google (`AdUnit.requestId`).
-- Log debug: `adb logcat -s AdsNative AdsInter AdsAppOpen AdsReward`.
+- Log debug: `adb logcat -s AdsNative AdsInter AdsAppOpen AdsReward AdsGap` (`AdsGap`: quảng cáo quay lại app hiện / bị chặn vì
+  `open_gap_ms` / `open_inter_gap_ms`).
 
 ---
 
@@ -197,6 +199,9 @@ trong prefs `debug_overrides`; nút Reset xoá hết. Bản release bỏ qua ove
   Next / thu gọn; `template/AdChoicesCorner.kt` chừa góc cho icon ở mẫu card có padding (áp cả cho shimmer).
 - Ô native **rộng hết màn / dialog** (không lề / padding hai bên), cách nội dung trên / dưới `@dimen/ad_slot_margin`
   (12dp). Native trong khung có padding `ad_slot_margin` thì dùng `ad_slot_bleed` + `clipToPadding="false"` để tràn sát mép.
+- Native ở chân màn mà nút phía trên phải luôn thấy (vd. Welcome Back): dùng `template/AdFitFrame.kt` làm container
+  (`maxHeightPx`). Quảng cáo cao hơn chỗ thì chỉ thu nhỏ media (`AdMediaFrame.heightCap`), không dưới 120dp (chính sách
+  AdMob); tiêu đề / CTA giữ nguyên.
 - **Native toàn màn** sau inter (`inter_then_native` / `native_as_inter`, `feature/ads/PostInterstitialNativeAdDialogFragment.kt`
   + `dialog_native_full.xml`) và trang native của Onboarding (`OnboardingAdFragment`) vẽ theo `template` của placement chứa
   native (vd. `ads_splash` → Full1) vào `native_container`, phủ cả status bar. Góc trên phải (cách mép `ad_card_padding`,
@@ -295,9 +300,7 @@ Công cụ chỉ dùng khi phát triển đặt trong `app/src/debug/` (không l
 
 ## 12. Còn thiếu / đã biết
 
-- Welcome back vẽ native theo `template` (mặc định Big1) với nút X + đếm ngược riêng trên tiêu đề màn, chưa dùng
-  khung chung của native full (sau inter / trang native Onboarding).
-- `custom_ui` của `on_resume` chưa có tác dụng (base chỉ có 1 màn Welcome back).
+- `custom_ui` của `on_resume` chưa có tác dụng (base chỉ có 1 màn Welcome back, cả 2 giá trị đều dùng nó).
 - Quảng cáo thưởng mới có 2 placement mẫu, chưa màn nào của base gọi (app con gọi `showReward`).
 - `docs/ads-config.html`, `docs/remote-config-testcases.*` viết cho format cũ (`ad_config` với `name1`, `id1..3`, Intro…)
   — **đã lỗi thời**, tin file này và `docs/remote-config.md`.

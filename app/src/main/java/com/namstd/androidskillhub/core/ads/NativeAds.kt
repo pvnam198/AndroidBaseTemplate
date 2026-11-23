@@ -76,8 +76,8 @@ enum class NativePlacement(val unit: AdUnit) {
     /** Native hiển thị như một slot banner thường (`banner_home` ad_type native_as_banner) - xem [BannerAds]. */
     BANNER_NATIVE(AdUnit.NATIVE_HOME),
 
-    /** Native trên màn Welcome Back (`on_resume` ad_type native) - xem WelcomeBackActivity. */
-    WELCOME_BACK(AdUnit.NATIVE_ON_RESUME);
+    /** Native chân màn Welcome Back (`native_welcome_back`) - xem WelcomeBackActivity. */
+    WELCOME_BACK(AdUnit.NATIVE_WELCOME_BACK);
 
     /**
      * Chỗ này có bật theo cấu hình placement ([config]) không. Native Splash / Language / Onboarding / Welcome back /

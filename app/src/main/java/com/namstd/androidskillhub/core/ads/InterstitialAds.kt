@@ -24,7 +24,10 @@ enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val na
     /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của bộ basic mẫu. */
     HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME),
 
-    /** Inter khi quay lại app từ nền (`on_resume` ad_type inter / native_as_inter / inter_then_native) - xem App. */
+    /**
+     * Quảng cáo khi bấm Tiếp tục ở màn Welcome Back (`on_resume` ad_type khác aoa), theo `ad_type` của on_resume: inter /
+     * native toàn màn (native, native_as_inter) / inter rồi native (inter_then_native) - xem WelcomeBackActivity.
+     */
     RESUME(AdKey.ON_RESUME, AdUnit.INTER_ON_RESUME, NativePlacement.AFTER_INTER_RESUME);
 
     val key: String get() = adKey.key

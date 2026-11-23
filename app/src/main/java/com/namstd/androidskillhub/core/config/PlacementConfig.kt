@@ -72,11 +72,12 @@ enum class AdFallback(val key: String) {
  * - [template]: tên native template (gốc trong SDK hoặc template riêng ở `templates` gốc file), trống = mặc định của chỗ hiện.
  * - [pages]: placement type onboarding - chèn trang native full sau các trang này (đếm từ 1).
  * - [step]: placement inter - cứ [step] lần gọi mới hiện 1 lần.
- * - [waitMs]: đếm ngược trước khi đóng được native toàn màn hình.
+ * - [waitMs]: đếm ngược trước khi đóng được native toàn màn hình; `native_welcome_back`: trước khi bấm được Tiếp tục.
  * - [refreshMs]: tự tải lại ô banner, 0 = không.
  * - [openAdOnClicks]: native_as_banner_collap - lần click thứ mấy trên quảng cáo thì mở trang quảng cáo.
  * - [fallback]: inter_then_native - xử lý khi thiếu 1 trong 2 quảng cáo.
- * - [customUi]: placement type resume - dùng màn Welcome Back riêng (app hiện chỉ có 1 màn Welcome Back).
+ * - [customUi]: placement type resume - true = màn Welcome Back riêng của app. Base chỉ có 1 màn Welcome Back nên cả 2
+ *   giá trị đều dùng WelcomeBackActivity.
  */
 data class PlacementConfig(
     val enable: Boolean,
@@ -161,10 +162,13 @@ enum class AdKey(val key: String) {
     /** Khi xong Onboarding (thường inter_then_native). */
     INTER_AFTER_ONBOARDING("inter_after_onboarding"),
     /**
-     * Khi user quay lại app từ nền. `ad_type` quyết định: aoa = App Open; native = màn Welcome Back có native
-     * (ID / template / wait_ms của chính placement này); inter / native_as_inter / inter_then_native = inter.
+     * Khi user quay lại app từ nền. `ad_type` aoa = App Open (`ad_ids.aoa`); ad_type khác = màn Welcome Back, bấm
+     * Tiếp tục thì chạy quảng cáo theo ad_type này: inter · native / native_as_inter (native toàn màn, `ad_ids.native`)
+     * · inter_then_native. Native chân màn Welcome Back là [NATIVE_WELCOME_BACK].
      */
     ON_RESUME("on_resume"),
+    /** Native chân màn Welcome Back (enable / ID / template / wait_ms riêng). Màn chỉ mở khi on_resume khác aoa. */
+    NATIVE_WELCOME_BACK("native_welcome_back"),
     BANNER_HOME("banner_home"),
     /** Native xen trong feed màn chính. */
     NATIVE_HOME_FEED("native_home_feed"),

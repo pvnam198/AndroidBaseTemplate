@@ -35,12 +35,13 @@ object AppOpenAds {
         if (!cache.isReady(unit)) { load(unit); return }
         val gaps = AdPolicy.openGaps
         if (!AdGapGate.canShowAppOpen(gaps.openGapMs, gaps.openInterGapMs)) {
-            if (BuildConfig.DEBUG) Log.d("AdsAppOpen", "on_resume App Open: bỏ qua, chưa đủ khoảng cách $gaps")
+            if (BuildConfig.DEBUG) Log.d("AdsGap", "on_resume App Open: bỏ qua, chưa đủ khoảng cách $gaps")
             return
         }
         if (FullScreenGate.isBusy()) return
         val current = cache.take(unit) ?: return
         if (!FullScreenGate.acquire(current)) return
+        if (BuildConfig.DEBUG) Log.d("AdsGap", "on_resume App Open: hiện")
         current.adEventCallback = object : AppOpenAdEventCallback {
             override fun onAdDismissedFullScreenContent() = runOnMainThread { finish(unit, current) }
             override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) =

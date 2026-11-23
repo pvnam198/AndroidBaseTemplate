@@ -53,6 +53,8 @@
     <string name="action_may_display_ad">This action may display an ad.</string>
     <string name="welcome_back_title">Welcome back</string>
     <string name="welcome_back_message">Thanks for coming back!</string>
+    <string name="welcome_back_continue">Continue</string>
+    <string name="welcome_back_continue_countdown">Continue (%1$d)</string>
     <string name="debug_config">Debug config</string>
     <string name="debug_config_title">Debug Remote Config</string>
     <string name="debug_config_subtitle">Sửa giá trị từng key rồi bấm Lưu. Để trống = dùng giá trị Firebase/default.</string>

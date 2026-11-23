@@ -44,9 +44,18 @@ class PlacementConfigTest {
         assertEquals("Full1", splash.template)
         assertEquals(AdFallback.SHOW_AVAILABLE, splash.fallback)
 
-        assertEquals(AdType.NATIVE, full(AdKey.ON_RESUME).adType)
-        assertEquals(PlacementType.RESUME, full(AdKey.ON_RESUME).type)
-        assertFalse(full(AdKey.ON_RESUME).customUi)
+        // on_resume: khác aoa = Welcome Back, Tiếp tục chạy inter_then_native; native chân màn là native_welcome_back.
+        val resume = full(AdKey.ON_RESUME)
+        assertEquals(AdType.INTER_THEN_NATIVE, resume.adType)
+        assertEquals(PlacementType.RESUME, resume.type)
+        assertFalse(resume.customUi)
+        assertEquals(1, resume.ids("inter").size)
+        assertEquals(1, resume.ids("native").size)
+        val welcome = full(AdKey.NATIVE_WELCOME_BACK)
+        assertTrue(welcome.enable)
+        assertEquals("Big1", welcome.template)
+        assertEquals(3000L, welcome.waitMs)
+        assertFalse(basic(AdKey.NATIVE_WELCOME_BACK).enable)
 
         val home = full(AdKey.BANNER_HOME)
         assertEquals(AdType.NATIVE_AS_BANNER_COLLAP, home.adType)
@@ -91,7 +100,7 @@ class PlacementConfigTest {
     fun everyAdUnitHasIdsInTheFullProfile() {
         // Unit nào cũng phải có ID trong bộ full, trừ các unit chỉ dùng khi ad_type đổi sang loại khác.
         val optional = setOf(
-            AdUnit.AOA_SPLASH, AdUnit.ON_RESUME, AdUnit.INTER_ON_RESUME, AdUnit.BANNER_HOME, AdUnit.NATIVE_INTER_HOME,
+            AdUnit.AOA_SPLASH, AdUnit.ON_RESUME, AdUnit.BANNER_HOME, AdUnit.NATIVE_INTER_HOME,
         )
         for (unit in AdUnit.entries - optional) {
             assertTrue(unit.name, full(unit.key).ids(unit.format.idType).isNotEmpty())

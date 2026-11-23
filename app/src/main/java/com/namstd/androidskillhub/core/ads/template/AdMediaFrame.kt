@@ -29,6 +29,14 @@ class AdMediaFrame @JvmOverloads constructor(
             requestLayout()
         }
 
+    /**
+     * Trần chiều cao (px) do khung chứa đặt khi quảng cáo cao quá chỗ ([AdFitFrame]); 0 = không giới hạn. Không gọi
+     * requestLayout - khung chứa đặt giá trị này ngay trong lượt đo của nó.
+     */
+    internal var heightCap = 0
+
+    private fun capped(height: Int) = if (heightCap > 0) minOf(height, heightCap) else height
+
     init {
         context.obtainStyledAttributes(attrs, R.styleable.AdMediaFrame).apply {
             ratio = parseRatio(getString(R.styleable.AdMediaFrame_adRatio))
@@ -53,7 +61,7 @@ class AdMediaFrame @JvmOverloads constructor(
         if (fixedHeight > 0 && !fillsExactHeight && MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
             super.onMeasure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(fixedHeight, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(capped(fixedHeight), MeasureSpec.EXACTLY),
             )
             return
         }
@@ -61,7 +69,7 @@ class AdMediaFrame @JvmOverloads constructor(
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return
         }
-        val height = (width / ratio).toInt()
+        val height = capped((width / ratio).toInt())
         super.onMeasure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
             MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),

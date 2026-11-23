@@ -1,57 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Màn Welcome Back (on_resume ad_type khác aoa): tiêu đề / lời chào / Tiếp tục / native ở chân màn.
+     Chữ và Tiếp tục luôn có chỗ trước; native tối đa 60% chiều cao nội dung (AdFitFrame thu nhỏ media nếu quá, media vẫn
+     ≥ 120dp); khoảng trống phía trên lấy phần còn lại. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
+    android:gravity="center_horizontal"
     android:orientation="vertical">
 
-    <FrameLayout
+    <Space
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/welcome_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start|center_vertical"
-            android:text="@string/welcome_back_title"
-            android:textAppearance="?attr/textAppearanceHeadline5"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tv_countdown"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="end|center_vertical"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:visibility="gone" />
-
-        <ImageView
-            android:id="@+id/iv_close"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="end|center_vertical"
-            android:contentDescription="@string/ad_close"
-            android:padding="8dp"
-            android:src="@drawable/ic_close_2"
-            android:tint="?attr/colorOnBackground"
-            android:visibility="gone" />
-    </FrameLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/welcome_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:text="@string/welcome_back_title"
+        android:textAppearance="?attr/textAppearanceHeadline5"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:paddingHorizontal="16dp"
         android:text="@string/welcome_back_message"
         android:textColor="@color/app_text_secondary" />
 
+    <!-- Trong lúc đếm ngược wait_ms của native_welcome_back: chưa bấm được, kèm số giây còn lại. -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_continue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="16dp"
+        android:minWidth="160dp"
+        android:text="@string/welcome_back_continue" />
+
     <!-- Native rộng hết màn (không lề / padding hai bên). -->
-    <FrameLayout
+    <com.namstd.androidskillhub.core.ads.template.AdFitFrame
         android:id="@+id/native_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="@dimen/ad_slot_margin"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/ad_slot_margin" />
 </LinearLayout>

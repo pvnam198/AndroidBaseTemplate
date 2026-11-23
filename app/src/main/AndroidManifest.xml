@@ -50,8 +50,7 @@
             android:name=".feature.welcome.WelcomeBackActivity"
             android:screenOrientation="portrait"
             android:exported="false"
-            android:launchMode="singleTop"
-            android:noHistory="true" />
+            android:launchMode="singleTop" />
         <activity
             android:name=".feature.debug.DebugConfigActivity"
             android:screenOrientation="portrait"

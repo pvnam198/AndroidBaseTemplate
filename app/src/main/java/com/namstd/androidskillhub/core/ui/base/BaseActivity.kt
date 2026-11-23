@@ -122,9 +122,11 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
      * Chạy quảng cáo full-screen cho [placement] theo `enable` của vị trí đó (xem [fullScreenPlan]),
      * rồi gọi [onComplete]. Loại: plain interstitial / interstitial + native break / native-only / tắt.
      * (APP_OPEN chỉ ở SPLASH và do SplashActivity lo; ở đây coi như tắt.)
+     * [ignoreGap] = true: bỏ qua `inter_gap_ms` / `open_inter_gap_ms` (vd. Tiếp tục ở Welcome Back - đã tính là lượt
+     * quảng cáo quay lại app, đã qua `open_gap_ms`).
      * Chỉ một implementation cho toàn app - [BaseFragment.showInterstitial] uỷ quyền về đây.
      */
-    internal fun showInterstitial(placement: InterstitialPlacement, onComplete: () -> Unit) {
+    internal fun showInterstitial(placement: InterstitialPlacement, ignoreGap: Boolean = false, onComplete: () -> Unit) {
         if (SplashFallback.take(placement)) {
             // Splash bị lỡ quảng cáo: placement này bù lại bằng một plain interstitial,
             // bất kể plan, step hay gap của chính nó nói gì.
@@ -136,7 +138,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         if (!passesInterstitialStepGate(placement)) { onComplete(); return }
         when (plan) {
             FullScreenAdPlan.INTERSTITIAL ->
-                if (!InterstitialAds.show(this, placement, onComplete = onComplete)) onComplete()
+                if (!InterstitialAds.show(this, placement, ignoreGap = ignoreGap, onComplete = onComplete)) onComplete()
             FullScreenAdPlan.NATIVE_ONLY -> {
                 if (!Ads.adsEnabled || FullScreenGate.isBusy()) { onComplete(); return }
                 // Không có interstitial phía trước để che thời gian load, nên đợi (có giới hạn) ad #1 trước -
@@ -157,7 +159,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
                     return
                 }
                 val afterInterstitial = { runNativeAdBreak(placement, onComplete) }
-                if (!InterstitialAds.show(this, placement, onComplete = afterInterstitial)) afterInterstitial()
+                if (!InterstitialAds.show(this, placement, ignoreGap = ignoreGap, onComplete = afterInterstitial)) afterInterstitial()
             }
             else -> onComplete()
         }

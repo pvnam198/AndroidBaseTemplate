@@ -13,16 +13,17 @@ import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.Ads
 import com.namstd.androidskillhub.core.ads.AppOpenAds
 import com.namstd.androidskillhub.core.ads.AdUnit
+import com.namstd.androidskillhub.core.ads.FullScreenAdPlan
 import com.namstd.androidskillhub.core.ads.InterstitialAds
 import com.namstd.androidskillhub.core.ads.InterstitialPlacement
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.fullScreenPlan
 import com.namstd.androidskillhub.core.billing.Premium
 import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.AdType
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.preferences.AppPreferences
-import com.namstd.androidskillhub.core.ui.base.BaseActivity
 import com.namstd.androidskillhub.feature.welcome.WelcomeBackActivity
 import java.lang.ref.WeakReference
 
@@ -54,13 +55,12 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
             currentActivity.get()?.let { activity ->
                 val preferences = AppPreferences.getInstance(this@AndroidSkillHubApp)
                 if (preferences.setupCompleted) {
-                    // on_resume: aoa = App Open; native = màn Welcome Back có native; còn lại = inter (luồng theo ad_type).
+                    // on_resume: aoa = App Open; ad_type khác = màn Welcome Back (native chân màn + quảng cáo khi bấm
+                    // Tiếp tục theo ad_type). Cả hai chịu open_gap_ms / open_inter_gap_ms.
                     when (AdPolicy.adType(AdKey.ON_RESUME)) {
+                        null -> Unit // tắt: không hiện gì khi quay lại app
                         AdType.AOA -> Ads.onReturnToForeground(activity)
-                        AdType.NATIVE -> WelcomeBackActivity.launch(activity)
-                        AdType.INTER, AdType.NATIVE_AS_INTER, AdType.INTER_THEN_NATIVE ->
-                            (activity as? BaseActivity<*>)?.showInterstitial(InterstitialPlacement.RESUME) {}
-                        else -> Unit // tắt: không hiện gì khi quay lại app
+                        else -> WelcomeBackActivity.launch(activity)
                     }
                 }
             }
@@ -68,14 +68,20 @@ class AndroidSkillHubApp : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        // App xuống nền: tải sẵn quảng cáo của on_resume cho lần quay lại.
+        // App xuống nền: tải sẵn quảng cáo cho lần quay lại (không tải sẵn thì lần quay lại đầu tiên không có gì để hiện).
         if (!Ads.adsEnabled) return
         when (AdPolicy.adType(AdKey.ON_RESUME)) {
+            null -> Unit
             AdType.AOA -> AppOpenAds.load(AdUnit.ON_RESUME)
-            AdType.NATIVE -> NativeAds.preload(NativePlacement.WELCOME_BACK)
-            AdType.INTER, AdType.INTER_THEN_NATIVE -> InterstitialAds.preload(InterstitialPlacement.RESUME)
-            AdType.NATIVE_AS_INTER -> NativeAds.preload(NativePlacement.AFTER_INTER_RESUME)
-            else -> Unit
+            else -> {
+                // Welcome Back: native chân màn (`native_welcome_back`) + quảng cáo khi bấm Tiếp tục theo ad_type on_resume.
+                if (AdPolicy.nativeEnabled(NativePlacement.WELCOME_BACK)) NativeAds.preload(NativePlacement.WELCOME_BACK)
+                InterstitialAds.preload(InterstitialPlacement.RESUME)
+                val plan = fullScreenPlan(InterstitialPlacement.RESUME)
+                if (plan == FullScreenAdPlan.NATIVE_ONLY || plan == FullScreenAdPlan.INTER_PLUS_NATIVE) {
+                    NativeAds.preload(NativePlacement.AFTER_INTER_RESUME)
+                }
+            }
         }
     }
 

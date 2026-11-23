@@ -191,6 +191,12 @@ trong prefs `debug_overrides`; nút Reset xoá hết. Bản release bỏ qua ove
 - Mẫu mặc định khi `template` trống: Big1; `native_language_small` → Tiny1; native collapsible → Collap1.
 - **Không hiện giá** ("FREE") dù Figma có vẽ — Google trả trường giá, base cố ý bỏ.
 - Danh sách mẫu nằm ở enum `NativeAdTemplate` (key viết thường, không phân biệt hoa thường khi đọc config).
+- Shimmer lúc load dựng từ chính mẫu + style sẽ hiện (`template/NativeSkeleton.kt`, chữ / ảnh thành khối xám) nên ad
+  hiện ra không nhảy kích thước. Banner / dải collapsible vẫn dùng `ad_banner_shimmer.xml`.
+- Biểu tượng AdChoices ("i") luôn ở **góc trên trái** (`setAdChoicesPlacement(TOP_LEFT)`), góc trên phải để cho nút X /
+  Next / thu gọn; `template/AdChoicesCorner.kt` chừa góc cho icon ở mẫu card có padding (áp cả cho shimmer).
+- Ô native **rộng hết màn / dialog** (không lề / padding hai bên), cách nội dung trên / dưới `@dimen/ad_slot_margin`
+  (12dp). Native trong khung có padding `ad_slot_margin` thì dùng `ad_slot_bleed` + `clipToPadding="false"` để tràn sát mép.
 
 ### 6.2 `templates` (gốc file cấu hình)
 

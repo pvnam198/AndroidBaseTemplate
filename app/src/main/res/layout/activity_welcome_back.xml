@@ -47,10 +47,11 @@
         android:text="@string/welcome_back_message"
         android:textColor="@color/app_text_secondary" />
 
+    <!-- Native rộng hết màn (không lề / padding hai bên). -->
     <FrameLayout
         android:id="@+id/native_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp" />
+        android:layout_marginTop="@dimen/ad_slot_margin"
+        android:layout_weight="1" />
 </LinearLayout>

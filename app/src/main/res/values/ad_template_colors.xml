@@ -13,5 +13,6 @@
     <color name="ad_badge_text">#1C1B1F</color>
     <color name="ad_star">#F5B800</color>
     <color name="ad_star_empty">#E3E5EA</color>
-    <color name="ad_action_bg">#99000000</color>
+    <!-- Nút đóng / next của native: tròn xám đặc, icon trắng (Figma). -->
+    <color name="ad_action_bg">#8A8A8A</color>
 </resources>

@@ -11,9 +11,10 @@ import com.namstd.androidskillhub.R
 import com.namstd.androidskillhub.core.ads.AdPolicy
 import com.namstd.androidskillhub.core.ads.NativeAds
 import com.namstd.androidskillhub.core.ads.NativePlacement
+import com.namstd.androidskillhub.core.ads.template.AdChoicesCorner
+import com.namstd.androidskillhub.core.ads.template.NativeSkeleton
 import com.namstd.androidskillhub.core.ads.template.NativeStyleApplier
 import com.namstd.androidskillhub.databinding.AdNativeBinding
-import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 sealed interface AdFeedItem<out T> {
     data class Content<T>(val value: T) : AdFeedItem<T>
@@ -85,7 +86,7 @@ abstract class BaseAdRecyclerAdapter<T>(
         }
         // Thử lại một lần cho mỗi slot mới bind nếu lần load trước lỗi; không làm gì khi đang load hoặc đã có cache.
         NativeAds.preload(placement)
-        holder.showShimmer()
+        holder.showShimmer(placement)
         holder.startPolling(placement) { ad -> loadedAds[position] = ad }
     }
 
@@ -153,6 +154,7 @@ abstract class BaseAdRecyclerAdapter<T>(
 
         fun show(ad: NativeAd) {
             val binding = AdNativeBinding.inflate(LayoutInflater.from(activity))
+            AdChoicesCorner.reserve(binding.root)
             populate(ad, binding)
             placement?.let { NativeStyleApplier.apply(binding.root, NativeAds.templateFor(it).style) }
             container.removeAllViews()
@@ -203,12 +205,13 @@ abstract class BaseAdRecyclerAdapter<T>(
 
         private fun visibility(value: Any?) = if (value == null) View.GONE else View.VISIBLE
 
-        fun showShimmer() {
-            val shimmer = AdNativeShimmerBinding.inflate(LayoutInflater.from(activity))
+        fun showShimmer(placement: NativePlacement) {
+            // Cùng layout ad_native (và style của placement) với ad thật nên hiện ad không bị nhảy kích thước.
+            val shimmer = NativeSkeleton.create(activity, R.layout.ad_native, NativeAds.templateFor(placement).style)
             container.removeAllViews()
-            container.addView(shimmer.root)
+            container.addView(shimmer)
             setCollapsed(false)
-            shimmer.root.startShimmer()
+            shimmer.startShimmer()
         }
     }
 

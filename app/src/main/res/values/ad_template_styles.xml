@@ -2,6 +2,10 @@
 <!-- Thành phần dùng chung cho các template quảng cáo native (layout/ad_tpl_*.xml), lấy từ Figma "Wavez - ADs" / Atoms v2. -->
 <resources>
     <dimen name="ad_card_padding">12dp</dimen>
+    <!-- Khoảng cách trên / dưới ô native. Hai bên không có lề: native luôn rộng hết màn / dialog. -->
+    <dimen name="ad_slot_margin">12dp</dimen>
+    <!-- Cho native nằm trong khung có padding ad_slot_margin (dialog) tràn ra sát mép; khung đặt clipToPadding="false". -->
+    <dimen name="ad_slot_bleed">-12dp</dimen>
     <dimen name="ad_card_radius">16dp</dimen>
     <dimen name="ad_media_radius">12dp</dimen>
     <dimen name="ad_gap">8dp</dimen>

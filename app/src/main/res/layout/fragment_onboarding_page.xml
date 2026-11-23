@@ -4,12 +4,13 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="28dp">
+    android:paddingVertical="28dp">
 
     <TextView
         android:id="@+id/page_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="28dp"
         android:gravity="center"
         android:textAppearance="?attr/textAppearanceHeadline4"
         android:textColor="?attr/colorOnBackground"
@@ -19,15 +20,17 @@
         android:id="@+id/page_body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="28dp"
         android:layout_marginTop="14dp"
         android:gravity="center"
         android:textAppearance="?attr/textAppearanceBody1"
         android:textColor="@color/app_text_secondary" />
 
+    <!-- Native rộng hết màn (không lề hai bên); chữ ở trên có lề riêng. -->
     <FrameLayout
         android:id="@+id/native_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/ad_slot_margin"
         android:minHeight="120dp" />
 </LinearLayout>

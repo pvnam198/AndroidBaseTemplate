@@ -50,9 +50,6 @@ enum class NativeAdTemplate(val key: String, @LayoutRes val layout: Int) {
     FULL5("full5", R.layout.ad_tpl_full5),
     ;
 
-    /** Dải thấp (Tiny1, Tiny2): lúc load dùng shimmer thấp như banner thay vì shimmer card. */
-    val isStrip: Boolean get() = this == TINY1 || this == TINY2
-
     /**
      * Bộ native collapsible: mẫu Collap* là dạng lớn, bấm nút thu gọn / đóng thì thành dải này (đúng từng bộ trong
      * Figma: Collap1 → Tiny1, Collap2 → Tiny2, Collap3 → Tiny1). Mẫu không phải Collap* → null.

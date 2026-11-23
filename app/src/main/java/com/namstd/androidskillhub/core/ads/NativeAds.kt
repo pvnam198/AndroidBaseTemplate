@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
+import com.google.android.libraries.ads.mobile.sdk.common.AdChoicesPlacement
 import com.google.android.libraries.ads.mobile.sdk.common.AdValue
 import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError
 import com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
@@ -21,14 +22,14 @@ import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
 import com.namstd.androidskillhub.BuildConfig
 import com.namstd.androidskillhub.R
+import com.namstd.androidskillhub.core.ads.template.AdChoicesCorner
 import com.namstd.androidskillhub.core.ads.template.NativeAdTemplate
+import com.namstd.androidskillhub.core.ads.template.NativeSkeleton
 import com.namstd.androidskillhub.core.config.RemoteConfig
 import com.namstd.androidskillhub.core.ads.template.NativeTemplateSpec
 import com.namstd.androidskillhub.core.ads.template.NativeStyleApplier
 import com.namstd.androidskillhub.core.config.PlacementConfig
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.namstd.androidskillhub.databinding.AdBannerShimmerBinding
-import com.namstd.androidskillhub.databinding.AdNativeShimmerBinding
 
 /**
  * Các chỗ hiện native trong app, mỗi chỗ ứng với một ad unit ([unit] - ID trong `ad_ids.native`, `template` của placement
@@ -173,7 +174,7 @@ object NativeAds {
         }
         var currentView: NativeAdView? = null
         var attachedAd: NativeAd? = null
-        var shimmer: ShimmerFrameLayout? = showShimmer(activity, container, templateFor(placement).template.isStrip)
+        var shimmer: ShimmerFrameLayout? = showShimmer(activity, container, templateFor(placement))
 
         val request = request(
             activity, placement,
@@ -266,10 +267,9 @@ object NativeAds {
         }
     }
 
-    /** Shimmer giữ chỗ trong lúc load; [strip] = true (template dải Tiny) thì dùng shimmer thấp như banner. */
-    private fun showShimmer(activity: Activity, container: FrameLayout, strip: Boolean): ShimmerFrameLayout {
-        val inflater = LayoutInflater.from(activity)
-        val shimmer = if (strip) AdBannerShimmerBinding.inflate(inflater).root else AdNativeShimmerBinding.inflate(inflater).root
+    /** Shimmer giữ chỗ trong lúc load, dựng từ đúng mẫu [spec] sẽ hiện (cùng kích thước) - xem [NativeSkeleton]. */
+    private fun showShimmer(activity: Activity, container: FrameLayout, spec: NativeTemplateSpec): ShimmerFrameLayout {
+        val shimmer = NativeSkeleton.create(activity, spec)
         container.removeAllViews()
         container.addView(shimmer)
         shimmer.startShimmer()
@@ -283,7 +283,11 @@ object NativeAds {
         pool.startLoad(chain)
         WaterfallLoader<NativeAd>(chain).load(
             attempt = { id, loaded, failed ->
-                val request = NativeAdRequest.Builder(unit.requestId(id), listOf(NativeAd.NativeAdType.NATIVE)).build()
+                // Biểu tượng AdChoices ("i") ở góc trên trái: góc trên phải là nút X / Next / thu gọn của app (mẫu Full,
+                // Collap, native sau inter, trang native full Onboarding). SDK tự vẽ icon theo góc này cho mọi mẫu.
+                val request = NativeAdRequest.Builder(unit.requestId(id), listOf(NativeAd.NativeAdType.NATIVE))
+                    .setAdChoicesPlacement(AdChoicesPlacement.TOP_LEFT)
+                    .build()
                 NativeAdLoader.load(request, object : NativeAdLoaderCallback {
                     override fun onNativeAdLoaded(nativeAd: NativeAd) {
                         AdAudience.onNativeLoaded(nativeAd.headline)
@@ -319,6 +323,7 @@ object NativeAds {
     /** Inflate mẫu [spec], gắn [ad] vào đó rồi áp style - cho bất kỳ màn nào muốn dùng một mẫu cụ thể. */
     fun renderTemplate(activity: Activity, ad: NativeAd, spec: NativeTemplateSpec): NativeAdView {
         val view = LayoutInflater.from(activity).inflate(spec.template.layout, null) as NativeAdView
+        AdChoicesCorner.reserve(view)
         populateView(view, ad)
         NativeStyleApplier.apply(view, spec.style)
         return view

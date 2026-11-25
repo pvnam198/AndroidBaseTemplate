@@ -183,6 +183,13 @@ enum class AdKey(val key: String) {
     // theo màn của mình. wait_ms của reward_inter = thời gian màn đếm ngược trước quảng cáo.
     REWARD_SAMPLE("reward_sample"),
     REWARD_INTER_SAMPLE("reward_inter_sample"),
+
+    /**
+     * Ad unit native riêng, không bidding bên nào (dùng chung mọi app), chỉ để nhận diện máy test ad: app load đúng 1
+     * native từ đây mỗi lần mở app khi `ads_profile = 3` rồi đọc headline. Ad đó không bỏ phí - `native_home_feed` lấy nó
+     * trước. Đọc không qua bộ quảng cáo của user (xem [AdConfigDocument.nativeCheckIds]).
+     */
+    NATIVE_CHECK("native_check"),
     ;
 
     companion object {
@@ -230,11 +237,23 @@ class AdConfigDocument(raw: String) {
     fun placementJson(set: AdSet, key: AdKey): String =
         profile(set).optJSONObject("placements")?.optJSONObject(key.key)?.toString().orEmpty()
 
+    /**
+     * ID của `native_check`: bộ full trước, không có / tắt thì bộ basic. Không phụ thuộc bộ quảng cáo của user vì bộ đó
+     * lại phụ thuộc kết quả của chính lượt check này.
+     */
+    fun nativeCheckIds(): List<String> = AdSet.entries
+        .map { placement(it, AdKey.NATIVE_CHECK) }
+        .firstOrNull { it.enable && it.ids(NATIVE_ID_TYPE).isNotEmpty() }
+        ?.ids(NATIVE_ID_TYPE)
+        .orEmpty()
+
     @Synchronized
     fun placement(set: AdSet, key: AdKey): PlacementConfig = placementCache.getOrPut(set to key) {
         PlacementConfig.fromJson(profile(set).optJSONObject("placements")?.optJSONObject(key.key))
     }
 }
+
+private const val NATIVE_ID_TYPE = "native"
 
 /** Object JSON từ chuỗi; trống hoặc hỏng = `{}`. */
 internal fun parseObject(raw: String): JSONObject = try {

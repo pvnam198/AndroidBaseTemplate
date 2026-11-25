@@ -4,6 +4,7 @@ import android.content.Context
 import com.namstd.androidskillhub.core.config.AdKey
 import com.namstd.androidskillhub.core.config.AdSet
 import com.namstd.androidskillhub.core.config.AdType
+import com.namstd.androidskillhub.core.config.AdsProfileRule
 import com.namstd.androidskillhub.core.config.InterDelayConfig
 import com.namstd.androidskillhub.core.config.OpenGapConfig
 import com.namstd.androidskillhub.core.config.PlacementConfig
@@ -53,6 +54,17 @@ object AdPolicy {
     /** Placement inter bù khi Splash không kịp hiện quảng cáo - chỉ ở bộ full. Xem [SplashFallback]. */
     val splashFallback: InterstitialPlacement?
         get() = if (profile == AdProfile.FULL) RemoteConfig.splashFallback else null
+
+    /**
+     * ID `native_check` (rỗng nếu tắt quảng cáo / Premium / config không có). Không đi qua [profile] vì [profile] lại
+     * phụ thuộc kết quả check (`ads_profile = 3`) - xem [AdAudience].
+     */
+    fun nativeCheckIds(): List<String> =
+        if (!Ads.adsEnabled || prefs.isPremium) emptyList() else RemoteConfig.nativeCheckIds()
+
+    /** Có cần chạy lượt check máy test ad không: chỉ khi `ads_profile = 3` (`full_except_test_devices`). */
+    val shouldCheckTestDevice: Boolean
+        get() = RemoteConfig.adsProfileRule == AdsProfileRule.FULL_EXCEPT_TEST_DEVICES
 
     /** Có quảng cáo native không (tắt khi tắt quảng cáo / Premium). Bộ nào có native thì do cấu hình của bộ đó quyết. */
     val nativeAllowed: Boolean

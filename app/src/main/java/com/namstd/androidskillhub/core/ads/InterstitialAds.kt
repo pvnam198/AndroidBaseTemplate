@@ -15,11 +15,20 @@ import com.namstd.androidskillhub.core.config.AdKey
  * [interUnit] là ad unit interstitial, [nativePlacement] là native toàn màn hình hiện sau inter. [key] khớp tên trong
  * `inter_gap_ignore` và giá trị của `splash_fallback`.
  */
-enum class InterstitialPlacement(val adKey: AdKey, val interUnit: AdUnit, val nativePlacement: NativePlacement) {
-    SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH),
-    LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE),
+enum class InterstitialPlacement(
+    val adKey: AdKey,
+    val interUnit: AdUnit,
+    val nativePlacement: NativePlacement,
+    /**
+     * Chỉ hiện một lần (Splash: một lần mỗi tiến trình; Language, Onboarding: một lần cả đời cài app) nên dùng xong thì không
+     * load lại - load thêm sẽ không bao giờ được dùng tới. Các vị trí còn lại hiện lặp lại nên vẫn reload.
+     */
+    val oneTime: Boolean = false,
+) {
+    SPLASH(AdKey.ADS_SPLASH, AdUnit.INTER_SPLASH, NativePlacement.AFTER_INTER_SPLASH, oneTime = true),
+    LANGUAGE(AdKey.INTER_LANGUAGE, AdUnit.INTER_LANGUAGE, NativePlacement.AFTER_INTER_LANGUAGE, oneTime = true),
     /** Khi xong Onboarding (`inter_after_onboarding`). */
-    ONBOARDING(AdKey.INTER_AFTER_ONBOARDING, AdUnit.INTER_AFTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING),
+    ONBOARDING(AdKey.INTER_AFTER_ONBOARDING, AdUnit.INTER_AFTER_ONBOARDING, NativePlacement.AFTER_INTER_ONBOARDING, oneTime = true),
 
     /** Inter ở màn chính (app mẫu: bấm Cài đặt) - key `inter_home`, cũng là inter của bộ basic mẫu. */
     HOME(AdKey.INTER_HOME, AdUnit.INTER_HOME, NativePlacement.AFTER_INTER_HOME),
@@ -80,16 +89,20 @@ object InterstitialAds {
             return false
         }
         val unit = placement.interUnit
-        if (!cache.isReady(unit)) { onStatus("Interstitial: not ready"); load(unit, onStatus); return false }
+        if (!cache.isReady(unit)) {
+            onStatus("Interstitial: not ready")
+            if (!placement.oneTime) load(unit, onStatus)
+            return false
+        }
         // Kiểm tra trước khi lấy ad ra khỏi cache, để ad không bị mất khi đang có mục full-screen khác.
         if (FullScreenGate.isBusy()) { onStatus("Another full-screen item is showing"); return false }
         val current = cache.take(unit) ?: return false
         if (!FullScreenGate.acquire(current)) { onStatus("Another full-screen item is showing"); return false }
         current.adEventCallback = object : InterstitialAdEventCallback {
             override fun onAdDismissedFullScreenContent() =
-                runOnMainThread { finish(unit, current, onStatus, onComplete = onComplete) }
+                runOnMainThread { finish(placement, current, onStatus, onComplete = onComplete) }
             override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) =
-                runOnMainThread { finish(unit, current, onStatus, fullScreenContentError.message, onComplete) }
+                runOnMainThread { finish(placement, current, onStatus, fullScreenContentError.message, onComplete) }
             override fun onAdPaid(adValue: AdValue) = AdjustRevenueLogger.log(adValue)
         }
         current.show(activity)
@@ -97,7 +110,7 @@ object InterstitialAds {
     }
 
     private fun finish(
-        unit: AdUnit,
+        placement: InterstitialPlacement,
         shown: InterstitialAd,
         status: (String) -> Unit,
         error: String? = null,
@@ -108,7 +121,8 @@ object InterstitialAds {
         shown.destroy()
         status(error?.let { "Interstitial: $it" } ?: "Interstitial: dismissed")
         onComplete()
-        load(unit, status)
+        // Vị trí chỉ dùng một lần thì không nạp lại: ad nạp thêm sẽ không bao giờ được hiện.
+        if (!placement.oneTime) load(placement.interUnit, status)
     }
 
     fun clear() = cache.clear()

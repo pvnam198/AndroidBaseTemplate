@@ -102,10 +102,29 @@ object NativeAds {
     fun preload(placement: NativePlacement) {
         // SDK / config chưa có (mạng lỗi lúc mở app, đang thử lại): tải khi có.
         if (!AdsAvailability.usable) return AdsAvailability.runWhenUsable("native:$placement") { preload(placement) }
-        if (!AdPolicy.nativeAllowed || !Ads.isReady) return
+        // Chỉ tải placement đang bật: config có thể khai báo rất nhiều chỗ nhưng chỗ nào enable = false thì không dùng,
+        // tải thêm chỉ tốn request. nativeEnabled = đang cho phép native + placement bật (xem NativePlacement.isEnabled).
+        if (!AdPolicy.nativeEnabled(placement) || !Ads.isReady) return
         val chain = chain(placement)
         if (chain.isEmpty() || !pool.needsLoad(chain, preload = true)) return
-        startLoad(placement)
+        startLoad(placement.unit, placement.name)
+    }
+
+    @Volatile private var checkStarted = false
+
+    /**
+     * Load đúng 1 native từ `native_check` (không bidding) để nhận diện máy test ad ([AdAudience.onCheckNativeLoaded]);
+     * chạy mỗi lần mở app, chỉ khi `ads_profile = 3`. Ad cất vào pool theo ID: `native_home_feed` lấy nó trước ([requestLoaded]),
+     * không ai lấy thì nằm đó tới hết hạn. Không load bù, không load lại. Gọi sớm - xem SplashActivity.
+     */
+    fun preloadCheck() {
+        if (checkStarted) return
+        if (!AdsAvailability.usable) return AdsAvailability.runWhenUsable("native_check") { preloadCheck() }
+        if (!AdPolicy.shouldCheckTestDevice || !AdPolicy.nativeAllowed || !Ads.isReady) return
+        val chain = AdUnit.NATIVE_CHECK.configIds()
+        if (chain.isEmpty()) return
+        checkStarted = true
+        if (pool.needsLoad(chain, preload = true)) startLoad(AdUnit.NATIVE_CHECK, "CHECK")
     }
 
     /** Đã có ad mới (của một ID bất kỳ trong chuỗi của [placement]) nằm sẵn để hiện ngay chưa. */
@@ -124,13 +143,14 @@ object NativeAds {
      * Lấy ad đã preload cho [placement], nếu đã sẵn sàng, để caller tự hiển thị và tự destroy
      * (không quản lý container/shimmer, khác với [subscribe]) - dành cho các placement full-screen
      * chỉ hiện một lần, cần ad nằm sẵn đó mà không phải chờ load. Ngay sau đó chạy reload để pool
-     * được nạp lại cho lần sau. Trả về null nếu không preload kịp; xử lý như trường hợp no-fill.
+     * được nạp lại cho lần sau ([reload] = false thì không nạp lại). Trả về null nếu không preload kịp; xử lý như trường hợp no-fill.
      */
-    fun poll(placement: NativePlacement): NativeAd? {
+    fun poll(placement: NativePlacement, reload: Boolean = true): NativeAd? {
         if (!AdPolicy.nativeAllowed || !Ads.isReady) return null
         val loaded = pool.take(chain(placement))
         if (BuildConfig.DEBUG && loaded != null) Log.d(TAG, "${placement.name}: lấy ad sẵn của ${loaded.id.takeLast(10)}")
-        preload(placement)
+        // reload = false cho ad chỉ dùng một lần (không có lượt sau): nạp thêm sẽ không bao giờ được dùng.
+        if (reload) preload(placement)
         return loaded?.ad
     }
 
@@ -240,7 +260,10 @@ object NativeAds {
         onReady: (AdIdPool.Loaded<NativeAd>) -> Unit,
     ): AdHandle {
         val chain = chain(placement)
-        pool.take(chain)?.let { loaded ->
+        // native_home_feed (native dùng chung nhiều ô) lấy ad của native_check trước (nếu còn), không có thì dùng chuỗi ID riêng.
+        val taken = (if (placement == NativePlacement.HOME_FEED) pool.take(AdUnit.NATIVE_CHECK.configIds()) else null)
+            ?: pool.take(chain)
+        taken?.let { loaded ->
             if (BuildConfig.DEBUG) Log.d(TAG, "${placement.name}: lấy ad sẵn của ${loaded.id.takeLast(10)}")
             activity.runOnUiThread { onReady(loaded) }
             return AdHandle {}
@@ -259,7 +282,7 @@ object NativeAds {
             },
             onFailed = { activity.runOnUiThread { if (active) onFailed("No fill from configured ad units") } },
         )
-        if (pool.needsLoad(chain)) startLoad(placement)
+        if (pool.needsLoad(chain)) startLoad(placement.unit, placement.name)
         return AdHandle {
             active = false
             pool.removeWaiter(waiter)
@@ -276,8 +299,7 @@ object NativeAds {
     }
 
     /** Chạy một lượt waterfall cho chuỗi ID của [placement]; kết quả giao cho người chờ hợp ID hoặc cất vào pool. */
-    private fun startLoad(placement: NativePlacement) {
-        val unit = placement.unit
+    private fun startLoad(unit: AdUnit, tag: String) {
         val chain = unit.configIds()
         pool.startLoad(chain)
         WaterfallLoader<NativeAd>(chain).load(
@@ -289,7 +311,7 @@ object NativeAds {
                     .build()
                 NativeAdLoader.load(request, object : NativeAdLoaderCallback {
                     override fun onNativeAdLoaded(nativeAd: NativeAd) {
-                        AdAudience.onNativeLoaded(nativeAd.headline)
+                        if (unit == AdUnit.NATIVE_CHECK) AdAudience.onCheckNativeLoaded(nativeAd.headline)
                         nativeAd.adEventCallback = object : NativeAdEventCallback {
                             override fun onAdPaid(adValue: AdValue) = AdjustRevenueLogger.log(adValue)
                         }
@@ -301,12 +323,12 @@ object NativeAds {
             onLoaded = { ad, id ->
                 val delivery = pool.onLoaded(chain, id, ad)
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "${placement.name}: load xong ${id.takeLast(10)} → " + (delivery?.let { "giao cho người đang chờ" } ?: "cất pool"))
+                    Log.d(TAG, "$tag: load xong ${id.takeLast(10)} → " + (delivery?.let { "giao cho người đang chờ" } ?: "cất pool"))
                 }
                 delivery?.let { (waiter, loaded) -> waiter.onReady(loaded) }
             },
             onFailed = { error ->
-                if (BuildConfig.DEBUG) Log.d(TAG, "${placement.name}: load lỗi ($error)")
+                if (BuildConfig.DEBUG) Log.d(TAG, "$tag: load lỗi ($error)")
                 pool.onFailed(chain)?.onFailed?.invoke()
             },
         )
@@ -344,7 +366,8 @@ object NativeAds {
 
         view.headlineView = headline
         body?.let { view.bodyView = it }
-        icon?.let { view.iconView = it }
+        // Như template mẫu của Google: chỉ đăng ký iconView khi quảng cáo có icon (không có thì ẩn view, xem bên dưới).
+        if (ad.icon != null) icon?.let { view.iconView = it }
         cta?.let { view.callToActionView = it }
         advertiser?.let { view.advertiserView = it }
         stars?.let { view.starRatingView = it }

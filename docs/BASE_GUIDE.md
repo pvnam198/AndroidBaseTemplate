@@ -92,7 +92,7 @@ Quảng cáo thưởng (`core/ads/RewardAds.kt`) có 2 type (`type` / `ad_type` 
 | **Ad type** | Loại quảng cáo của placement (`ad_type`): `aoa`, `inter`, `inter_then_native`, `native_as_inter`, `native`, `banner`, `banner_collapsible`, `native_as_banner`, `native_as_banner_collap`, `reward`, `reward_inter`. | `AdType` |
 | **Template** | Mẫu vẽ native (Big1…Full5 hoặc mẫu tự đặt). | `core/ads/template/` |
 | **Bộ full / basic** | Hai bộ cấu hình `profiles.full` / `profiles.basic`, mỗi bộ có `settings` + `placements` đầy đủ (web đã gộp sẵn). | `AdConfigDocument` |
-| **ads_profile** | Ai dùng bộ nào: 0 tắt hết · 1 mọi user full · 2 user marketing (Adjust) full, còn lại basic · 3 mọi user full trừ máy test ad dùng basic. Premium luôn không có quảng cáo. | `AdProfile.kt`, `AdPolicy.kt` |
+| **ads_profile** | Ai dùng bộ nào: 0 tắt hết · 1 mọi user full · 2 user marketing (Adjust) full, còn lại basic · 3 mọi user full trừ máy test ad dùng basic (nhận diện bằng native `native_check`, xem `docs/remote-config.md`). Premium luôn không có quảng cáo. | `AdProfile.kt`, `AdPolicy.kt` |
 
 Mọi code quảng cáo đọc cấu hình qua `AdPolicy.config(key)` / `AdPolicy.adType(key)` — đã tính profile, Premium, debug override.
 

@@ -10,7 +10,9 @@ import com.namstd.androidskillhub.core.preferences.AppPreferences
  * nên lần mở app sau dùng luôn, không phải chờ kiểm tra lại:
  * - [isMarketingUser] (`full_for_paid_users`): user đến từ marketing, theo attribution của Adjust.
  * - [isTestAdDevice] (`full_except_test_devices`): máy nhận quảng cáo mẫu của Google - native có headline "Test Ad".
- *   Chỉ kiểm tra được khi có native load, nên máy đã bị đánh dấu thì giữ nguyên (BASIC không load native).
+ *   Chỉ do native của ad unit `native_check` (không bidding bên nào, xem [NativeAds.preloadCheck]) quyết định: native của
+ *   các placement khác có bidding nên bên khác thắng thầu thì headline không có "Test Ad" - không dùng để check.
+ *   Mỗi lần mở app (khi `ads_profile = 3`) check lại một lần; load lỗi thì giữ kết quả cũ.
  */
 object AdAudience {
     private lateinit var prefs: AppPreferences
@@ -32,11 +34,14 @@ object AdAudience {
             !network.equals(UNTRUSTED_NETWORK, ignoreCase = true)
     }
 
-    /** Gọi mỗi khi một native load xong: Google trả quảng cáo mẫu thì headline bắt đầu bằng "Test Ad". */
-    fun onNativeLoaded(headline: String?) {
+    /** Gọi khi native của `native_check` load xong: Google trả quảng cáo mẫu thì headline bắt đầu bằng "Test Ad". */
+    fun onCheckNativeLoaded(headline: String?) {
         if (headline.isNullOrBlank()) return
-        prefs.isTestAdDevice = headline.trimStart().startsWith(TEST_AD_PREFIX, ignoreCase = true)
+        prefs.isTestAdDevice = isTestAdHeadline(headline)
     }
+
+    internal fun isTestAdHeadline(headline: String): Boolean =
+        headline.trimStart().startsWith(TEST_AD_PREFIX, ignoreCase = true)
 
     private const val UNTRUSTED_NETWORK = "Untrusted Devices"
     private const val TEST_AD_PREFIX = "Test Ad"

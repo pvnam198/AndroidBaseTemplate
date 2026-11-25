@@ -191,7 +191,8 @@ class PostInterstitialNativeAdDialogFragment : BaseDialogFragment<DialogNativeFu
      * thì chuyển sang stage kế tiếp (hoặc đóng, khi đã quá [totalStages]).
      */
     private fun loadStage(stageNumber: Int) {
-        val ad = NativeAds.poll(placement.nativePlacement)
+        // Stage cuối của vị trí chỉ hiện một lần thì không reload (stage trước stage cuối vẫn reload có chủ đích).
+        val ad = NativeAds.poll(placement.nativePlacement, reload = stageNumber < totalStages || !placement.oneTime)
         if (ad == null) {
             if (stageNumber < totalStages) loadStage(stageNumber + 1) else finishBreak()
         } else {

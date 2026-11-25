@@ -189,7 +189,7 @@ abstract class BaseAdRecyclerAdapter<T>(
             view.headlineView = binding.adHeadline
             view.bodyView = binding.adBody
             view.advertiserView = binding.adAdvertiser
-            view.iconView = binding.adIcon
+            if (ad.icon != null) view.iconView = binding.adIcon
             view.callToActionView = binding.adCallToAction
             binding.adHeadline.text = ad.headline
             binding.adBody.text = ad.body

@@ -59,6 +59,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
         Ads.initialize(this) { consentGranted ->
             runOnUiThread {
                 if (consentGranted) {
+                    // Máy test ad (ads_profile = 3): load sớm 1 native từ native_check để nhận diện; native_home_feed dùng lại ad đó.
+                    NativeAds.preloadCheck()
                     binding.nativeContainer.isVisible = true
                     loadNative(binding.nativeContainer, NativePlacement.SPLASH)
                     NativeAds.preload(NativePlacement.LANGUAGE)

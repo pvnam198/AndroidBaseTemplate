@@ -234,6 +234,16 @@
           },
           "template": "Big1"
         },
+        "native_check": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": true,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          }
+        },
         "inter_home": {
           "type": "inter",
           "ad_type": "inter",
@@ -472,6 +482,16 @@
             ]
           },
           "template": "Big1"
+        },
+        "native_check": {
+          "type": "native",
+          "ad_type": "native",
+          "enable": true,
+          "ad_ids": {
+            "native": [
+              "ca-app-pub-3940256099942544/2247696110"
+            ]
+          }
         },
         "inter_home": {
           "type": "inter",

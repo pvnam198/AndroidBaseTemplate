@@ -191,7 +191,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
                 if (AdPolicy.config(placement.adKey).fallback == AdFallback.SKIP &&
                     (!InterstitialAds.isReady(placement.interUnit) || !NativeAds.isReady(placement.nativePlacement))
                 ) {
-                    InterstitialAds.load(placement.interUnit)
+                    if (!placement.oneTime) InterstitialAds.load(placement.interUnit)
                     onComplete()
                     return
                 }

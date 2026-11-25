@@ -145,4 +145,22 @@ class PlacementConfigTest {
         assertEquals(setOf(1, 2, 3), PlacementConfig.intSet("1, 2,3"))
         assertEquals(emptySet<Int>(), PlacementConfig.intSet(null))
     }
+    @Test
+    fun nativeCheckIdsPreferFullThenBasic() {
+        // File mẫu: có ở cả hai bộ -> lấy bộ full.
+        assertEquals(listOf("ca-app-pub-3940256099942544/2247696110"), doc.nativeCheckIds())
+        fun file(full: String, basic: String) = AdConfigDocument(
+            """{"profiles":{"full":{"placements":{$full}},"basic":{"placements":{$basic}}}}""",
+        )
+        fun check(enable: Boolean, id: String) =
+            """"native_check":{"enable":$enable,"ad_type":"native","ad_ids":{"native":["$id"]}}"""
+        // full tắt / không có -> thử basic.
+        assertEquals(listOf("B"), file(check(false, "A"), check(true, "B")).nativeCheckIds())
+        assertEquals(listOf("B"), file("", check(true, "B")).nativeCheckIds())
+        // full bật -> lấy full dù basic cũng có.
+        assertEquals(listOf("A"), file(check(true, "A"), check(true, "B")).nativeCheckIds())
+        // Không bộ nào bật / file hỏng -> rỗng (không check).
+        assertEquals(emptyList<String>(), file(check(false, "A"), check(false, "B")).nativeCheckIds())
+        assertEquals(emptyList<String>(), AdConfigDocument("").nativeCheckIds())
+    }
 }

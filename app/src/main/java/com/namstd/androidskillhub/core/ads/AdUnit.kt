@@ -54,7 +54,10 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     NATIVE_INTER_HOME(AdKey.INTER_HOME, AdFormat.NATIVE),
     BANNER_SETTING(AdKey.BANNER_SETTING, AdFormat.BANNER),
     REWARD_SAMPLE(AdKey.REWARD_SAMPLE, AdFormat.REWARDED),
-    REWARD_INTER_SAMPLE(AdKey.REWARD_INTER_SAMPLE, AdFormat.REWARDED_INTERSTITIAL);
+    REWARD_INTER_SAMPLE(AdKey.REWARD_INTER_SAMPLE, AdFormat.REWARDED_INTERSTITIAL),
+
+    /** Native không bidding để nhận diện máy test ad (`native_check`) - xem [NativeAds.preloadCheck]. */
+    NATIVE_CHECK(AdKey.NATIVE_CHECK, AdFormat.NATIVE);
 
     /**
      * ID cho waterfall (id_1 → id_3) của unit này: `ad_ids.<loại>` của placement [key] trong bộ quảng cáo của user
@@ -69,7 +72,8 @@ enum class AdUnit(val key: AdKey, val format: AdFormat) {
     }
 
     /** ID thật trong `ad_ids` (cả bản debug). */
-    fun configIds(): List<String> = AdPolicy.config(key).ids(format.idType)
+    fun configIds(): List<String> =
+        if (this == NATIVE_CHECK) AdPolicy.nativeCheckIds() else AdPolicy.config(key).ids(format.idType)
 
     /** ID gửi request cho ID cấu hình [configId]: bản debug luôn là [testId]. */
     fun requestId(configId: String, testId: String = format.testId): String =

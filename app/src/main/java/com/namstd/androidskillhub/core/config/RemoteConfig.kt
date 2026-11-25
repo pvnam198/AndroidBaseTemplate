@@ -227,6 +227,9 @@ object RemoteConfig {
      */
     fun placement(set: AdSet, key: AdKey): PlacementConfig = document().placement(set, key)
 
+    /** ID `native_check` (không qua bộ quảng cáo của user) - xem [AdConfigDocument.nativeCheckIds]. */
+    fun nativeCheckIds(): List<String> = document().nativeCheckIds()
+
     /**
      * Khoảng cách inter của bộ [set] (`profiles.<bộ>.settings`): `inter_gap_ms` (không có: full 0, basic 90 giây) và
      * `inter_gap_ignore` (placement không bị chặn bởi khoảng cách).

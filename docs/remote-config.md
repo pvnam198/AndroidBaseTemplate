@@ -99,7 +99,7 @@ Mỗi bản release đổi `VERSION_KEY` và thêm key mới trên Firebase (xem
 trang một placement), `native_full_onboarding`,
 `inter_after_onboarding`, `on_resume` (quay lại app: aoa = App Open; ad_type khác = màn Welcome Back, Tiếp tục chạy
 quảng cáo theo ad_type), `native_welcome_back` (native chân màn Welcome Back, `wait_ms` = đếm ngược nút Tiếp tục), `banner_home`,
-`native_home_feed`, `inter_home`, `banner_setting`, `reward_sample`, `reward_inter_sample`. Tên trên web phải khớp
+`native_home_feed`, `inter_home`, `banner_setting`, `reward_sample`, `reward_inter_sample`, `native_check` (xem bên dưới). Tên trên web phải khớp
 `AdKey`; placement app không biết thì bỏ qua.
 
 ## Cơ chế
@@ -165,3 +165,11 @@ Mọi thời gian tính bằng **mili-giây**.
   8 s rồi chờ mạng có lại (Splash không bị chặn; không bỏ qua bước đồng ý, không thêm config mặc định).
   `RemoteConfig.hasAdConfig()` + `AdsAvailability`: preload và `loadNative` / `loadBanner` gọi lúc chưa có SDK / config
   được hoãn, có lúc nào thì chạy lúc đó. Log `AdsInit`.
+- **25/11/2026** — thêm placement **`native_check`**: ad unit native riêng, **không bidding bên nào**, dùng chung mọi app. Khi
+  `ads_profile = 3` app load sớm đúng 1 native từ đây mỗi lần mở app (sau khi đồng ý UMP) để nhận diện máy test ad - chỉ
+  native này mới được ghi cờ `isTestAdDevice` (trước đây mọi native load đều ghi nên bị bidding làm sai). Ad đó không bỏ
+  phí: `native_home_feed` lấy nó trước, không ai lấy thì nằm pool tới hết hạn; không load bù. Đọc từ bộ full trước, tắt
+  hoặc không có thì bộ basic, không qua bộ quảng cáo của user (bộ đó phụ thuộc chính kết quả check).
+- **25/11/2026** — quảng cáo chỉ dùng một lần (Splash: một lần mỗi tiến trình; Language, Onboarding: một lần cả đời cài
+  app) không load lại sau khi dùng (`InterstitialPlacement.oneTime`, `NativeAds.poll(reload)`); `NativeAds.preload` chỉ
+  tải placement đang bật (`enable = true`). Native chỉ đăng ký `iconView` khi quảng cáo có icon (như template mẫu của Google).
